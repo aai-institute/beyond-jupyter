@@ -200,6 +200,9 @@ class DataFrameTransformerChain(DataFrameTransformer):
                 return dft
         return None
 
+    def append(self, t: DataFrameTransformer):
+        self.dataFrameTransformers.append(t)
+
 
 class DFTRenameColumns(RuleBasedDataFrameTransformer):
     def __init__(self, columnsMap: Dict[str, str]):
