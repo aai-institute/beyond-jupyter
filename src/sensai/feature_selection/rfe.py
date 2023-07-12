@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sensai import VectorModel, InputOutputData
+from sensai.data_transformation import DFTKeepColumns, DFTColumnFilter
 from sensai.evaluation import VectorModelCrossValidatorParams, createVectorModelCrossValidator
 from sensai.feature_importance import FeatureImportanceProvider, AggregatedFeatureImportance
 from sensai.util.plot import ScatterPlot
@@ -37,6 +38,8 @@ class RecursiveFeatureEliminationCV:
         :param crossValidatorParams: the parameters for cross-validation
         :param minFeatures: the minimum number of features to evaluate
         """
+        if not crossValidatorParams.returnTrainedModels:
+            raise ValueError("crossValidatorParams: returnTrainedModels is required to be enabled")
         self.crossValidatorParams = crossValidatorParams
         self.minFeatures = minFeatures
 
@@ -81,7 +84,8 @@ class RecursiveFeatureEliminationCV:
             return ScatterPlot(self.getNumFeaturesArray(), self.getMetricValuesArray(), c_opacity=1, x_label="number of features",
                 y_label=f"cross-validation mean metric value ({self.metricName})").fig
 
-    def run(self, model: Union[VectorModel, FeatureImportanceProvider], ioData: InputOutputData, metricName: str, minimise: bool) -> Result:
+    def run(self, model: Union[VectorModel, FeatureImportanceProvider], ioData: InputOutputData, metricName: str,
+            minimise: bool, removeInputPreprocessors=False) -> Result:
         """
         Runs the optimisation for the given model and data.
 
@@ -89,17 +93,27 @@ class RecursiveFeatureEliminationCV:
         :param ioData: the data
         :param metricName: the metric to optimise
         :param minimise: whether the metric shall be minimsed; if False, maximise.
+        :param removeInputPreprocessors: whether to remove input preprocessors from the model and create input data
+            only once during the entire experiment; this is usually reasonable only if all input preprocessors are not
+            trained on the input data or if, for any given data split/fold, the preprocessor learning outcome is likely
+            to be largely similar.
         :return: a result object, which provides access to the selected features and data on all elimination steps
         """
         metricKey = f"mean[{metricName}]"
 
-        model = copy(model)
-        model.fitInputOutputData(ioData, fitPreprocessors=True, fitModel=False)
-        inputs = model.computeModelInputs(ioData.inputs)
-        model.removeInputPreprocessors()
-        ioData = InputOutputData(inputs, ioData.outputs)
+        dftColumnFilter = None
+        if removeInputPreprocessors:
+            model = copy(model)
+            model.fitInputOutputData(ioData, fitPreprocessors=True, fitModel=False)
+            inputs = model.computeModelInputs(ioData.inputs)
+            model.removeInputPreprocessors()
+            ioData = InputOutputData(inputs, ioData.outputs)
+            features = list(inputs.columns)
+        else:
+            features = None  # can only be obtained after having fitted the model initially (see below)
+        dftColumnFilter = DFTColumnFilter()
+        model.withFeatureTransformers(dftColumnFilter, add=True)
 
-        features = list(inputs.columns)
         steps = []
         while True:
             # evaluate model
@@ -107,6 +121,9 @@ class RecursiveFeatureEliminationCV:
             crossValData = crossValidator.evalModel(model)
             aggMetricsDict = crossValData.getEvalStatsCollection().aggMetricsDict()
             metricValue = aggMetricsDict[metricKey]
+
+            if features is None:
+                features = crossValData.trainedModels[0].getModelInputVariableNames()
 
             steps.append(self.Step(metricValue=metricValue, features=features))
 
@@ -127,7 +144,8 @@ class RecursiveFeatureEliminationCV:
                 eliminatedFeatures = [tuples[0][0]]
                 log.info(f"Eliminating feature {eliminatedFeatures[0]}")
             features = [f for f in features if f not in eliminatedFeatures]
-            ioData.inputs = ioData.inputs[features]
+            dftColumnFilter.keep = features
+
             log.info(f"{len(features)} features remain")
 
             if len(features) < self.minFeatures:
