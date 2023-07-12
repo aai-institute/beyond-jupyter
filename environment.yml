@@ -1,0 +1,16 @@
+name: pop
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - pandas
+      - scipy
+      - numpy
+      - scikit-learn
+      - seaborn
+      - typing_extensions
+      - jupyter
+      - xgboost
+      - hyperopt
