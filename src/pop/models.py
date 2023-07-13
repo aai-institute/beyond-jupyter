@@ -23,7 +23,7 @@ class DataSet(ToStringMixin):
         self.random_state = random_state
 
     def tag(self) -> str:
-        return f"numSamples{self.num_samples}rnd{self.random_state}"
+        return f"numSamples{self.num_samples}Rnd{self.random_state}"
 
     def load_iodata(self) -> InputOutputData:
         log.info(f"Reading data (num_samples={self.num_samples})")
@@ -76,8 +76,8 @@ class ModelFactory:
     @classmethod
     def create_xgb_meanpop_opt_fsel(cls):
         model = cls.create_xgb_meanpop_opt()
-        selected_feature_columns = ['mean_artist_popularity', 'genre_2', 'genre_10', 'genre_13', 'genre_14',
-            'genre_24', 'genre_27', 'genre_35', 'genre_42', 'genre_47', 'genre_49', 'genre_56']
+        model.setName(model.getName() + "-fsel")
+        selected_feature_columns = ['danceability', 'energy', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'loudness', 'duration_ms', 'mean_artist_popularity', 'genre_1', 'genre_2', 'genre_3', 'genre_4', 'genre_6', 'genre_7', 'genre_8', 'genre_9', 'genre_10', 'genre_11', 'genre_12', 'genre_13', 'genre_14', 'genre_15', 'genre_16', 'genre_17', 'genre_18', 'genre_22', 'genre_23', 'genre_24', 'genre_25', 'genre_26', 'genre_27', 'genre_28', 'genre_29', 'genre_30', 'genre_32', 'genre_33', 'genre_34', 'genre_35', 'genre_36', 'genre_37', 'genre_39', 'genre_40', 'genre_41', 'genre_42', 'genre_43', 'genre_44', 'genre_45', 'genre_46', 'genre_47', 'genre_48', 'genre_49', 'genre_51', 'genre_52', 'genre_53', 'genre_54', 'genre_56', 'genre_57', 'genre_58', 'genre_61', 'genre_63', 'genre_64', 'genre_65', 'genre_66', 'genre_67', 'genre_68', 'genre_69', 'genre_70', 'genre_72', 'genre_73', 'genre_75', 'genre_76', 'genre_78', 'genre_81', 'mode_0']
         return model.withFeatureTransformers(DFTKeepColumns(selected_feature_columns), add=True)
 
     @classmethod
