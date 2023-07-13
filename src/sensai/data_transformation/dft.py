@@ -6,6 +6,7 @@ from typing import List, Sequence, Union, Dict, Callable, Any, Optional, Set
 
 import numpy as np
 import pandas as pd
+import sklearn
 from sklearn.preprocessing import OneHotEncoder
 
 from .sklearn_transformer import SkLearnTransformerProtocol
@@ -16,6 +17,8 @@ from ..util.pickle import setstate
 from ..util.string import orRegexGroup, ToStringMixin
 
 from typing import TYPE_CHECKING
+
+from ..util.version import Version
 
 if TYPE_CHECKING:
     from ..featuregen import FeatureGenerator
@@ -374,11 +377,17 @@ class DFTOneHotEncoder(DataFrameTransformer):
         self.handleUnknown = "ignore" if ignoreUnknown else "error"
         if categories is not None:
             if type(categories) == dict:
-                self.oneHotEncoders = {col: OneHotEncoder(categories=[np.sort(categories)], sparse=False, handle_unknown=self.handleUnknown) for col, categories in categories.items()}
+                self.oneHotEncoders = {col: OneHotEncoder(categories=[np.sort(categories)], handle_unknown=self.handleUnknown, **self._sparseKwargs()) for col, categories in categories.items()}
             else:
                 if len(columns) != len(categories):
                     raise ValueError(f"Given categories must have the same length as columns to process")
-                self.oneHotEncoders = {col: OneHotEncoder(categories=[np.sort(categories)], sparse=False, handle_unknown=self.handleUnknown) for col, categories in zip(columns, categories)}
+                self.oneHotEncoders = {col: OneHotEncoder(categories=[np.sort(categories)], handle_unknown=self.handleUnknown, **self._sparseKwargs()) for col, categories in zip(columns, categories)}
+
+    def _sparseKwargs(self, sparse=False):
+        if Version(sklearn).isAtLeast(1, 2):
+            return dict(sparse_output=sparse)
+        else:
+            return dict(sparse=sparse)
 
     def __setstate__(self, state):
         if "arrayValuedResult" not in state:
@@ -396,7 +405,7 @@ class DFTOneHotEncoder(DataFrameTransformer):
             if len(self._columnsToEncode) == 0:
                 log.warning(f"{self} does not apply to any columns, transformer has no effect; regex='{self._columnNameRegex}'")
         if self.oneHotEncoders is None:
-            self.oneHotEncoders = {column: OneHotEncoder(categories=[np.sort(df[column].unique())], sparse=False, handle_unknown=self.handleUnknown) for column in self._columnsToEncode}
+            self.oneHotEncoders = {column: OneHotEncoder(categories=[np.sort(df[column].unique())], handle_unknown=self.handleUnknown, **self._sparseKwargs()) for column in self._columnsToEncode}
         for columnName in self._columnsToEncode:
             self.oneHotEncoders[columnName].fit(df[[columnName]])
 
