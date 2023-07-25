@@ -1,7 +1,7 @@
 from azureml.core import Experiment, Workspace
 from typing import Dict, Any
 
-from .tracking_base import TrackedExperiment
+from .tracking_base import TrackedExperiment, TContext
 from .. import VectorModel
 from ..evaluation.evaluator import MetricsDictProvider
 
@@ -47,3 +47,6 @@ class TrackedAzureMLExperiment(TrackedExperiment):
         with self.experiment.start_logging() as run:
             for name, value in valuesDict.items():
                 run.log(name, value)
+
+    def _createTrackingContext(self, name: str, description: str) -> TContext:
+        raise NotImplementedError()

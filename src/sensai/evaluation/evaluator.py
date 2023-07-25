@@ -12,6 +12,7 @@ from .eval_stats.eval_stats_regression import RegressionEvalStats, RegressionEva
 from ..data import DataSplitter, DataSplitterFractional, InputOutputData
 from ..data_transformation import DataFrameTransformer
 from ..tracking import TrackingMixin, TrackedExperiment
+from ..tracking.tracking_base import TrackingContext
 from ..util.string import ToStringMixin
 from ..util.typing import PandasNamedTuple
 from ..vector_model import VectorClassificationModel, VectorModel, VectorModelBase, VectorModelFittableBase, VectorRegressionModel
@@ -47,7 +48,7 @@ class MetricsDictProvider(TrackingMixin, ABC):
         """
         valuesDict = self._computeMetrics(model, **kwargs)
         if self.trackedExperiment is not None:
-            self.trackedExperiment.trackValues(valuesDict, addValuesDict={"str(model)": str(model)})
+            self.trackedExperiment.trackValues(valuesDict, addValuesDict={"str(model)": str(model)}) # TODO
         return valuesDict
 
 
@@ -200,10 +201,11 @@ class VectorModelEvaluator(MetricsDictProvider, Generic[TEvalData], ABC):
         """
         data = self.trainingData if onTrainingData else self.testData
         result: VectorModelEvaluationData = self._evalModel(model, data)
-        if track and self.trackedExperiment is not None:
+        with TrackingContext.fromOptionalExperiment(self.trackedExperiment if track else None, model=model) as trackingContext:
+            multipleVars = len(result.predictedVarNames) > 1
             for predVarName in result.predictedVarNames:
-                addValuesDict = {"str(model)": str(model), "predVarName": predVarName}
-                self.trackedExperiment.trackValues(result.getEvalStats(predVarName).metricsDict(), addValuesDict=addValuesDict)
+                metrics = result.getEvalStats(predVarName).metricsDict()
+                trackingContext.trackMetrics(metrics, predVarName if multipleVars else None)
         return result
 
     @abstractmethod

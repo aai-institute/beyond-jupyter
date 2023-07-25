@@ -32,6 +32,7 @@ from .evaluator import VectorModelEvaluator, VectorModelEvaluationData, VectorRe
 from ..data import InputOutputData
 from ..feature_importance import AggregatedFeatureImportance, FeatureImportanceProvider, plotFeatureImportance, FeatureImportance
 from ..tracking import TrackedExperiment
+from ..tracking.tracking_base import TrackingContext
 from ..util.deprecation import deprecated
 from ..util.io import ResultWriter
 from ..util.string import prettyStringRepr
@@ -135,13 +136,17 @@ def evalModelViaEvaluator(model: TModel, inputOutputData: InputOutputData, testF
 
 
 class EvaluationResultCollector:
-    def __init__(self, showPlots: bool = True, resultWriter: Optional[ResultWriter] = None):
+    def __init__(self, showPlots: bool = True, resultWriter: Optional[ResultWriter] = None,
+            trackingContext: TrackingContext = None):
         self.showPlots = showPlots
         self.resultWriter = resultWriter
+        self.trackingContext = trackingContext
 
     def addFigure(self, name: str, fig: matplotlib.figure.Figure):
         if self.resultWriter is not None:
             self.resultWriter.writeFigure(name, fig, closeFigure=not self.showPlots)
+        if self.trackingContext is not None:
+            self.trackingContext.trackFigure(name, fig)
 
     def addDataFrameCsvFile(self, name: str, df: pd.DataFrame):
         if self.resultWriter is not None:
@@ -272,7 +277,9 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
             if resultWriter is not None:
                 resultWriter.writeTextFile("evaluator-results", strEvalResults)
             if createPlots:
-                self.createPlots(evalResultData, showPlots=showPlots, resultWriter=resultWriter, subtitlePrefix=subtitlePrefix)
+                with TrackingContext.fromOptionalExperiment(trackedExperiment, model=model) as trackingContext:
+                    self.createPlots(evalResultData, showPlots=showPlots, resultWriter=resultWriter,
+                        subtitlePrefix=subtitlePrefix, trackingContext=trackingContext)
 
         evalResultData = evaluator.evalModel(model)
         gatherResults(evalResultData, resultWriter)
@@ -280,7 +287,6 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
             evalResultDataTrain = evaluator.evalModel(model, onTrainingData=True)
             additionalResultWriter = resultWriter.childWithAddedPrefix("onTrain-") if resultWriter is not None else None
             gatherResults(evalResultDataTrain, additionalResultWriter, subtitlePrefix="[onTrain] ")
-
         return evalResultData
 
     @staticmethod
@@ -303,20 +309,28 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
         :return: cross-validation result data
         """
         resultWriter = self._resultWriterForModel(resultWriter, model)
+
         if crossValidator is None:
             crossValidator = self.createCrossValidator(model)
         if trackedExperiment is not None:
             crossValidator.setTrackedExperiment(trackedExperiment)
+
         crossValidationData = crossValidator.evalModel(model)
+
         aggStatsByVar = {varName: crossValidationData.getEvalStatsCollection(predictedVarName=varName).aggMetricsDict()
                 for varName in crossValidationData.predictedVarNames}
         df = pd.DataFrame.from_dict(aggStatsByVar, orient="index")
+
         strEvalResults = df.to_string()
         if logResults:
             log.info(f"Cross-validation results:\n{strEvalResults}")
         if resultWriter is not None:
             resultWriter.writeTextFile("crossval-results", strEvalResults)
-        self.createPlots(crossValidationData, showPlots=showPlots, resultWriter=resultWriter)
+
+        with TrackingContext.fromOptionalExperiment(trackedExperiment, model=model) as trackingContext:
+            self.createPlots(crossValidationData, showPlots=showPlots, resultWriter=resultWriter,
+                trackingContext=trackingContext)
+
         return crossValidationData
 
     def compareModels(self, models: Sequence[TModel], resultWriter: Optional[ResultWriter] = None, useCrossValidation=False,
@@ -324,7 +338,8 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
             sortColumnMoveToLeft=True,
             alsoIncludeUnsortedResults: bool = False, alsoIncludeCrossValGlobalStats: bool = False,
             visitors: Optional[Iterable["ModelComparisonVisitor"]] = None,
-            writeVisitorResults=False, writeCSV=False) -> "ModelComparisonData":
+            writeVisitorResults=False, writeCSV=False,
+            trackedExperiment: Optional[TrackedExperiment] = None) -> "ModelComparisonData":
         """
         Compares several models via simple evaluation or cross-validation
 
@@ -363,7 +378,7 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
                 if crossValidator is None:
                     crossValidator = self.createCrossValidator(model)
                 crossValData = self.performCrossValidation(model, resultWriter=resultWriter if writeIndividualResults else None,
-                    crossValidator=crossValidator)
+                    crossValidator=crossValidator, trackedExperiment=trackedExperiment)
                 modelResult = ModelComparisonData.Result(crossValData=crossValData)
                 resultByModelName[modelName] = modelResult
                 evalStatsCollection = crossValData.getEvalStatsCollection()
@@ -372,7 +387,7 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
                 if evaluator is None:
                     evaluator = self.createEvaluator(model)
                 evalData = self.performSimpleEvaluation(model, resultWriter=resultWriter if writeIndividualResults else None,
-                    fitModel=fitModels, evaluator=evaluator)
+                    fitModel=fitModels, evaluator=evaluator, trackedExperiment=trackedExperiment)
                 modelResult = ModelComparisonData.Result(evalData=evalData)
                 resultByModelName[modelName] = modelResult
                 evalStats = evalData.getEvalStats()
@@ -453,7 +468,8 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
         """
         return self.compareModels(models, resultWriter=resultWriter, useCrossValidation=True)
 
-    def createPlots(self, data: Union[TEvalData, TCrossValData], showPlots=True, resultWriter: Optional[ResultWriter] = None, subtitlePrefix: str = ""):
+    def createPlots(self, data: Union[TEvalData, TCrossValData], showPlots=True, resultWriter: Optional[ResultWriter] = None,
+            subtitlePrefix: str = "", trackingContext: Optional[TrackingContext] = None):
         """
         Creates default plots that visualise the results in the given evaluation data
 
@@ -464,7 +480,8 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
         """
         if not showPlots and resultWriter is None:
             return
-        resultCollector = EvaluationResultCollector(showPlots=showPlots, resultWriter=resultWriter)
+        resultCollector = EvaluationResultCollector(showPlots=showPlots, resultWriter=resultWriter,
+            trackingContext=trackingContext)
         self._createPlots(data, resultCollector, subtitle=subtitlePrefix + data.modelName)
 
     def _createPlots(self, data: Union[TEvalData, TCrossValData], resultCollector: EvaluationResultCollector, subtitle=None):

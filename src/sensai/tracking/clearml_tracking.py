@@ -1,10 +1,29 @@
 import logging
+from typing import Dict
 
+from matplotlib import pyplot as plt
+
+from .tracking_base import TrackingContext, TContext
 from ..tracking import TrackedExperiment
 
 from clearml import Task
 
 log = logging.getLogger(__name__)
+
+
+class ClearMLTrackingContext(TrackingContext):
+    def __init__(self, name, experiment, task):
+        super().__init__(name, experiment)
+        self.task = task
+
+    def _trackMetrics(self, metrics: Dict[str, float]):
+        self.task.connect(metrics)
+
+    def trackFigure(self, name: str, fig: plt.Figure):
+        fig.show()
+
+    def _end(self):
+        pass
 
 
 # TODO: this is an initial working implementation, it should eventually be improved
@@ -39,3 +58,6 @@ class ClearMLExperiment(TrackedExperiment):
 
     def _trackValues(self, valuesDict):
         self.task.connect(valuesDict)
+
+    def _createTrackingContext(self, name: str, description: str) -> TContext:
+        return ClearMLTrackingContext(name, self, self.task)
