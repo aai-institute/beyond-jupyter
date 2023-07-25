@@ -14,3 +14,4 @@ dependencies:
       - jupyter
       - xgboost
       - hyperopt
+      - mlflow

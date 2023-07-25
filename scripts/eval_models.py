@@ -1,10 +1,13 @@
 import os
 
+import mlflow
+
 from pop.features import FeatureName
 from pop.models import DataSet, ModelFactory, ModelEvaluation
 from sensai import VectorRegressionModel
 from sensai.evaluation.eval_util import ModelComparisonVisitorAggregatedFeatureImportance
 from sensai.feature_importance import FeatureImportanceProvider
+from sensai.tracking.mlflow_tracking import MlFlowExperiment
 from sensai.util import logging, markUsed
 from sensai.util.io import ResultWriter
 from sensai.util.logging import datetimeTag
@@ -15,8 +18,10 @@ markUsed(FeatureName)
 
 def eval_models(dataset: DataSet, use_crossval=False):
     try:
-        experiment_name = f"{datetimeTag()}-{dataset.tag()}"
-        result_writer = ResultWriter(os.path.join("results", "model_comparison", experiment_name))
+        datetime_tag = datetimeTag()
+        tracked_experiment = MlFlowExperiment(f"popularity-prediction_{dataset.tag()}", "",
+            instancePrefix=f"{datetime_tag}_")
+        result_writer = ResultWriter(os.path.join("results", "model_comparison", f"{datetime_tag}-{dataset.tag()}"))
         logging.addFileLogger(result_writer.path("log.txt"))
 
         models = [
@@ -35,7 +40,7 @@ def eval_models(dataset: DataSet, use_crossval=False):
 
         ev = ModelEvaluation(dataset).create_evaluator()
         result = ev.compareModels(models, result_writer, useCrossValidation=use_crossval, visitors=visitors,
-            writeVisitorResults=True)
+            writeVisitorResults=True, trackedExperiment=tracked_experiment)
         markUsed(result)
 
     except Exception as e:
