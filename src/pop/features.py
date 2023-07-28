@@ -46,11 +46,11 @@ class FeatureName(Enum):
 
 class FeatureGeneratorMeanArtistPopularity(FeatureGenerator):
     def __init__(self):
-        super().__init__(normalisationRuleTemplate=DFTNormalisation.RuleTemplate(
-            transformerFactory=SkLearnTransformerFactoryFactory.MaxAbsScaler()))
+        super().__init__(normalisation_rule_template=DFTNormalisation.RuleTemplate(
+            transformer_factory=SkLearnTransformerFactoryFactory.MaxAbsScaler()))
 
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame = None, ctx=None):
-        df: pd.DataFrame = pd.concat([X, Y], axis=1)[[COL_ARTIST_NAME, COL_POPULARITY]]
+    def _fit(self, x: pd.DataFrame, y: pd.DataFrame = None, ctx=None):
+        df: pd.DataFrame = pd.concat([x, y], axis=1)[[COL_ARTIST_NAME, COL_POPULARITY]]
         gb = df.groupby(COL_ARTIST_NAME)
         s = gb.sum()[COL_POPULARITY]
         s.name = "sum"
@@ -58,12 +58,12 @@ class FeatureGeneratorMeanArtistPopularity(FeatureGenerator):
         c.name = "cnt"
         m = s / c
         m.name = "mean"
-        self._y = Y
+        self._y = y
         self._values = pd.concat([s, c, m], axis=1)
 
     def _generate(self, df: pd.DataFrame, ctx=None) -> pd.DataFrame:
         ctx: VectorRegressionModel
-        is_training = ctx.isBeingFitted()
+        is_training = ctx.is_being_fitted()
 
         if is_training:
             def val_t(t):
@@ -93,18 +93,18 @@ class FeatureGeneratorMeanArtistPopularity(FeatureGenerator):
 
 
 registry = FeatureGeneratorRegistry()
-registry.registerFactory(FeatureName.MUSICAL_DEGREES, lambda: FeatureGeneratorTakeColumns(COLS_MUSICAL_DEGREES,
-    normalisationRuleTemplate=DFTNormalisation.RuleTemplate(skip=True)))
-registry.registerFactory(FeatureName.MUSICAL_CATEGORIES, lambda: FeatureGeneratorTakeColumns(COLS_MUSICAL_CATEGORIES,
-    categoricalFeatureNames=COLS_MUSICAL_CATEGORIES))
-registry.registerFactory(FeatureName.LOUDNESS, lambda: FeatureGeneratorTakeColumns(COL_LOUDNESS,
-    normalisationRuleTemplate=DFTNormalisation.RuleTemplate(
-        transformerFactory=SkLearnTransformerFactoryFactory.StandardScaler())))
-registry.registerFactory(FeatureName.TEMPO, lambda: FeatureGeneratorTakeColumns(COL_TEMPO,
-    normalisationRuleTemplate=DFTNormalisation.RuleTemplate(
-        transformerFactory=SkLearnTransformerFactoryFactory.StandardScaler())))
-registry.registerFactory(FeatureName.DURATION, lambda: FeatureGeneratorTakeColumns(COL_DURATION_MS,
-    normalisationRuleTemplate=DFTNormalisation.RuleTemplate(
-        transformerFactory=SkLearnTransformerFactoryFactory.StandardScaler())))
-registry.registerFactory(FeatureName.MEAN_ARTIST_POPULARITY, FeatureGeneratorMeanArtistPopularity)
+registry.register_factory(FeatureName.MUSICAL_DEGREES, lambda: FeatureGeneratorTakeColumns(COLS_MUSICAL_DEGREES,
+    normalisation_rule_template=DFTNormalisation.RuleTemplate(skip=True)))
+registry.register_factory(FeatureName.MUSICAL_CATEGORIES, lambda: FeatureGeneratorTakeColumns(COLS_MUSICAL_CATEGORIES,
+    categorical_feature_names=COLS_MUSICAL_CATEGORIES))
+registry.register_factory(FeatureName.LOUDNESS, lambda: FeatureGeneratorTakeColumns(COL_LOUDNESS,
+    normalisation_rule_template=DFTNormalisation.RuleTemplate(
+        transformer_factory=SkLearnTransformerFactoryFactory.StandardScaler())))
+registry.register_factory(FeatureName.TEMPO, lambda: FeatureGeneratorTakeColumns(COL_TEMPO,
+    normalisation_rule_template=DFTNormalisation.RuleTemplate(
+        transformer_factory=SkLearnTransformerFactoryFactory.StandardScaler())))
+registry.register_factory(FeatureName.DURATION, lambda: FeatureGeneratorTakeColumns(COL_DURATION_MS,
+    normalisation_rule_template=DFTNormalisation.RuleTemplate(
+        transformer_factory=SkLearnTransformerFactoryFactory.StandardScaler())))
+registry.register_factory(FeatureName.MEAN_ARTIST_POPULARITY, FeatureGeneratorMeanArtistPopularity)
 

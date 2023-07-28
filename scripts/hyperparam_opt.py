@@ -9,16 +9,16 @@ from pop.models import DataSet, ModelFactory, ModelEvaluation
 from sensai.evaluation.eval_stats import RegressionMetricRRSE
 from sensai.util import logging
 from sensai.util.io import ResultWriter
-from sensai.util.logging import datetimeTag
-from sensai.util.pickle import loadPickle
+from sensai.util.logging import datetime_tag
+from sensai.util.pickle import load_pickle
 
 log = logging.getLogger(__name__)
 
 
 def run_hyperopt(dataset: DataSet, model: Literal["xgb"] = "xgb"):
-    experiment_name = f"{datetimeTag()}-{model}-{dataset.tag()}"
+    experiment_name = f"{datetime_tag()}-{model}-{dataset.tag()}"
     result_writer = ResultWriter(os.path.join("results", "hyperopt", experiment_name))
-    logging.addFileLogger(result_writer.path("log.txt"))
+    logging.add_file_logger(result_writer.path("log.txt"))
 
     if model == "xgb":
         initialSpace = [
@@ -58,23 +58,23 @@ def run_hyperopt(dataset: DataSet, model: Literal["xgb"] = "xgb"):
     def objective(space):
         log.info(f"Evaluating {space}")
         model = create_model(space)
-        result = ev.performSimpleEvaluation(model)
-        loss = result.getEvalStats().computeMetricValue(metric)
+        result = ev.perform_simple_evaluation(model)
+        loss = result.get_eval_stats().compute_metric_value(metric)
         log.info(f"Loss[{metric.name}]={loss}")
         return {'loss': loss, 'status': hyperopt.STATUS_OK}
 
-    trialsFile = result_writer.path("trials.pickle")
+    trials_file = result_writer.path("trials.pickle")
     logging.getLogger("sensai").setLevel(logging.WARN)
     log.info(f"Starting hyperparameter optimisation for {model} and {dataset}")
     hyperopt.fmin(objective, space, algo=hyperopt.tpe.suggest, timeout=hours*3600, show_progressbar=False,
-        trials_save_file=trialsFile, points_to_evaluate=initialSpace)
+        trials_save_file=trials_file, points_to_evaluate=initialSpace)
     logging.getLogger("sensai").setLevel(logging.INFO)
-    trials: hyperopt.Trials = loadPickle(trialsFile)
+    trials: hyperopt.Trials = load_pickle(trials_file)
     log.info(f"Best trial: {trials.best_trial}")
 
 
 if __name__ == '__main__':
-    logging.configureLogging()
+    logging.configure()
     log.info("Starting")
     run_hyperopt(DataSet(10000))
     log.info("Done")
