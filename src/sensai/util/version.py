@@ -10,7 +10,7 @@ class Version:
         """
         self.components = package.__version__.split(".")
 
-    def isAtLeast(self, *components: int):
+    def is_at_least(self, *components: int):
         """
         Checks this version against the given version components.
         This version object must contain at least the respective number of components

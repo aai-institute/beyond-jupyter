@@ -16,10 +16,10 @@ class ClearMLTrackingContext(TrackingContext):
         super().__init__(name, experiment)
         self.task = task
 
-    def _trackMetrics(self, metrics: Dict[str, float]):
+    def _track_metrics(self, metrics: Dict[str, float]):
         self.task.connect(metrics)
 
-    def trackFigure(self, name: str, fig: plt.Figure):
+    def track_figure(self, name: str, fig: plt.Figure):
         fig.show()
 
     def _end(self):
@@ -28,36 +28,36 @@ class ClearMLTrackingContext(TrackingContext):
 
 # TODO: this is an initial working implementation, it should eventually be improved
 class ClearMLExperiment(TrackedExperiment):
-    def __init__(self, task: Task = None, projectName: str = None, taskName: str = None,
-            additionalLoggingValuesDict=None):
+    def __init__(self, task: Task = None, project_name: str = None, task_name: str = None,
+            additional_logging_values_dict=None):
         """
 
         :param task: instances of trains.Task
-        :param projectName: only necessary if task is not provided
-        :param taskName: only necessary if task is not provided
-        :param additionalLoggingValuesDict:
+        :param project_name: only necessary if task is not provided
+        :param task_name: only necessary if task is not provided
+        :param additional_logging_values_dict:
         """
         if task is None:
-            if projectName is None or taskName is None:
+            if project_name is None or task_name is None:
                 raise ValueError("Either the trains task or the project name and task name have to be provided")
-            self.task = Task.init(project_name=projectName, task_name=taskName, reuse_last_task_id=False)
+            self.task = Task.init(project_name=project_name, task_name=task_name, reuse_last_task_id=False)
         else:
-            if projectName is not None:
+            if project_name is not None:
                 log.warning(
-                    f"projectName parameter with value {projectName} passed even though task has been given, "
+                    f"projectName parameter with value {project_name} passed even though task has been given, "
                     f"will ignore this parameter"
                 )
-            if taskName is not None:
+            if task_name is not None:
                 log.warning(
-                    f"taskName parameter with value {taskName} passed even though task has been given, "
+                    f"taskName parameter with value {task_name} passed even though task has been given, "
                     f"will ignore this parameter"
                 )
             self.task = task
         self.logger = self.task.get_logger()
-        super().__init__(additionalLoggingValuesDict=additionalLoggingValuesDict)
+        super().__init__(additional_logging_values_dict=additional_logging_values_dict)
 
-    def _trackValues(self, valuesDict):
-        self.task.connect(valuesDict)
+    def _track_values(self, values_dict):
+        self.task.connect(values_dict)
 
-    def _createTrackingContext(self, name: str, description: str) -> TContext:
+    def _create_tracking_context(self, name: str, description: str) -> TContext:
         return ClearMLTrackingContext(name, self, self.task)

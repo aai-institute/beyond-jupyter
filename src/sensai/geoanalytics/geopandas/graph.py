@@ -7,10 +7,10 @@ from typing import Callable, Dict
 from shapely.geometry import MultiLineString
 import geopandas as gp
 
-from .coordinates import extractCoordinatesArray, GeoDataFrameWrapper
+from .coordinates import extract_coordinates_array, GeoDataFrameWrapper
 
 
-def delaunayGraph(data: np.ndarray, edge_weight: Callable[[np.ndarray, np.ndarray], float] = euclidean):
+def delaunay_graph(data: np.ndarray, edge_weight: Callable[[np.ndarray, np.ndarray], float] = euclidean):
     """
     The Delaunay triangulation of the data as networkx.Graph
 
@@ -39,33 +39,33 @@ class SpanningTree:
         :param datapoints:
         :param tree_finder: function mapping a graph to a subgraph. The default is minimum_spanning_tree
         """
-        datapoints = extractCoordinatesArray(datapoints)
-        self.tree = tree_finder(delaunayGraph(datapoints))
-        edgeWeights = []
+        datapoints = extract_coordinates_array(datapoints)
+        self.tree = tree_finder(delaunay_graph(datapoints))
+        edge_weights = []
         self.coordinatePairs = []
         for edge in self.tree.edges.data():
-            edgeCoordinateIndices, edgeData = [edge[0], edge[1]], edge[2]
-            edgeWeights.append(edgeData["weight"])
-            self.coordinatePairs.append(datapoints[edgeCoordinateIndices])
-        self.edgeWeights = np.array(edgeWeights)
+            edge_coordinate_indices, edge_data = [edge[0], edge[1]], edge[2]
+            edge_weights.append(edge_data["weight"])
+            self.coordinatePairs.append(datapoints[edge_coordinate_indices])
+        self.edgeWeights = np.array(edge_weights)
 
-    def totalWeight(self):
+    def total_weight(self):
         return self.edgeWeights.sum()
 
-    def numEdges(self):
+    def num_edges(self):
         return len(self.tree.edges)
 
-    def meanEdgeWeight(self):
+    def mean_edge_weight(self):
         return self.edgeWeights.mean()
 
-    def summaryDict(self) -> Dict[str, float]:
+    def summary_dict(self) -> Dict[str, float]:
         """
         Dictionary containing coarse information about the tree
         """
         return {
-            "numEdges": self.numEdges(),
-            "totalWeight": self.totalWeight(),
-            "meanEdgeWeight": self.meanEdgeWeight()
+            "numEdges": self.num_edges(),
+            "totalWeight": self.total_weight(),
+            "meanEdgeWeight": self.mean_edge_weight()
         }
 
 
@@ -75,17 +75,17 @@ class CoordinateSpanningTree(SpanningTree, GeoDataFrameWrapper):
     Enhances the :class:`SpanningTree` class by adding methods and validation specific to geospatial coordinates.
     """
     def __init__(self, datapoints: np.ndarray, tree_finder: Callable[[nx.Graph], nx.Graph] = nx.minimum_spanning_tree):
-        datapoints = extractCoordinatesArray(datapoints)
+        datapoints = extract_coordinates_array(datapoints)
         super().__init__(datapoints, tree_finder=tree_finder)
 
-    def multiLineString(self):
+    def multi_line_string(self):
         return MultiLineString(self.coordinatePairs)
 
-    def toGeoDF(self, crs='epsg:3857'):
+    def to_geodf(self, crs='epsg:3857'):
         """
         :param crs: projection. By default pseudo-mercator
         :return: GeoDataFrame of length 1 with the tree as MultiLineString instance
         """
-        gdf = gp.GeoDataFrame({"geometry": [self.multiLineString()]})
+        gdf = gp.GeoDataFrame({"geometry": [self.multi_line_string()]})
         gdf.crs = crs
         return gdf

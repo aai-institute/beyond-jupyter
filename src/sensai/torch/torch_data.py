@@ -12,14 +12,14 @@ from torch.autograd import Variable
 from .. import normalisation
 from ..data import DataFrameSplitter, DataFrameSplitterFractional
 from ..data_transformation import DFTSkLearnTransformer
-from ..util.dtype import toFloatArray
+from ..util.dtype import to_float_array
 from ..util.pickle import setstate
 
 
 log = logging.getLogger(__name__)
 
 
-def toTensor(d: Union[torch.Tensor, np.ndarray, list], cuda=False):
+def to_tensor(d: Union[torch.Tensor, np.ndarray, list], cuda=False):
     if not isinstance(d, torch.Tensor):
         if isinstance(d, np.ndarray):
             d = torch.from_numpy(d)
@@ -86,15 +86,15 @@ class TensorScalerCentreAndScale(TensorScaler):
 
 
 class TensorScalerFromVectorDataScaler(TensorScalerCentreAndScale):
-    def __init__(self, vectorDataScaler: normalisation.VectorDataScaler, cuda: bool):
-        if vectorDataScaler.scale is not None:
-            invScale = torch.from_numpy(vectorDataScaler.scale).float()
-            scale = 1.0 / invScale
+    def __init__(self, vector_data_scaler: normalisation.VectorDataScaler, cuda: bool):
+        if vector_data_scaler.scale is not None:
+            inv_scale = torch.from_numpy(vector_data_scaler.scale).float()
+            scale = 1.0 / inv_scale
         else:
             scale = None
-        centre = vectorDataScaler.translate
+        centre = vector_data_scaler.translate
         if centre is not None:
-            centre = torch.from_numpy(vectorDataScaler.translate).float()
+            centre = torch.from_numpy(vector_data_scaler.translate).float()
         super().__init__(centre=centre, scale=scale)
         if cuda:
             self.cuda()
@@ -103,7 +103,7 @@ class TensorScalerFromVectorDataScaler(TensorScalerCentreAndScale):
         if "translate" in state:
             if state["scale"] is not None:  # old representation where scale is actually inverse scale
                 state["scale"] = 1.0 / state["scale"]
-        setstate(TensorScalerFromVectorDataScaler, self, state, renamedProperties={"translate": "centre"})
+        setstate(TensorScalerFromVectorDataScaler, self, state, renamed_properties={"translate": "centre"})
 
 
 class TensorScalerIdentity(TensorScaler):
@@ -123,14 +123,14 @@ class TensorScalerFromDFTSkLearnTransformer(TensorScalerCentreAndScale):
         if isinstance(trans, sklearn.preprocessing.RobustScaler):
             centre = trans.center_
             scale = trans.scale_
-            isReciprocalScale = True
+            is_reciprocal_scale = True
         else:
             raise ValueError(f"sklearn transformer of type '{trans.__class__}' is unhandled")
         if centre is not None:
             centre = torch.from_numpy(centre).float()
         if scale is not None:
             scale = torch.from_numpy(scale).float()
-            if isReciprocalScale:
+            if is_reciprocal_scale:
                 scale = 1.0 / scale
         super().__init__(centre=centre, scale=scale)
 
@@ -176,7 +176,7 @@ class RuleBasedTensoriser(Tensoriser, ABC):
 
 class TensoriserDataFrameFloatValuesMatrix(RuleBasedTensoriser):
     def _tensorise(self, df: pd.DataFrame) -> np.ndarray:
-        return torch.from_numpy(toFloatArray(df)).float()
+        return torch.from_numpy(to_float_array(df)).float()
 
 
 class TensoriserClassLabelIndices(RuleBasedTensoriser):
@@ -190,17 +190,18 @@ class DataUtil(ABC):
     """Interface for DataUtil classes, which are used to process data for neural networks"""
 
     @abstractmethod
-    def splitIntoTensors(self, fractionalSizeOfFirstSet) -> Tuple[Tuple[torch.Tensor, torch.Tensor], Tuple[torch.Tensor, torch.Tensor]]:
+    def split_into_tensors(self, fractional_size_of_first_set) \
+            -> Tuple[Tuple[torch.Tensor, torch.Tensor], Tuple[torch.Tensor, torch.Tensor]]:
         """
         Splits the data set
 
-        :param fractionalSizeOfFirstSet: the desired fractional size in
+        :param fractional_size_of_first_set: the desired fractional size in
         :return: a tuple (A, B) where A and B are tuples (in, out) with input and output data
         """
         pass
 
     @abstractmethod
-    def getOutputTensorScaler(self) -> TensorScaler:
+    def get_output_tensor_scaler(self) -> TensorScaler:
         """
         Gets the scaler with which to scale model outputs
 
@@ -209,7 +210,7 @@ class DataUtil(ABC):
         pass
 
     @abstractmethod
-    def getInputTensorScaler(self) -> TensorScaler:
+    def get_input_tensor_scaler(self) -> TensorScaler:
         """
         Gets the scaler with which to scale model inputs
 
@@ -218,14 +219,14 @@ class DataUtil(ABC):
         pass
 
     @abstractmethod
-    def modelOutputDim(self) -> int:
+    def model_output_dim(self) -> int:
         """
         :return: the dimensionality that is to be output by the model to be trained
         """
         pass
 
     @abstractmethod
-    def inputDim(self):
+    def input_dim(self):
         """
         :return: the dimensionality of the input or None if it is variable
         """
@@ -233,39 +234,47 @@ class DataUtil(ABC):
 
 
 class VectorDataUtil(DataUtil):
-    def __init__(self, inputs: pd.DataFrame, outputs: pd.DataFrame, cuda: bool, normalisationMode=normalisation.NormalisationMode.NONE,
-            differingOutputNormalisationMode=None, inputTensoriser: Optional[Tensoriser] = None, outputTensoriser: Optional[Tensoriser] = None,
-            dataFrameSplitter: Optional[DataFrameSplitter] = None):
+    def __init__(self,
+            inputs: pd.DataFrame,
+            outputs: pd.DataFrame,
+            cuda: bool,
+            normalisation_mode=normalisation.NormalisationMode.NONE,
+            differing_output_normalisation_mode=None,
+            input_tensoriser: Optional[Tensoriser] = None,
+            output_tensoriser: Optional[Tensoriser] = None,
+            data_frame_splitter: Optional[DataFrameSplitter] = None):
         """
         :param inputs: the data frame of inputs
         :param outputs: the data frame of outputs
         :param cuda: whether to apply CUDA
-        :param normalisationMode: the normalisation mode to use for inputs and (unless differingOutputNormalisationMode is specified) outputs
-        :param differingOutputNormalisationMode: the normalisation mode to apply to outputs, overriding normalisationMode;
+        :param normalisation_mode: the normalisation mode to use for inputs and (unless differingOutputNormalisationMode is specified)
+            outputs
+        :param differing_output_normalisation_mode: the normalisation mode to apply to outputs, overriding normalisationMode;
             if None, use normalisationMode
         """
         if inputs.shape[0] != outputs.shape[0]:
             raise ValueError("Output length must be equal to input length")
         self.inputs = inputs
         self.outputs = outputs
-        self.inputTensoriser = inputTensoriser if inputTensoriser is not None else TensoriserDataFrameFloatValuesMatrix()
-        self.outputTensoriser = outputTensoriser if outputTensoriser is not None else TensoriserDataFrameFloatValuesMatrix()
-        self.inputVectorDataScaler = normalisation.VectorDataScaler(self.inputs, normalisationMode)
+        self.inputTensoriser = input_tensoriser if input_tensoriser is not None else TensoriserDataFrameFloatValuesMatrix()
+        self.outputTensoriser = output_tensoriser if output_tensoriser is not None else TensoriserDataFrameFloatValuesMatrix()
+        self.inputVectorDataScaler = normalisation.VectorDataScaler(self.inputs, normalisation_mode)
         self.inputTensorScaler = TensorScalerFromVectorDataScaler(self.inputVectorDataScaler, cuda)
-        self.outputVectorDataScaler = normalisation.VectorDataScaler(self.outputs, normalisationMode if differingOutputNormalisationMode is None else differingOutputNormalisationMode)
+        self.outputVectorDataScaler = normalisation.VectorDataScaler(self.outputs,
+            normalisation_mode if differing_output_normalisation_mode is None else differing_output_normalisation_mode)
         self.outputTensorScaler = TensorScalerFromVectorDataScaler(self.outputVectorDataScaler, cuda)
-        self.dataFrameSplitter = dataFrameSplitter
+        self.dataFrameSplitter = data_frame_splitter
 
     def __len__(self):
         return len(self.inputs)
 
-    def getOutputTensorScaler(self):
+    def get_output_tensor_scaler(self):
         return self.outputTensorScaler
 
-    def getInputTensorScaler(self):
+    def get_input_tensor_scaler(self):
         return self.inputTensorScaler
 
-    def _computeSplitIndices(self, fractionalSizeOfFirstSet):
+    def _compute_split_indices(self, fractional_size_of_first_set):
         splitter = self.dataFrameSplitter
         if splitter is None:
             # By default, we use a simple fractional split without shuffling.
@@ -274,88 +283,98 @@ class VectorDataUtil(DataUtil):
             # order the data in ways that result in desirable fractional splits (though the user may, of course, simply override
             # the splitter to achieve any desired split).
             splitter = DataFrameSplitterFractional(shuffle=False)
-        indices_A, indices_B = splitter.computeSplitIndices(self.inputs, fractionalSizeOfFirstSet)
-        return indices_A, indices_B
+        indices_a, indices_b = splitter.compute_split_indices(self.inputs, fractional_size_of_first_set)
+        return indices_a, indices_b
 
-    def splitIntoTensors(self, fractionalSizeOfFirstSet):
-        indices_A, indices_B = self._computeSplitIndices(fractionalSizeOfFirstSet)
-        A = self._tensorsForIndices(indices_A)
-        B = self._tensorsForIndices(indices_B)
-        return A, B
+    def split_into_tensors(self, fractional_size_of_first_set):
+        indices_a, indices_b = self._compute_split_indices(fractional_size_of_first_set)
+        a = self._tensors_for_indices(indices_a)
+        b = self._tensors_for_indices(indices_b)
+        return a, b
 
-    def _dataFramesForIndices(self, indices):
-        inputDF = self.inputs.iloc[indices]
-        outputDF = self.outputs.iloc[indices]
-        return inputDF, outputDF
+    def _data_frames_for_indices(self, indices):
+        input_df = self.inputs.iloc[indices]
+        output_df = self.outputs.iloc[indices]
+        return input_df, output_df
 
-    def _tensorsForIndices(self, indices):
-        inputDF, outputDF = self._dataFramesForIndices(indices)
-        return self._tensorsForDataFrames(inputDF, outputDF)
+    def _tensors_for_indices(self, indices):
+        input_df, output_df = self._data_frames_for_indices(indices)
+        return self._tensors_for_data_frames(input_df, output_df)
 
-    def _tensorsForDataFrames(self, inputDF, outputDF):
+    def _tensors_for_data_frames(self, input_df, output_df):
         # apply normalisation (if any)
-        if self.inputVectorDataScaler.normalisationMode != normalisation.NormalisationMode.NONE:
-            inputDF = pd.DataFrame(self.inputVectorDataScaler.getNormalisedArray(inputDF), columns=inputDF.columns, index=inputDF.index)
-        if self.outputVectorDataScaler.normalisationMode != normalisation.NormalisationMode.NONE:
-            outputDF = pd.DataFrame(self.outputVectorDataScaler.getNormalisedArray(outputDF), columns=outputDF.columns, index=outputDF.index)
+        if self.inputVectorDataScaler.normalisation_mode != normalisation.NormalisationMode.NONE:
+            input_df = pd.DataFrame(self.inputVectorDataScaler.get_normalised_array(input_df), columns=input_df.columns,
+                index=input_df.index)
+        if self.outputVectorDataScaler.normalisation_mode != normalisation.NormalisationMode.NONE:
+            output_df = pd.DataFrame(self.outputVectorDataScaler.get_normalised_array(output_df), columns=output_df.columns,
+                index=output_df.index)
 
-        return self.inputTensoriser.tensorise(inputDF), self.outputTensoriser.tensorise(outputDF)
+        return self.inputTensoriser.tensorise(input_df), self.outputTensoriser.tensorise(output_df)
 
-    def splitIntoDataSets(self, fractionalSizeOfFirstSet, cuda: bool, tensoriseDynamically=False) -> Tuple["TorchDataSet", "TorchDataSet"]:
-        if not tensoriseDynamically:
-            (xA, yA), (xB, yB) = self.splitIntoTensors(fractionalSizeOfFirstSet)
+    def split_into_data_sets(self, fractional_size_of_first_set, cuda: bool, tensorise_dynamically=False) \
+            -> Tuple["TorchDataSet", "TorchDataSet"]:
+        if not tensorise_dynamically:
+            (xA, yA), (xB, yB) = self.split_into_tensors(fractional_size_of_first_set)
             return TorchDataSetFromTensors(xA, yA, cuda), TorchDataSetFromTensors(xB, yB, cuda)
         else:
-            if self.inputVectorDataScaler.normalisationMode != normalisation.NormalisationMode.NONE or \
-                    self.outputVectorDataScaler.normalisationMode != normalisation.NormalisationMode.NONE:
+            if self.inputVectorDataScaler.normalisation_mode != normalisation.NormalisationMode.NONE or \
+                    self.outputVectorDataScaler.normalisation_mode != normalisation.NormalisationMode.NONE:
                 raise Exception("Dynamic tensorisation is not supported when using data scaling")
-            indicesA, indicesB = self._computeSplitIndices(fractionalSizeOfFirstSet)
-            inputA, outputA = self._dataFramesForIndices(indicesA)
-            inputB, outputB = self._dataFramesForIndices(indicesB)
-            dsA = TorchDataSetFromDataFramesDynamicallyTensorised(inputA, outputA, cuda, inputTensoriser=self.inputTensoriser,
-                outputTensoriser=self.outputTensoriser)
-            dsB = TorchDataSetFromDataFramesDynamicallyTensorised(inputB, outputB, cuda, inputTensoriser=self.inputTensoriser,
-                outputTensoriser=self.outputTensoriser)
-            return dsA, dsB
+            indices_a, indices_b = self._compute_split_indices(fractional_size_of_first_set)
+            input_a, output_a = self._data_frames_for_indices(indices_a)
+            input_b, output_b = self._data_frames_for_indices(indices_b)
+            ds_a = TorchDataSetFromDataFramesDynamicallyTensorised(input_a, output_a, cuda, input_tensoriser=self.inputTensoriser,
+                output_tensoriser=self.outputTensoriser)
+            ds_b = TorchDataSetFromDataFramesDynamicallyTensorised(input_b, output_b, cuda, input_tensoriser=self.inputTensoriser,
+                output_tensoriser=self.outputTensoriser)
+            return ds_a, ds_b
 
-    def inputDim(self):
+    def input_dim(self):
         return self.inputs.shape[1]
 
-    def outputDim(self):
+    def output_dim(self):
         """
         :return: the dimensionality of the outputs (ground truth values)
         """
         return self.outputs.shape[1]
 
-    def modelOutputDim(self):
-        return self.outputDim()
+    def model_output_dim(self):
+        return self.output_dim()
 
 
 class ClassificationVectorDataUtil(VectorDataUtil):
-    def __init__(self, inputs: pd.DataFrame, outputs: pd.DataFrame, cuda, numClasses, normalisationMode=normalisation.NormalisationMode.NONE,
-            inputTensoriser: Tensoriser = None, outputTensoriser: Tensoriser = None, dataFrameSplitter: Optional[DataFrameSplitter] = None):
+    def __init__(self,
+            inputs: pd.DataFrame,
+            outputs: pd.DataFrame,
+            cuda,
+            num_classes,
+            normalisation_mode=normalisation.NormalisationMode.NONE,
+            input_tensoriser: Tensoriser = None,
+            output_tensoriser: Tensoriser = None,
+            data_frame_splitter: Optional[DataFrameSplitter] = None):
         if len(outputs.columns) != 1:
             raise Exception(f"Exactly one output dimension (the class index) is required, got {len(outputs.columns)}")
-        super().__init__(inputs, outputs, cuda, normalisationMode=normalisationMode,
-            differingOutputNormalisationMode=normalisation.NormalisationMode.NONE, inputTensoriser=inputTensoriser,
-            outputTensoriser=TensoriserClassLabelIndices() if outputTensoriser is None else outputTensoriser,
-            dataFrameSplitter=dataFrameSplitter)
-        self.numClasses = numClasses
+        super().__init__(inputs, outputs, cuda, normalisation_mode=normalisation_mode,
+            differing_output_normalisation_mode=normalisation.NormalisationMode.NONE, input_tensoriser=input_tensoriser,
+            output_tensoriser=TensoriserClassLabelIndices() if output_tensoriser is None else output_tensoriser,
+            data_frame_splitter=data_frame_splitter)
+        self.numClasses = num_classes
 
-    def modelOutputDim(self):
+    def model_output_dim(self):
         return self.numClasses
 
 
 class TorchDataSet:
     @abstractmethod
-    def iterBatches(self, batchSize: int, shuffle: bool = False, inputOnly=False) -> Iterator[Union[Tuple[torch.Tensor, torch.Tensor],
+    def iter_batches(self, batch_size: int, shuffle: bool = False, input_only=False) -> Iterator[Union[Tuple[torch.Tensor, torch.Tensor],
             Tuple[Sequence[torch.Tensor], torch.Tensor], torch.Tensor, Sequence[torch.Tensor]]]:
         """
         Provides an iterator over batches from the data set.
 
-        :param batchSize: the maximum size of each batch
+        :param batch_size: the maximum size of each batch
         :param shuffle: whether to shuffle the data set
-        :param inputOnly: whether to provide only inputs (rather than inputs and corresponding outputs).
+        :param input_only: whether to provide only inputs (rather than inputs and corresponding outputs).
             If true, provide only inputs, where inputs can either be a tensor or a tuple of tensors.
             If false, provide a pair (i, o) with inputs and corresponding outputs (o is always a tensor).
             Some data sets may only be able to provide inputs, in which case inputOnly=False should lead to an
@@ -374,43 +393,43 @@ class TorchDataSet:
 
 
 class TorchDataSetProvider:
-    def __init__(self, inputTensorScaler: Optional[TensorScaler] = None, outputTensorScaler: Optional[TensorScaler] = None,
-            inputDim: Optional[int] = None, modelOutputDim: int = None):
-        if inputTensorScaler is None:
-            inputTensorScaler = TensorScalerIdentity()
-        if outputTensorScaler is None:
-            outputTensorScaler = TensorScalerIdentity()
-        if modelOutputDim is None:
+    def __init__(self, input_tensor_scaler: Optional[TensorScaler] = None, output_tensor_scaler: Optional[TensorScaler] = None,
+            input_dim: Optional[int] = None, model_output_dim: int = None):
+        if input_tensor_scaler is None:
+            input_tensor_scaler = TensorScalerIdentity()
+        if output_tensor_scaler is None:
+            output_tensor_scaler = TensorScalerIdentity()
+        if model_output_dim is None:
             raise ValueError("The model output dimension must be provided")
-        self.inputTensorScaler = inputTensorScaler
-        self.outputTensorScaler = outputTensorScaler
-        self.inputDim = inputDim
-        self.modelOutputDim = modelOutputDim
+        self.inputTensorScaler = input_tensor_scaler
+        self.outputTensorScaler = output_tensor_scaler
+        self.inputDim = input_dim
+        self.modelOutputDim = model_output_dim
 
     @abstractmethod
-    def provideSplit(self, fractionalSizeOfFirstSet: float) -> Tuple[TorchDataSet, TorchDataSet]:
+    def provide_split(self, fractional_size_of_first_set: float) -> Tuple[TorchDataSet, TorchDataSet]:
         """
         Provides two data sets, which could, for example, serve as training and validation sets.
 
-        :param fractionalSizeOfFirstSet: the fractional size of the first data set
+        :param fractional_size_of_first_set: the fractional size of the first data set
         :return: a tuple of data sets (A, B) where A has (approximately) the given fractional size and B encompasses
             the remainder of the data
         """
         pass
 
-    def getOutputTensorScaler(self) -> TensorScaler:
+    def get_output_tensor_scaler(self) -> TensorScaler:
         return self.outputTensorScaler
 
-    def getInputTensorScaler(self) -> TensorScaler:
+    def get_input_tensor_scaler(self) -> TensorScaler:
         return self.inputTensorScaler
 
-    def getModelOutputDim(self) -> int:
+    def get_model_output_dim(self) -> int:
         """
         :return: the number of output dimensions that would be required to be generated by the model to match this dataset.
         """
         return self.modelOutputDim
 
-    def getInputDim(self) -> Optional[int]:
+    def get_input_dim(self) -> Optional[int]:
         """
         :return: the number of output dimensions that would be required to be generated by the model to match this dataset.
             For models that accept variable input sizes (such as RNNs), this may be None.
@@ -473,13 +492,13 @@ class TorchDataSetFromTensors(TorchDataSet):
         self.y = y
         self.cuda = cuda
 
-    def iterBatches(self, batchSize: int, shuffle: bool = False, inputOnly=False) -> Iterator[Union[Tuple[torch.Tensor, torch.Tensor],
+    def iter_batches(self, batch_size: int, shuffle: bool = False, input_only=False) -> Iterator[Union[Tuple[torch.Tensor, torch.Tensor],
             Tuple[Sequence[torch.Tensor], torch.Tensor], torch.Tensor, Sequence[torch.Tensor]]]:
-        tensorTuples = (self.x, self.y) if not inputOnly and self.y is not None else (self.x,)
-        yield from self._get_batches(tensorTuples, batchSize, shuffle)
+        tensor_tuples = (self.x, self.y) if not input_only and self.y is not None else (self.x,)
+        yield from self._get_batches(tensor_tuples, batch_size, shuffle)
 
-    def _get_batches(self, tensorTuples: Sequence[TensorTuple], batch_size, shuffle):
-        length = len(tensorTuples[0])
+    def _get_batches(self, tensor_tuples: Sequence[TensorTuple], batch_size, shuffle):
+        length = len(tensor_tuples[0])
         if shuffle:
             index = torch.randperm(length)
         else:
@@ -497,7 +516,7 @@ class TorchDataSetFromTensors(TorchDataSet):
                 end_idx = min(length, start_idx + batch_size)
             excerpt = index[start_idx:end_idx]
             batch = []
-            for tensorTuple in tensorTuples:
+            for tensorTuple in tensor_tuples:
                 if len(tensorTuple) != length:
                     raise Exception("Passed tensors of differing lengths")
                 t = tensorTuple[excerpt]
@@ -520,42 +539,42 @@ class TorchDataSetFromTensors(TorchDataSet):
 
 
 class TorchDataSetFromDataFramesPreTensorised(TorchDataSetFromTensors):
-    def __init__(self, input: pd.DataFrame, output: Optional[pd.DataFrame], cuda: bool,
-            inputTensoriser: Optional[Tensoriser] = None, outputTensoriser: Optional[Tensoriser] = None):
-        if inputTensoriser is None:
-            inputTensoriser = TensoriserDataFrameFloatValuesMatrix()
-        log.debug(f"Applying {inputTensoriser} to data frame of length {len(input)} ...")
-        inputTensors = inputTensoriser.tensorise(input)
-        if output is not None:
-            if outputTensoriser is None:
-                outputTensoriser = TensoriserDataFrameFloatValuesMatrix()
-            log.debug(f"Applying {outputTensoriser} to data frame of length {len(output)} ...")
-            outputTensors = outputTensoriser.tensorise(output)
+    def __init__(self, input_df: pd.DataFrame, output_df: Optional[pd.DataFrame], cuda: bool,
+            input_tensoriser: Optional[Tensoriser] = None, output_tensoriser: Optional[Tensoriser] = None):
+        if input_tensoriser is None:
+            input_tensoriser = TensoriserDataFrameFloatValuesMatrix()
+        log.debug(f"Applying {input_tensoriser} to data frame of length {len(input_df)} ...")
+        input_tensors = input_tensoriser.tensorise(input_df)
+        if output_df is not None:
+            if output_tensoriser is None:
+                output_tensoriser = TensoriserDataFrameFloatValuesMatrix()
+            log.debug(f"Applying {output_tensoriser} to data frame of length {len(output_df)} ...")
+            output_tensors = output_tensoriser.tensorise(output_df)
         else:
-            outputTensors = None
-        super().__init__(inputTensors, outputTensors, cuda)
+            output_tensors = None
+        super().__init__(input_tensors, output_tensors, cuda)
 
 
 class TorchDataSetFromDataFramesDynamicallyTensorised(TorchDataSet):
-    def __init__(self, input: pd.DataFrame, output: Optional[pd.DataFrame], cuda: bool,
-            inputTensoriser: Optional[Tensoriser] = None, outputTensoriser: Optional[Tensoriser] = None):
-        self.inputDF = input
-        self.outputDF = output
+    def __init__(self, input_df: pd.DataFrame, output_df: Optional[pd.DataFrame], cuda: bool,
+            input_tensoriser: Optional[Tensoriser] = None, output_tensoriser: Optional[Tensoriser] = None):
+        self.inputDF = input_df
+        self.outputDF = output_df
         self.cuda = cuda
-        if inputTensoriser is None:
-            inputTensoriser = TensoriserDataFrameFloatValuesMatrix()
-        self.inputTensoriser = inputTensoriser
-        if output is not None:
-            if len(input) != len(output):
+        if input_tensoriser is None:
+            input_tensoriser = TensoriserDataFrameFloatValuesMatrix()
+        self.inputTensoriser = input_tensoriser
+        if output_df is not None:
+            if len(input_df) != len(output_df):
                 raise ValueError("Lengths of input and output data frames must be equal")
-            if outputTensoriser is None:
-                outputTensoriser = TensoriserDataFrameFloatValuesMatrix()
-        self.outputTensoriser = outputTensoriser
+            if output_tensoriser is None:
+                output_tensoriser = TensoriserDataFrameFloatValuesMatrix()
+        self.outputTensoriser = output_tensoriser
 
     def size(self) -> Optional[int]:
         return len(self.inputDF)
 
-    def iterBatches(self, batchSize: int, shuffle: bool = False, inputOnly=False):
+    def iter_batches(self, batch_size: int, shuffle: bool = False, input_only=False):
         length = len(self.inputDF)
         if shuffle:
             index = torch.randperm(length)
@@ -563,60 +582,60 @@ class TorchDataSetFromDataFramesDynamicallyTensorised(TorchDataSet):
             index = torch.LongTensor(range(length))
         i = 0
         while i < length:
-            batchIndices = index[i:i+batchSize]
-            inputTensors = TensorTuple(self.inputTensoriser.tensorise(self.inputDF.iloc[batchIndices]))
+            batch_indices = index[i:i + batch_size]
+            input_tensors = TensorTuple(self.inputTensoriser.tensorise(self.inputDF.iloc[batch_indices]))
             if self.cuda:
-                inputTensors = inputTensors.cuda()
-            if inputOnly:
-                yield inputTensors.item()
+                input_tensors = input_tensors.cuda()
+            if input_only:
+                yield input_tensors.item()
             else:
-                outputTensors = TensorTuple(self.outputTensoriser.tensorise(self.outputDF.iloc[batchIndices]))
+                output_tensors = TensorTuple(self.outputTensoriser.tensorise(self.outputDF.iloc[batch_indices]))
                 if self.cuda:
-                    outputTensors = outputTensors.cuda()
-                yield inputTensors.item(), outputTensors.item()
-            i += batchSize
+                    output_tensors = output_tensors.cuda()
+                yield input_tensors.item(), output_tensors.item()
+            i += batch_size
 
 
 class TorchDataSetFromDataFrames(TorchDataSet):
-    def __init__(self, input: pd.DataFrame, output: Optional[pd.DataFrame], cuda: bool,
-            inputTensoriser: Optional[Tensoriser] = None, outputTensoriser: Optional[Tensoriser] = None,
-            tensoriseDynamically=False):
-        if tensoriseDynamically:
-            self._torchDataSet: TorchDataSet = TorchDataSetFromDataFramesDynamicallyTensorised(input, output, cuda,
-                inputTensoriser=inputTensoriser, outputTensoriser=outputTensoriser)
+    def __init__(self, input_df: pd.DataFrame, output_df: Optional[pd.DataFrame], cuda: bool,
+            input_tensoriser: Optional[Tensoriser] = None, output_tensoriser: Optional[Tensoriser] = None,
+            tensorise_dynamically=False):
+        if tensorise_dynamically:
+            self._torchDataSet: TorchDataSet = TorchDataSetFromDataFramesDynamicallyTensorised(input_df, output_df, cuda,
+                input_tensoriser=input_tensoriser, output_tensoriser=output_tensoriser)
         else:
-            self._torchDataSet: TorchDataSet = TorchDataSetFromDataFramesPreTensorised(input, output, cuda,
-                inputTensoriser=inputTensoriser, outputTensoriser=outputTensoriser)
+            self._torchDataSet: TorchDataSet = TorchDataSetFromDataFramesPreTensorised(input_df, output_df, cuda,
+                input_tensoriser=input_tensoriser, output_tensoriser=output_tensoriser)
 
-    def iterBatches(self, batchSize: int, shuffle: bool = False, inputOnly=False):
-        yield from self._torchDataSet.iterBatches(batchSize, shuffle=shuffle, inputOnly=inputOnly)
+    def iter_batches(self, batch_size: int, shuffle: bool = False, input_only=False):
+        yield from self._torchDataSet.iter_batches(batch_size, shuffle=shuffle, input_only=input_only)
 
     def size(self) -> Optional[int]:
         return self._torchDataSet.size()
 
 
 class TorchDataSetProviderFromDataUtil(TorchDataSetProvider):
-    def __init__(self, dataUtil: DataUtil, cuda: bool):
-        super().__init__(inputTensorScaler=dataUtil.getInputTensorScaler(), outputTensorScaler=dataUtil.getOutputTensorScaler(),
-            inputDim=dataUtil.inputDim(), modelOutputDim=dataUtil.modelOutputDim())
-        self.dataUtil = dataUtil
+    def __init__(self, data_util: DataUtil, cuda: bool):
+        super().__init__(input_tensor_scaler=data_util.get_input_tensor_scaler(), output_tensor_scaler=data_util.get_output_tensor_scaler(),
+            input_dim=data_util.input_dim(), model_output_dim=data_util.model_output_dim())
+        self.dataUtil = data_util
         self.cuda = cuda
 
-    def provideSplit(self, fractionalSizeOfFirstSet: float) -> Tuple[TorchDataSet, TorchDataSet]:
-        (x1, y1), (x2, y2) = self.dataUtil.splitIntoTensors(fractionalSizeOfFirstSet)
+    def provide_split(self, fractional_size_of_first_set: float) -> Tuple[TorchDataSet, TorchDataSet]:
+        (x1, y1), (x2, y2) = self.dataUtil.split_into_tensors(fractional_size_of_first_set)
         return TorchDataSetFromTensors(x1, y1, self.cuda), TorchDataSetFromTensors(x2, y2, self.cuda)
 
 
 class TorchDataSetProviderFromVectorDataUtil(TorchDataSetProvider):
-    def __init__(self, dataUtil: VectorDataUtil, cuda: bool, tensoriseDynamically=False):
-        super().__init__(inputTensorScaler=dataUtil.getInputTensorScaler(), outputTensorScaler=dataUtil.getOutputTensorScaler(),
-            inputDim=dataUtil.inputDim(), modelOutputDim=dataUtil.modelOutputDim())
-        self.dataUtil = dataUtil
+    def __init__(self, data_util: VectorDataUtil, cuda: bool, tensorise_dynamically=False):
+        super().__init__(input_tensor_scaler=data_util.get_input_tensor_scaler(), output_tensor_scaler=data_util.get_output_tensor_scaler(),
+            input_dim=data_util.input_dim(), model_output_dim=data_util.model_output_dim())
+        self.dataUtil = data_util
         self.cuda = cuda
-        self.tensoriseDynamically = tensoriseDynamically
+        self.tensoriseDynamically = tensorise_dynamically
 
-    def provideSplit(self, fractionalSizeOfFirstSet: float) -> Tuple[TorchDataSet, TorchDataSet]:
-        return self.dataUtil.splitIntoDataSets(fractionalSizeOfFirstSet, self.cuda, tensoriseDynamically=self.tensoriseDynamically)
+    def provide_split(self, fractional_size_of_first_set: float) -> Tuple[TorchDataSet, TorchDataSet]:
+        return self.dataUtil.split_into_data_sets(fractional_size_of_first_set, self.cuda, tensorise_dynamically=self.tensoriseDynamically)
 
 
 class TensorTransformer(ABC):

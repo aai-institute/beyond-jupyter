@@ -14,13 +14,13 @@ class ActivationFunction(Enum):
     SOFTMAX = "softmax"
 
     @classmethod
-    def fromName(cls, name) -> "ActivationFunction":
+    def from_name(cls, name: str) -> "ActivationFunction":
         for item in cls:
-            if item.value.name == name:
+            if item.get_name() == name:
                 return item
         raise ValueError(f"No function found for name '{name}'")
 
-    def getTorchFunction(self) -> Optional[Callable]:
+    def get_torch_function(self) -> Optional[Callable]:
         return {
                 ActivationFunction.NONE: None,
                 ActivationFunction.SIGMOID: F.sigmoid,
@@ -30,11 +30,11 @@ class ActivationFunction(Enum):
                 ActivationFunction.SOFTMAX: functools.partial(F.softmax, dim=1)
             }[self]
 
-    def getName(self) -> str:
+    def get_name(self) -> str:
         return self.value
 
     @classmethod
-    def torchFunctionFromAny(cls, f: Union[str, "ActivationFunction", Callable, None]) -> Optional[Callable]:
+    def torch_function_from_any(cls, f: Union[str, "ActivationFunction", Callable, None]) -> Optional[Callable]:
         """
         Gets the torch activation for the given argument
 
@@ -45,11 +45,11 @@ class ActivationFunction(Enum):
             return None
         elif isinstance(f, str):
             try:
-                return cls.fromName(f).getTorchFunction()
+                return cls.from_name(f).get_torch_function()
             except ValueError:
                 return getattr(F, f)
         elif isinstance(f, ActivationFunction):
-            return f.getTorchFunction()
+            return f.get_torch_function()
         elif callable(f):
             return f
         else:
@@ -62,9 +62,9 @@ class ClassificationOutputMode(Enum):
     UNNORMALISED_LOG_PROBABILITIES = "unnormalised_log_probabilities"
 
     @classmethod
-    def forActivationFn(cls, fn: Optional[Union[Callable, ActivationFunction]]):
+    def for_activation_fn(cls, fn: Optional[Union[Callable, ActivationFunction]]):
         if isinstance(fn, ActivationFunction):
-            fn = fn.getTorchFunction()
+            fn = fn.get_torch_function()
         if fn is None:
             return cls.UNNORMALISED_LOG_PROBABILITIES
         if not callable(fn):

@@ -4,44 +4,44 @@ import torch
 from torch import nn
 
 from ...torch_base import MCDropoutCapableNNModule
-from ....util.string import objectRepr, functionName
+from ....util.string import object_repr, function_name
 
 
 class MultiLayerPerceptron(MCDropoutCapableNNModule):
-    def __init__(self, inputDim: float, outputDim: float, hiddenDims: Sequence[int],
-            hidActivationFn: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
-            outputActivationFn: Optional[Callable[[torch.Tensor], torch.Tensor]] = torch.sigmoid,
-            pDropout: Optional[float] = None):
+    def __init__(self, input_dim: float, output_dim: float, hidden_dims: Sequence[int],
+            hid_activation_fn: Callable[[torch.Tensor], torch.Tensor] = torch.sigmoid,
+            output_activation_fn: Optional[Callable[[torch.Tensor], torch.Tensor]] = torch.sigmoid,
+            p_dropout: Optional[float] = None):
         super().__init__()
-        self.inputDim = inputDim
-        self.outputDim = outputDim
-        self.hiddenDims = hiddenDims
-        self.hidActivationFn = hidActivationFn
-        self.outputActivationFn = outputActivationFn
-        self.pDropout = pDropout
+        self.inputDim = input_dim
+        self.outputDim = output_dim
+        self.hiddenDims = hidden_dims
+        self.hidActivationFn = hid_activation_fn
+        self.outputActivationFn = output_activation_fn
+        self.pDropout = p_dropout
         self.layers = nn.ModuleList()
-        if pDropout is not None:
-            self.dropout = nn.Dropout(p=pDropout)
+        if p_dropout is not None:
+            self.dropout = nn.Dropout(p=p_dropout)
         else:
             self.dropout = None
-        prevDim = inputDim
-        for dim in [*hiddenDims, outputDim]:
-            self.layers.append(nn.Linear(prevDim, dim))
-            prevDim = dim
+        prev_dim = input_dim
+        for dim in [*hidden_dims, output_dim]:
+            self.layers.append(nn.Linear(prev_dim, dim))
+            prev_dim = dim
 
     def __str__(self):
-        return objectRepr(self, dict(inputDim=self.inputDim, outputDim=self.outputDim, hiddenDims=self.hiddenDims,
-            hidActivationFn=functionName(self.hidActivationFn) if self.hidActivationFn is not None else None,
-            outputActivationFn=functionName(self.outputActivationFn) if self.outputActivationFn is not None else None,
+        return object_repr(self, dict(inputDim=self.inputDim, outputDim=self.outputDim, hiddenDims=self.hiddenDims,
+            hidActivationFn=function_name(self.hidActivationFn) if self.hidActivationFn is not None else None,
+            outputActivationFn=function_name(self.outputActivationFn) if self.outputActivationFn is not None else None,
             pDropout=self.pDropout))
 
     def forward(self, x):
         for i, layer in enumerate(self.layers):
-            isLast = i+1 == len(self.layers)
+            is_last = i+1 == len(self.layers)
             x = layer(x)
-            if not isLast and self.dropout is not None:
+            if not is_last and self.dropout is not None:
                 x = self.dropout(x)
-            activation = self.hidActivationFn if not isLast else self.outputActivationFn
+            activation = self.hidActivationFn if not is_last else self.outputActivationFn
             if activation is not None:
                 x = activation(x)
         return x

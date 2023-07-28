@@ -14,14 +14,14 @@ from ..clustering import GreedyAgglomerativeClustering
 
 class GeoCoordClusterer(ABC):
     @abstractmethod
-    def fitGeoCoords(self, geoCoords: List[GeoCoord]):
+    def fit_geo_coords(self, geo_coords: List[GeoCoord]):
         """
-        :param geoCoords: the coordinates to be clustered
+        :param geo_coords: the coordinates to be clustered
         """
         pass
 
     @abstractmethod
-    def clustersIndices(self) -> Tuple[List[List[int]], List[int]]:
+    def clusters_indices(self) -> Tuple[List[List[int]], List[int]]:
         """
         :return: a tuple (clusters, outliers), where clusters is a list of point indices, one list for each
             cluster containing the indices of points within the cluster, and outliers is the list of indices of points not within
@@ -31,24 +31,29 @@ class GeoCoordClusterer(ABC):
 
 
 class GreedyAgglomerativeGeoCoordClusterer(GeoCoordClusterer):
-    def __init__(self, maxMinDistanceForMergeM: float, maxDistanceM: float, minClusterSize: int, lcs: LocalCoordinateSystem = None):
+    def __init__(self,
+            max_min_distance_for_merge_m: float,
+            max_distance_m: float,
+            min_cluster_size: int,
+            lcs: LocalCoordinateSystem = None):
         """
-        :param maxMinDistanceForMergeM: the maximum distance, in metres, for the minimum distance between two existing clusters for a merge
+        :param max_min_distance_for_merge_m: the maximum distance, in metres, for the minimum distance between two existing clusters for a merge
             to be admissible
-        :param maxDistanceM: the maximum distance, in metres, between any two points for the points to be allowed to be in the same cluster
-        :param minClusterSize: the minimum number of points any valid cluster must ultimately contain; the points in any smaller clusters
+        :param max_distance_m: the maximum distance, in metres, between any two points for the points to be allowed to be in the same cluster
+        :param min_cluster_size: the minimum number of points any valid cluster must ultimately contain; the points in any smaller clusters
             shall be considered as outliers
         :param lcs: the local coordinate system to use for clustering; if None, compute based on mean coordinates passed when fitting
         """
         self.lcs = lcs
-        self.minClusterSize = minClusterSize
-        self.maxMinDistanceForMerge = maxMinDistanceForMergeM
-        self.maxDistanceM = maxDistanceM
-        self.squaredMaxMinDistanceForMerge = maxMinDistanceForMergeM * maxMinDistanceForMergeM
-        self.squaredMaxDistance = maxDistanceM * maxDistanceM
-        self.localPoints = None
-        self.mMinDistance: Optional["GreedyAgglomerativeGeoCoordClusterer.Matrix"] = None
-        self.mMaxSquaredDistance: Optional["GreedyAgglomerativeGeoCoordClusterer.Matrix"] = None
+        self.min_cluster_size = min_cluster_size
+        self.max_min_distance_for_merge = max_min_distance_for_merge_m
+        self.max_distance_m = max_distance_m
+        self.squared_max_min_distance_for_merge = max_min_distance_for_merge_m * max_min_distance_for_merge_m
+        self.squared_max_distance = max_distance_m * max_distance_m
+        self.local_points = None
+        self.m_min_distance: Optional["GreedyAgglomerativeGeoCoordClusterer.Matrix"] = None
+        self.m_max_squared_distance: Optional["GreedyAgglomerativeGeoCoordClusterer.Matrix"] = None
+        self.clusters = None
 
     class Matrix:
         UNSET_VALUE = np.inf
@@ -70,142 +75,144 @@ class GreedyAgglomerativeGeoCoordClusterer(GeoCoordClusterer):
             self.xy = xy
 
     class Cluster(GreedyAgglomerativeClustering.Cluster):
-        def __init__(self, point: "GreedyAgglomerativeGeoCoordClusterer.LocalPoint", idx: int, clusterer: 'GreedyAgglomerativeGeoCoordClusterer'):
+        def __init__(self, point: "GreedyAgglomerativeGeoCoordClusterer.LocalPoint", idx: int,
+                clusterer: 'GreedyAgglomerativeGeoCoordClusterer'):
             self.idx = idx
             self.clusterer = clusterer
             self.points = [point]
 
-        def mergeCost(self, other: "GreedyAgglomerativeGeoCoordClusterer.Cluster"):
-            cartesianProduct = itertools.product(self.points, other.points)
-            minSquaredDistance = math.inf
-            maxSquaredDistance = 0
-            for p1, p2 in cartesianProduct:
+        def merge_cost(self, other: "GreedyAgglomerativeGeoCoordClusterer.Cluster"):
+            cartesian_product = itertools.product(self.points, other.points)
+            min_squared_distance = math.inf
+            max_squared_distance = 0
+            for p1, p2 in cartesian_product:
                 diff = p1.xy - p2.xy
-                squaredDistance = np.dot(diff, diff)
-                if squaredDistance > self.clusterer.squaredMaxDistance:
-                    maxSquaredDistance = math.inf
+                squared_distance = np.dot(diff, diff)
+                if squared_distance > self.clusterer.squared_max_distance:
+                    max_squared_distance = math.inf
                     break
                 else:
-                    minSquaredDistance = min(squaredDistance, minSquaredDistance)
+                    min_squared_distance = min(squared_distance, min_squared_distance)
 
             # fill cache: the max value takes precedence; if it is inf (no merge admissible), then the min value is also set to inf;
             # the min value valid only if the max value is finite
-            self.clusterer.mMaxSquaredDistance.set(self.idx, other.idx, maxSquaredDistance)
-            if np.isinf(maxSquaredDistance):
-                self.clusterer.mMinDistance.set(self.idx, other.idx, np.inf)
+            self.clusterer.m_max_squared_distance.set(self.idx, other.idx, max_squared_distance)
+            if np.isinf(max_squared_distance):
+                self.clusterer.m_min_distance.set(self.idx, other.idx, np.inf)
             else:
-                self.clusterer.mMinDistance.set(self.idx, other.idx, minSquaredDistance)
+                self.clusterer.m_min_distance.set(self.idx, other.idx, min_squared_distance)
 
-            if np.isinf(maxSquaredDistance):
+            if np.isinf(max_squared_distance):
                 return math.inf
-            if minSquaredDistance <= self.clusterer.squaredMaxMinDistanceForMerge:
-                return minSquaredDistance
+            if min_squared_distance <= self.clusterer.squared_max_min_distance_for_merge:
+                return min_squared_distance
             return math.inf
 
         def merge(self, other):
             self.points += other.points
 
-    def fitGeoCoords(self, geoCoords: List[GeoCoord]) -> None:
-        self.mMinDistance = self.Matrix(len(geoCoords))
-        self.mMaxSquaredDistance = self.Matrix(len(geoCoords))
+    def fit_geo_coords(self, geo_coords: List[GeoCoord]) -> None:
+        self.m_min_distance = self.Matrix(len(geo_coords))
+        self.m_max_squared_distance = self.Matrix(len(geo_coords))
         if self.lcs is None:
-            meanCoord = GeoCoord.meanCoord(geoCoords)
-            self.lcs = LocalCoordinateSystem(meanCoord.lat, meanCoord.lon)
-        self.localPoints = [self.LocalPoint(np.array(self.lcs.getLocalCoords(p.lat, p.lon)), idx) for idx, p in enumerate(geoCoords)]
-        clusters = [self.Cluster(lp, i, self) for i, lp in enumerate(self.localPoints)]
+            mean_coord = GeoCoord.mean_coord(geo_coords)
+            self.lcs = LocalCoordinateSystem(mean_coord.lat, mean_coord.lon)
+        self.local_points = [self.LocalPoint(np.array(self.lcs.get_local_coords(p.lat, p.lon)), idx) for idx, p in enumerate(geo_coords)]
+        clusters = [self.Cluster(lp, i, self) for i, lp in enumerate(self.local_points)]
         gac = GreedyAgglomerativeClustering(clusters,
-            mergeCandidateDeterminationStrategy=self.MergeCandidateDeterminationStrategy(self.maxDistanceM, self))
-        clusters = gac.applyClustering()
+            merge_candidate_determination_strategy=self.MergeCandidateDeterminationStrategy(self.max_distance_m, self))
+        clusters = gac.apply_clustering()
         self.clusters = clusters
 
-    def clustersIndices(self) -> Tuple[List[List[int]], List[int]]:
+    def clusters_indices(self) -> Tuple[List[List[int]], List[int]]:
         outliers = []
         clusters = []
         for c in self.clusters:
             indices = [p.idx for p in c.points]
-            if len(c.points) < self.minClusterSize:
+            if len(c.points) < self.min_cluster_size:
                 outliers.extend(indices)
             else:
                 clusters.append(indices)
         return clusters, outliers
 
     class MergeCandidateDeterminationStrategy(GreedyAgglomerativeClustering.MergeCandidateDeterminationStrategy):
-        def __init__(self, searchRadiusM: float, parent: "GreedyAgglomerativeGeoCoordClusterer"):
+        def __init__(self, search_radius_m: float, parent: "GreedyAgglomerativeGeoCoordClusterer"):
             super().__init__()
             self.parent = parent
-            self.searchRadiusM = searchRadiusM
+            self.searchRadiusM = search_radius_m
 
-        def setClusterer(self, clusterer: GreedyAgglomerativeClustering):
-            super().setClusterer(clusterer)
+        def set_clusterer(self, clusterer: GreedyAgglomerativeClustering):
+            super().set_clusterer(clusterer)
             points = []
-            for wc in self.clusterer.wrappedClusters:
+            for wc in self.clusterer.wrapped_clusters:
                 c: GreedyAgglomerativeGeoCoordClusterer.Cluster = wc.cluster
                 for p in c.points:
                     points.append(p.xy)
-            assert len(points) == len(self.clusterer.wrappedClusters)
+            assert len(points) == len(self.clusterer.wrapped_clusters)
             points = np.stack(points)
             self.kdtree = sklearn.neighbors.KDTree(points)
 
-        def iterCandidateIndices(self, wc: "GreedyAgglomerativeClustering.WrappedCluster", initial: bool,
-                mergedClusterIndices: Tuple[int, int] = None) -> Iterator[int]:
+        def iter_candidate_indices(self, wc: "GreedyAgglomerativeClustering.WrappedCluster", initial: bool,
+                merged_cluster_indices: Tuple[int, int] = None) -> Iterator[int]:
             c: GreedyAgglomerativeGeoCoordClusterer.Cluster = wc.cluster
             if initial:
-                localPoint = c.points[0]  # pick any point from wc, since we use maximum cluster extension as search radius
-                indices = self.kdtree.query_radius(np.reshape(localPoint.xy, (1, 2)), self.searchRadiusM)[0]
-                candidateSet = set()
+                local_point = c.points[0]  # pick any point from wc, since we use maximum cluster extension as search radius
+                indices = self.kdtree.query_radius(np.reshape(local_point.xy, (1, 2)), self.searchRadiusM)[0]
+                candidate_set = set()
                 for idx in indices:
-                    wc = self.clusterer.wrappedClusters[idx]
-                    candidateSet.add(wc.getClusterAssociation().idx)
-                yield from sorted(candidateSet)
+                    wc = self.clusterer.wrapped_clusters[idx]
+                    candidate_set.add(wc.get_cluster_association().idx)
+                yield from sorted(candidate_set)
             else:
-                # The new distance values (max/min) between wc and any cluster index otherIdx can be computed from the cached distance values
-                # of the two clusters from which wc was created through a merge:
+                # The new distance values (max/min) between wc and any cluster index otherIdx can be computed from the cached distance
+                # values of the two clusters from which wc was created through a merge:
                 # The max distance is the maximum of the squared distances of the original clusters (and if either is inf, then
                 # a merge is definitely inadmissible, because one of the original clusters was already too far away).
                 # The min distance is the minimum of the squred distances of the original clusters.
-                c1, c2 = mergedClusterIndices
-                max1 = self.parent.mMaxSquaredDistance.m[c1]
-                max2 = self.parent.mMaxSquaredDistance.m[c2]
-                maxCombined = np.maximum(max1, max2)
-                for otherIdx, maxSqDistance in enumerate(maxCombined):
-                    minSqDistance = np.inf
-                    if maxSqDistance <= self.parent.squaredMaxDistance:
-                        wcOther = self.clusterer.wrappedClusters[otherIdx]
-                        if wcOther.isMerged():
+                c1, c2 = merged_cluster_indices
+                max1 = self.parent.m_max_squared_distance.m[c1]
+                max2 = self.parent.m_max_squared_distance.m[c2]
+                max_combined = np.maximum(max1, max2)
+                for otherIdx, maxSqDistance in enumerate(max_combined):
+                    min_sq_distance = np.inf
+                    if maxSqDistance <= self.parent.squared_max_distance:
+                        wc_other = self.clusterer.wrapped_clusters[otherIdx]
+                        if wc_other.is_merged():
                             continue
-                        min1 = self.parent.mMinDistance.get(c1, otherIdx)
-                        min2 = self.parent.mMinDistance.get(c2, otherIdx)
-                        minSqDistance = min(min1, min2)
-                        if minSqDistance <= self.parent.squaredMaxMinDistanceForMerge:
-                            yield GreedyAgglomerativeClustering.ClusterMerge(wc, wcOther, minSqDistance)
+                        min1 = self.parent.m_min_distance.get(c1, otherIdx)
+                        min2 = self.parent.m_min_distance.get(c2, otherIdx)
+                        min_sq_distance = min(min1, min2)
+                        if min_sq_distance <= self.parent.squared_max_min_distance_for_merge:
+                            yield GreedyAgglomerativeClustering.ClusterMerge(wc, wc_other, min_sq_distance)
                     # update cache
-                    self.parent.mMaxSquaredDistance.set(wc.idx, otherIdx, maxSqDistance)
-                    self.parent.mMinDistance.set(wc.idx, otherIdx, minSqDistance)
+                    self.parent.m_max_squared_distance.set(wc.idx, otherIdx, maxSqDistance)
+                    self.parent.m_min_distance.set(wc.idx, otherIdx, min_sq_distance)
 
 
 class SkLearnGeoCoordClusterer(GeoCoordClusterer):
     def __init__(self, clusterer, lcs: LocalCoordinateSystem = None):
         """
         :param clusterer: a clusterer from sklearn.cluster
-        :param lcs: the local coordinate system to use for Euclidian conversion; if None, determine from data (using mean coordinate as centre)
+        :param lcs: the local coordinate system to use for Euclidian conversion; if None, determine from data (using mean coordinate as
+            centre)
         """
         self.lcs = lcs
         self.clusterer = clusterer
-        self.localPoints = None
+        self.local_points = None
 
-    def fitGeoCoords(self, geoCoords: List[GeoCoord]):
+    def fit_geo_coords(self, geo_coords: List[GeoCoord]):
         if self.lcs is None:
-            meanCoord = GeoCoord.meanCoord(geoCoords)
-            self.lcs = LocalCoordinateSystem(meanCoord.lat, meanCoord.lon)
-        self.localPoints = [self.lcs.getLocalCoords(p.lat, p.lon) for p in geoCoords]
-        self.clusterer.fit(self.localPoints)
+            mean_coord = GeoCoord.mean_coord(geo_coords)
+            self.lcs = LocalCoordinateSystem(mean_coord.lat, mean_coord.lon)
+        self.local_points = [self.lcs.get_local_coords(p.lat, p.lon) for p in geo_coords]
+        self.clusterer.fit(self.local_points)
 
     def _clusters(self, mode):
         clusters = collections.defaultdict(list)
         outliers = []
         for idxPoint, idxCluster in enumerate(self.clusterer.labels_):
             if mode == "localPoints":
-                item = self.localPoints[idxPoint]
+                item = self.local_points[idxPoint]
             elif mode == "indices":
                 item = idxPoint
             else:
@@ -216,7 +223,7 @@ class SkLearnGeoCoordClusterer(GeoCoordClusterer):
                 outliers.append(item)
         return list(clusters.values()), outliers
 
-    def clustersLocalPoints(self) -> Tuple[List[List[Tuple[float, float]]], List[Tuple[float, float]]]:
+    def clusters_local_points(self) -> Tuple[List[List[Tuple[float, float]]], List[Tuple[float, float]]]:
         """
         :return: a tuple (clusters, outliers), where clusters is a dictionary mapping from cluster index to
             the list of local points within the cluster and outliers is a list of local points not within
@@ -224,7 +231,7 @@ class SkLearnGeoCoordClusterer(GeoCoordClusterer):
         """
         return self._clusters("localPoints")
 
-    def clustersIndices(self) -> Tuple[List[List[int]], List[int]]:
+    def clusters_indices(self) -> Tuple[List[List[int]], List[int]]:
         return self._clusters("indices")
 
 

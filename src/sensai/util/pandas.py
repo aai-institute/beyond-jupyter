@@ -20,50 +20,50 @@ class DataFrameColumnChangeTracker:
     >>> df = pd.DataFrame({"bar": [1, 2]})
     >>> columnChangeTracker = DataFrameColumnChangeTracker(df)
     >>> df["foo"] = [4, 5]
-    >>> columnChangeTracker.trackChange(df)
-    >>> columnChangeTracker.getRemovedColumns()
+    >>> columnChangeTracker.track_change(df)
+    >>> columnChangeTracker.get_removed_columns()
     set()
-    >>> columnChangeTracker.getAddedColumns()
+    >>> columnChangeTracker.get_added_columns()
     {'foo'}
     """
-    def __init__(self, initialDF: pd.DataFrame):
-        self.initialColumns = copy(initialDF.columns)
-        self.finalColumns = None
+    def __init__(self, initial_df: pd.DataFrame):
+        self.initialColumns = copy(initial_df.columns)
+        self.final_columns = None
 
-    def trackChange(self, changedDF: pd.DataFrame):
-        self.finalColumns = copy(changedDF.columns)
+    def track_change(self, changed_df: pd.DataFrame):
+        self.final_columns = copy(changed_df.columns)
 
-    def getRemovedColumns(self):
-        self.assertChangeWasTracked()
-        return set(self.initialColumns).difference(self.finalColumns)
+    def get_removed_columns(self):
+        self.assert_change_was_tracked()
+        return set(self.initialColumns).difference(self.final_columns)
 
-    def getAddedColumns(self):
+    def get_added_columns(self):
         """
         Returns the columns in the last entry of the history that were not present the first one
         """
-        self.assertChangeWasTracked()
-        return set(self.finalColumns).difference(self.initialColumns)
+        self.assert_change_was_tracked()
+        return set(self.final_columns).difference(self.initialColumns)
 
-    def columnChangeString(self):
+    def column_change_string(self):
         """
         Returns a string representation of the change
         """
-        self.assertChangeWasTracked()
-        if list(self.initialColumns) == list(self.finalColumns):
+        self.assert_change_was_tracked()
+        if list(self.initialColumns) == list(self.final_columns):
             return "none"
-        removedCols, addedCols = self.getRemovedColumns(), self.getAddedColumns()
-        if removedCols == addedCols == set():
-            return f"reordered {list(self.finalColumns)}"
+        removed_cols, added_cols = self.get_removed_columns(), self.get_added_columns()
+        if removed_cols == added_cols == set():
+            return f"reordered {list(self.final_columns)}"
 
-        return f"added={list(addedCols)}, removed={list(removedCols)}"
+        return f"added={list(added_cols)}, removed={list(removed_cols)}"
 
-    def assertChangeWasTracked(self):
-        if self.finalColumns is None:
+    def assert_change_was_tracked(self):
+        if self.final_columns is None:
             raise Exception(f"No change was tracked yet. "
                             f"Did you forget to call trackChange on the resulting data frame?")
 
 
-def extractArray(df: pd.DataFrame, dtype=None):
+def extract_array(df: pd.DataFrame, dtype=None):
     """
     Extracts array from data frame. It is expected that each row corresponds to a data point and
     each column corresponds to a "channel". Moreover, all entries are expected to be arrays of the same shape
@@ -127,7 +127,7 @@ def extractArray(df: pd.DataFrame, dtype=None):
     return arr
 
 
-def removeDuplicateIndexEntries(df: pd.DataFrame):
+def remove_duplicate_index_entries(df: pd.DataFrame):
     """
     Removes successive duplicate index entries by keeping only the first occurrence for every duplicate index element.
 
@@ -135,8 +135,8 @@ def removeDuplicateIndexEntries(df: pd.DataFrame):
     :return: the (modified) data frame with duplicate index entries removed
     """
     keep = [True]
-    prevItem = df.index[0]
+    prev_item = df.index[0]
     for item in df.index[1:]:
-        keep.append(item != prevItem)
-        prevItem = item
+        keep.append(item != prev_item)
+        prev_item = item
     return df[keep]

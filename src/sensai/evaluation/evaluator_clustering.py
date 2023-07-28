@@ -12,7 +12,7 @@ TClusteringEvalStats = TypeVar("TClusteringEvalStats", bound=ClusterLabelsEvalSt
 
 class ClusteringModelEvaluator(MetricsDictProvider, Generic[TClusteringEvalStats], ABC):
     @timed
-    def _computeMetrics(self, model: EuclideanClusterer, **kwargs) -> Dict[str, float]:
+    def _compute_metrics(self, model: EuclideanClusterer, **kwargs) -> Dict[str, float]:
         """
         Evaluate the model and return the results as dict
 
@@ -20,11 +20,11 @@ class ClusteringModelEvaluator(MetricsDictProvider, Generic[TClusteringEvalStats
         :param kwargs: will be passed to evalModel
         :return:
         """
-        evalStats = self.evalModel(model, **kwargs)
-        return evalStats.metricsDict()
+        eval_stats = self.eval_model(model, **kwargs)
+        return eval_stats.metrics_dict()
 
     @abstractmethod
-    def evalModel(self, model: EuclideanClusterer, **kwargs) -> TClusteringEvalStats:
+    def eval_model(self, model: EuclideanClusterer, **kwargs) -> TClusteringEvalStats:
         pass
 
 
@@ -32,7 +32,7 @@ class ClusteringModelUnsupervisedEvaluator(ClusteringModelEvaluator[ClusteringUn
     def __init__(self, datapoints):
         self.datapoints = datapoints
 
-    def evalModel(self, model: EuclideanClusterer, fit=True):
+    def eval_model(self, model: EuclideanClusterer, fit=True):
         """
         Retrieve evaluation statistics holder for the clustering model
 
@@ -43,23 +43,23 @@ class ClusteringModelUnsupervisedEvaluator(ClusteringModelEvaluator[ClusteringUn
         """
         if fit:
             model.fit(self.datapoints)
-        return ClusteringUnsupervisedEvalStats.fromModel(model)
+        return ClusteringUnsupervisedEvalStats.from_model(model)
 
 
 class ClusteringModelSupervisedEvaluator(ClusteringModelEvaluator[ClusteringSupervisedEvalStats]):
-    def __init__(self, datapoints, trueLabels: Sequence[int], noiseLabel=-1):
+    def __init__(self, datapoints, true_labels: Sequence[int], noise_label=-1):
         """
         :param datapoints:
-        :param trueLabels: labels of the true clusters, including the noise clusters.
-        :param noiseLabel: label of the noise cluster (if there is one) in the true labels
+        :param true_labels: labels of the true clusters, including the noise clusters.
+        :param noise_label: label of the noise cluster (if there is one) in the true labels
         """
-        if len(trueLabels) != len(datapoints):
+        if len(true_labels) != len(datapoints):
             raise ValueError("true labels must be of same length as datapoints")
         self.datapoints = datapoints
-        self.trueLabels = trueLabels
-        self.noiseLabel = noiseLabel
+        self.trueLabels = true_labels
+        self.noiseLabel = noise_label
 
-    def evalModel(self, model: EuclideanClusterer, fit=True):
+    def eval_model(self, model: EuclideanClusterer, fit=True):
         """
         Retrieve evaluation statistics holder for the clustering model
 
@@ -76,4 +76,4 @@ class ClusteringModelSupervisedEvaluator(ClusteringModelEvaluator[ClusteringSupe
                 raise ValueError(f"Noise label of evaluator does not match noise label of the model:"
                                  f" {self.noiseLabel} != {model.noiseLabel}. "
                                  f"Either evaluate with fit=True or adjust the noise label in the ground truth labels")
-        return ClusteringSupervisedEvalStats.fromModel(model, self.trueLabels)
+        return ClusteringSupervisedEvalStats.from_model(model, self.trueLabels)

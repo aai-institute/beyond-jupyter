@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 TransformableArray = Union[np.ndarray, Sequence[Sequence[Any]]]
 
 
-def to2DArray(arr: TransformableArray) -> np.ndarray:
+def to_2d_array(arr: TransformableArray) -> np.ndarray:
     if not isinstance(arr, np.ndarray):
         arr = np.array(arr)
     if len(arr.shape) != 2:
@@ -46,14 +46,15 @@ class ManualScaler:
         pass
 
     def transform(self, arr: TransformableArray) -> np.ndarray:
-        arr = to2DArray(arr)
+        arr = to_2d_array(arr)
         return (arr - self.centre) * self.scale
 
     def inverse_transform(self, arr: TransformableArray) -> np.ndarray:
-        arr = to2DArray(arr)
+        arr = to_2d_array(arr)
         return (arr / self.scale) + self.centre
 
 
+# noinspection PyPep8Naming
 class SkLearnTransformerFactoryFactory:
     @staticmethod
     def MaxAbsScaler() -> Callable[[], MaxAbsScaler]:

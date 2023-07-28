@@ -7,31 +7,32 @@ import pandas as pd
 
 from .sklearn.sklearn_base import AbstractSkLearnMultipleOneDimVectorRegressionModel, AbstractSkLearnVectorClassificationModel, \
     FeatureImportanceProviderSkLearnRegressionMultipleOneDim, FeatureImportanceProviderSkLearnClassification
-from .util.string import orRegexGroup
+from .util.string import or_regex_group
 
 log = logging.getLogger(__name__)
 
 
 # noinspection PyUnusedLocal
-def _updateFitArgs(fitArgs: dict, inputs: pd.DataFrame, outputs: pd.DataFrame, categoricalFeatureNameRegex: Optional[str]):
-    if categoricalFeatureNameRegex is not None:
+def _update_fit_args(fit_args: dict, inputs: pd.DataFrame, outputs: pd.DataFrame, categorical_feature_name_regex: Optional[str]):
+    if categorical_feature_name_regex is not None:
         cols = list(inputs.columns)
-        categoricalFeatureNames = [col for col in cols if re.match(categoricalFeatureNameRegex, col)]
-        colIndices = [cols.index(f) for f in categoricalFeatureNames]
-        args = {"categorical_feature": colIndices}
+        categorical_feature_names = [col for col in cols if re.match(categorical_feature_name_regex, col)]
+        col_indices = [cols.index(f) for f in categorical_feature_names]
+        args = {"categorical_feature": col_indices}
         log.info(f"Updating fit parameters with {args}")
-        fitArgs.update(args)
+        fit_args.update(args)
     else:
-        fitArgs.pop("categorical_feature", None)
+        fit_args.pop("categorical_feature", None)
 
 
-class LightGBMVectorRegressionModel(AbstractSkLearnMultipleOneDimVectorRegressionModel, FeatureImportanceProviderSkLearnRegressionMultipleOneDim):
+class LightGBMVectorRegressionModel(AbstractSkLearnMultipleOneDimVectorRegressionModel,
+        FeatureImportanceProviderSkLearnRegressionMultipleOneDim):
     log = log.getChild(__qualname__)
 
-    def __init__(self, categoricalFeatureNames: Optional[Union[Sequence[str], str]] = None, random_state=42, num_leaves=31,
-            max_depth=-1, n_estimators=100, min_child_samples=20, importance_type="gain", **modelArgs):
+    def __init__(self, categorical_feature_names: Optional[Union[Sequence[str], str]] = None, random_state=42, num_leaves=31,
+            max_depth=-1, n_estimators=100, min_child_samples=20, importance_type="gain", **model_args):
         """
-        :param categoricalFeatureNames: sequence of feature names in the input data that are categorical or a single string containing
+        :param categorical_feature_names: sequence of feature names in the input data that are categorical or a single string containing
             a regex matching the categorical feature names.
             Columns that have dtype 'category' (as will be the case for categorical columns created via FeatureGenerators)
             need not be specified (will be inferred automatically).
@@ -44,33 +45,33 @@ class LightGBMVectorRegressionModel(AbstractSkLearnMultipleOneDimVectorRegressio
         :param importance_type: the type of feature importance to be set in the respective property of the wrapped model.
             If ‘split’, result contains numbers of times the feature is used in a model.
             If ‘gain’, result contains total gains of splits which use the feature.
-        :param modelArgs: see https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html
+        :param model_args: see https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html
         """
         super().__init__(lightgbm.sklearn.LGBMRegressor, random_state=random_state, num_leaves=num_leaves, importance_type=importance_type,
             max_depth=max_depth, n_estimators=n_estimators, min_child_samples=min_child_samples,
-            **modelArgs)
+            **model_args)
 
-        if type(categoricalFeatureNames) == str:
-            categoricalFeatureNameRegex = categoricalFeatureNames
+        if type(categorical_feature_names) == str:
+            categorical_feature_name_regex = categorical_feature_names
         else:
-            if categoricalFeatureNames is not None and len(categoricalFeatureNames) > 0:
-                categoricalFeatureNameRegex = orRegexGroup(categoricalFeatureNames)
+            if categorical_feature_names is not None and len(categorical_feature_names) > 0:
+                categorical_feature_name_regex = or_regex_group(categorical_feature_names)
             else:
-                categoricalFeatureNameRegex = None
-        self._categoricalFeatureNameRegex: str = categoricalFeatureNameRegex
+                categorical_feature_name_regex = None
+        self._categoricalFeatureNameRegex: str = categorical_feature_name_regex
 
-    def _updateFitArgs(self, inputs: pd.DataFrame, outputs: pd.DataFrame):
-        _updateFitArgs(self.fitArgs, inputs, outputs, self._categoricalFeatureNameRegex)
+    def _update_fit_args(self, inputs: pd.DataFrame, outputs: pd.DataFrame):
+        _update_fit_args(self.fitArgs, inputs, outputs, self._categoricalFeatureNameRegex)
 
 
 class LightGBMVectorClassificationModel(AbstractSkLearnVectorClassificationModel, FeatureImportanceProviderSkLearnClassification):
     log = log.getChild(__qualname__)
 
-    def __init__(self, categoricalFeatureNames: Optional[Union[Sequence[str], str]] = None, random_state=42, num_leaves=31,
-            max_depth=-1, n_estimators=100, min_child_samples=20, importance_type="gain", useBalancedClassWeights=False,
-            **modelArgs):
+    def __init__(self, categorical_feature_names: Optional[Union[Sequence[str], str]] = None, random_state=42, num_leaves=31,
+            max_depth=-1, n_estimators=100, min_child_samples=20, importance_type="gain", use_balanced_class_weights=False,
+            **model_args):
         """
-        :param categoricalFeatureNames: sequence of feature names in the input data that are categorical or a single string containing
+        :param categorical_feature_names: sequence of feature names in the input data that are categorical or a single string containing
             a regex matching the categorical feature names.
             Columns that have dtype 'category' (as will be the case for categorical columns created via FeatureGenerators)
             need not be specified (will be inferred automatically).
@@ -83,31 +84,31 @@ class LightGBMVectorClassificationModel(AbstractSkLearnVectorClassificationModel
         :param importance_type: the type of feature importance to be set in the respective property of the wrapped model.
             If ‘split’, result contains numbers of times the feature is used in a model.
             If ‘gain’, result contains total gains of splits which use the feature.
-        :param useBalancedClassWeights: whether to compute class weights from the training data that is given and pass it on to the
+        :param use_balanced_class_weights: whether to compute class weights from the training data that is given and pass it on to the
             classifier's fit method; weighted data points may not be supported for all types of models
-        :param modelArgs: see https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMClassifier.html?highlight=LGBMClassifier
+        :param model_args: see https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMClassifier.html?highlight=LGBMClassifier
         """
         super().__init__(lightgbm.sklearn.LGBMClassifier, random_state=random_state, num_leaves=num_leaves,
             max_depth=max_depth, n_estimators=n_estimators, min_child_samples=min_child_samples, importance_type=importance_type,
-            useBalancedClassWeights=useBalancedClassWeights, **modelArgs)
+            use_balanced_class_weights=use_balanced_class_weights, **model_args)
 
-        if type(categoricalFeatureNames) == str:
-            categoricalFeatureNameRegex = categoricalFeatureNames
+        if type(categorical_feature_names) == str:
+            categorical_feature_name_regex = categorical_feature_names
         else:
-            if categoricalFeatureNames is not None and len(categoricalFeatureNames) > 0:
-                categoricalFeatureNameRegex = orRegexGroup(categoricalFeatureNames)
+            if categorical_feature_names is not None and len(categorical_feature_names) > 0:
+                categorical_feature_name_regex = or_regex_group(categorical_feature_names)
             else:
-                categoricalFeatureNameRegex = None
-        self._categoricalFeatureNameRegex: str = categoricalFeatureNameRegex
+                categorical_feature_name_regex = None
+        self._categoricalFeatureNameRegex: str = categorical_feature_name_regex
 
-    def _updateFitArgs(self, inputs: pd.DataFrame, outputs: pd.DataFrame):
-        _updateFitArgs(self.fitArgs, inputs, outputs, self._categoricalFeatureNameRegex)
+    def _update_fit_args(self, inputs: pd.DataFrame, outputs: pd.DataFrame):
+        _update_fit_args(self.fitArgs, inputs, outputs, self._categoricalFeatureNameRegex)
 
-    def _predictClassProbabilities(self, x: pd.DataFrame):
+    def _predict_class_probabilities(self, x: pd.DataFrame):
         if len(self._labels) == 1:
             # special handling required because LGBMClassifier will return values for two classes even if there is only one
-            Y = self.model.predict_proba(self._transformInput(x))
-            Y = Y[:, 0]
-            return pd.DataFrame(Y, columns=self._labels)
+            y = self.model.predict_proba(self._transform_input(x))
+            y = y[:, 0]
+            return pd.DataFrame(y, columns=self._labels)
         else:
-            return super()._predictClassProbabilities(x)
+            return super()._predict_class_probabilities(x)

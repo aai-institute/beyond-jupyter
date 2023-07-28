@@ -26,7 +26,7 @@ TEvalStatsCollection = TypeVar("TEvalStatsCollection", bound=EvalStatsCollection
 
 class MetricsDictProvider(TrackingMixin, ABC):
     @abstractmethod
-    def _computeMetrics(self, model, **kwargs) -> Dict[str, float]:
+    def _compute_metrics(self, model, **kwargs) -> Dict[str, float]:
         """
         Computes metrics for the given model, typically by fitting the model and applying it to test data
 
@@ -36,7 +36,7 @@ class MetricsDictProvider(TrackingMixin, ABC):
         """
         pass
 
-    def computeMetrics(self, model, **kwargs) -> Optional[Dict[str, float]]:
+    def compute_metrics(self, model, **kwargs) -> Optional[Dict[str, float]]:
         """
         Computes metrics for the given model, typically by fitting the model and applying it to test data.
         If a tracked experiment was previously set, the metrics are tracked with the string representation
@@ -46,100 +46,104 @@ class MetricsDictProvider(TrackingMixin, ABC):
         :param kwargs: parameters to pass on to the underlying evaluation method
         :return: a dictionary with metrics values
         """
-        valuesDict = self._computeMetrics(model, **kwargs)
-        if self.trackedExperiment is not None:
-            self.trackedExperiment.trackValues(valuesDict, addValuesDict={"str(model)": str(model)}) # TODO
-        return valuesDict
+        values_dict = self._compute_metrics(model, **kwargs)
+        if self.tracked_experiment is not None:
+            self.tracked_experiment.track_values(values_dict, add_values_dict={"str(model)": str(model)})  # TODO strings unsupported (mlflow)
+        return values_dict
 
 
 class MetricsDictProviderFromFunction(MetricsDictProvider):
-    def __init__(self, computeMetricsFn: Callable[[VectorModel], Dict[str, float]]):
-        self._computeMetricsFn = computeMetricsFn
+    def __init__(self, compute_metrics_fn: Callable[[VectorModel], Dict[str, float]]):
+        self._compute_metrics_fn = compute_metrics_fn
 
-    def _computeMetrics(self, model, **kwargs) -> Dict[str, float]:
-        return self._computeMetricsFn(model)
+    def _compute_metrics(self, model, **kwargs) -> Dict[str, float]:
+        return self._compute_metrics_fn(model)
 
 
 class VectorModelEvaluationData(ABC, Generic[TEvalStats]):
-    def __init__(self, statsDict: Dict[str, TEvalStats], ioData: InputOutputData, model: VectorModelBase):
+    def __init__(self, stats_dict: Dict[str, TEvalStats], io_data: InputOutputData, model: VectorModelBase):
         """
-        :param statsDict: a dictionary mapping from output variable name to the evaluation statistics object
-        :param ioData: the input/output data that was used to produce the results
+        :param stats_dict: a dictionary mapping from output variable name to the evaluation statistics object
+        :param io_data: the input/output data that was used to produce the results
         :param model: the model that was used to produce predictions
         """
-        self.ioData = ioData
-        self.evalStatsByVarName = statsDict
-        self.predictedVarNames = list(self.evalStatsByVarName.keys())
+        self.io_data = io_data
+        self.eval_stats_by_var_name = stats_dict
+        self.predicted_var_names = list(self.eval_stats_by_var_name.keys())
         self.model = model
 
     @property
-    def modelName(self):
-        return self.model.getName()
+    def model_name(self):
+        return self.model.get_name()
 
     @property
-    def inputData(self):  # for backward compatibility
-        return self.ioData.inputs
+    def input_data(self):  # for backward compatibility
+        return self.io_data.inputs
 
-    def getEvalStats(self, predictedVarName=None) -> TEvalStats:
-        if predictedVarName is None:
-            if len(self.evalStatsByVarName) != 1:
-                raise Exception(f"Must provide name of predicted variable name, as multiple variables were predicted {list(self.evalStatsByVarName.keys())}")
+    def get_eval_stats(self, predicted_var_name=None) -> TEvalStats:
+        if predicted_var_name is None:
+            if len(self.eval_stats_by_var_name) != 1:
+                raise Exception(f"Must provide name of predicted variable name, as multiple variables were predicted:"
+                    f" {list(self.eval_stats_by_var_name.keys())}")
             else:
-                predictedVarName = next(iter(self.evalStatsByVarName.keys()))
-        evalStats = self.evalStatsByVarName.get(predictedVarName)
-        if evalStats is None:
-            raise ValueError(f"No evaluation data present for '{predictedVarName}'; known output variables: {list(self.evalStatsByVarName.keys())}")
-        return evalStats
+                predicted_var_name = next(iter(self.eval_stats_by_var_name.keys()))
+        eval_stats = self.eval_stats_by_var_name.get(predicted_var_name)
+        if eval_stats is None:
+            raise ValueError(f"No evaluation data present for '{predicted_var_name}'; known output variables: "
+                f"{list(self.eval_stats_by_var_name.keys())}")
+        return eval_stats
 
-    def getDataFrame(self):
+    def get_data_frame(self):
         """
         Returns an DataFrame with all evaluation metrics (one row per output variable)
 
         :return: a DataFrame containing evaluation metrics
         """
-        statsDicts = []
-        varNames = []
-        for predictedVarName, evalStats in self.evalStatsByVarName.items():
-            statsDicts.append(evalStats.metricsDict())
-            varNames.append(predictedVarName)
-        df = pd.DataFrame(statsDicts, index=varNames)
+        stats_dicts = []
+        var_names = []
+        for predictedVarName, evalStats in self.eval_stats_by_var_name.items():
+            stats_dicts.append(evalStats.metrics_dict())
+            var_names.append(predictedVarName)
+        df = pd.DataFrame(stats_dicts, index=var_names)
         df.index.name = "predictedVar"
         return df
 
-    def iterInputOutputGroundTruthTuples(self, predictedVarName=None) -> Generator[Tuple[PandasNamedTuple, Any, Any], None, None]:
-        evalStats = self.getEvalStats(predictedVarName)
-        for i, namedTuple in enumerate(self.inputData.itertuples()):
-            yield namedTuple, evalStats.y_predicted[i], evalStats.y_true[i]
+    def iter_input_output_ground_truth_tuples(self, predicted_var_name=None) -> Generator[Tuple[PandasNamedTuple, Any, Any], None, None]:
+        eval_stats = self.get_eval_stats(predicted_var_name)
+        for i, named_tuple in enumerate(self.input_data.itertuples()):
+            yield named_tuple, eval_stats.y_predicted[i], eval_stats.y_true[i]
 
 
 class VectorRegressionModelEvaluationData(VectorModelEvaluationData[RegressionEvalStats]):
-    def getEvalStatsCollection(self):
-        return RegressionEvalStatsCollection(list(self.evalStatsByVarName.values()))
+    def get_eval_stats_collection(self):
+        return RegressionEvalStatsCollection(list(self.eval_stats_by_var_name.values()))
 
 
 TEvalData = TypeVar("TEvalData", bound=VectorModelEvaluationData)
 
 
 class VectorModelEvaluatorParams(ToStringMixin, ABC):
-    def __init__(self, dataSplitter: DataSplitter = None, fractionalSplitTestFraction: float = None, fractionalSplitRandomSeed=42,
-            fractionalSplitShuffle=True):
+    def __init__(self, data_splitter: DataSplitter = None, fractional_split_test_fraction: float = None, fractional_split_random_seed=42,
+            fractional_split_shuffle=True):
         """
-        :param dataSplitter: [if test data must be obtained via split] a splitter to use in order to obtain; if None, must specify
+        :param data_splitter: [if test data must be obtained via split] a splitter to use in order to obtain; if None, must specify
             fractionalSplitTestFraction for fractional split (default)
-        :param fractionalSplitTestFraction: [if test data must be obtained via split, dataSplitter is None] the fraction of the data to use for testing/evaluation;
-        :param fractionalSplitRandomSeed: [if test data must be obtained via split, dataSplitter is none] the random seed to use for the fractional split of the data
-        :param fractionalSplitShuffle: [if test data must be obtained via split, dataSplitter is None] whether to randomly (based on randomSeed) shuffle the dataset before
-            splitting it
+        :param fractional_split_test_fraction: [if test data must be obtained via split, dataSplitter is None] the fraction of the data to
+            use for testing/evaluation;
+        :param fractional_split_random_seed: [if test data must be obtained via split, dataSplitter is none] the random seed to use for the
+            fractional split of the data
+        :param fractional_split_shuffle: [if test data must be obtained via split, dataSplitter is None] whether to randomly (based on
+            randomSeed) shuffle the dataset before splitting it
         """
-        self._dataSplitter = dataSplitter
-        self._fractionalSplitTestFraction = fractionalSplitTestFraction
-        self._fractionalSplitRandomSeed = fractionalSplitRandomSeed
-        self._fractionalSplitShuffle = fractionalSplitShuffle
+        self._dataSplitter = data_splitter
+        self._fractionalSplitTestFraction = fractional_split_test_fraction
+        self._fractionalSplitRandomSeed = fractional_split_random_seed
+        self._fractionalSplitShuffle = fractional_split_shuffle
 
-    def _toStringExcludePrivate(self) -> bool:
+    def _tostring_exclude_private(self) -> bool:
         return True
 
-    def _toStringAdditionalEntries(self) -> Dict[str, Any]:
+    def _tostring_additional_entries(self) -> Dict[str, Any]:
         d = {}
         if self._dataSplitter is not None:
             d["dataSplitter"] = self._dataSplitter
@@ -149,245 +153,240 @@ class VectorModelEvaluatorParams(ToStringMixin, ABC):
             d["fractionalSplitShuffle"] = self._fractionalSplitShuffle
         return d
 
-    def getDataSplitter(self) -> DataSplitter:
+    def get_data_splitter(self) -> DataSplitter:
         if self._dataSplitter is None:
             if self._fractionalSplitTestFraction is None:
                 raise ValueError("Cannot create default data splitter, as no split fraction was provided")
             self._dataSplitter = DataSplitterFractional(1 - self._fractionalSplitTestFraction, shuffle=self._fractionalSplitShuffle,
-                randomSeed=self._fractionalSplitRandomSeed)
+                random_seed=self._fractionalSplitRandomSeed)
         return self._dataSplitter
 
-    def setDataSplitter(self, splitter: DataSplitter):
+    def set_data_splitter(self, splitter: DataSplitter):
         self._dataSplitter = splitter
 
 
 class VectorModelEvaluator(MetricsDictProvider, Generic[TEvalData], ABC):
-    def __init__(self, data: Optional[InputOutputData], testData: InputOutputData = None, params: VectorModelEvaluatorParams = None):
+    def __init__(self, data: Optional[InputOutputData], test_data: InputOutputData = None, params: VectorModelEvaluatorParams = None):
         """
         Constructs an evaluator with test and training data.
 
         :param data: the full data set, or, if testData is given, the training data
-        :param testData: the data to use for testing/evaluation; if None, must specify appropriate parameters to define splitting
+        :param test_data: the data to use for testing/evaluation; if None, must specify appropriate parameters to define splitting
         :param params: the parameters
         """
-        if testData is None:
+        if test_data is None:
             if params is None:
                 raise ValueError("Parameters required for data split must be provided")
-            dataSplitter = params.getDataSplitter()
-            self.trainingData, self.testData = dataSplitter.split(data)
-            log.debug(f"{dataSplitter} created split with {len(self.trainingData)} ({100*len(self.trainingData)/len(data):.2f}%) and "
-                f"{len(self.testData)} ({100*len(self.testData)/len(data):.2f}%) training and test data points respectively")
+            data_splitter = params.get_data_splitter()
+            self.training_data, self.test_data = data_splitter.split(data)
+            log.debug(f"{data_splitter} created split with {len(self.training_data)} "
+                f"({100 * len(self.training_data) / len(data):.2f}%) and "
+                f"{len(self.test_data)} ({100 * len(self.test_data) / len(data):.2f}%) training and test data points respectively")
         else:
-            self.trainingData = data
-            self.testData = testData
+            self.training_data = data
+            self.test_data = test_data
 
-    def setTrackedExperiment(self, trackedExperiment: TrackedExperiment):
+    def set_tracked_experiment(self, tracked_experiment: TrackedExperiment):
         """
         Sets a tracked experiment which will result in metrics being saved whenever computeMetrics is called
         or evalModel is called with track=True.
 
-        :param trackedExperiment: the experiment in which to track evaluation metrics.
+        :param tracked_experiment: the experiment in which to track evaluation metrics.
         """
-        super().setTrackedExperiment(trackedExperiment)
+        super().set_tracked_experiment(tracked_experiment)
 
-    def evalModel(self, model: VectorModelBase, onTrainingData=False, track=True) -> TEvalData:
+    def eval_model(self, model: VectorModelBase, on_training_data=False, track=True) -> TEvalData:
         """
         Evaluates the given model
 
         :param model: the model to evaluate
-        :param onTrainingData: if True, evaluate on this evaluator's training data rather than the held-out test data
+        :param on_training_data: if True, evaluate on this evaluator's training data rather than the held-out test data
         :param track: whether to track the evaluation metrics for the case where a tracked experiment was set on this object
         :return: the evaluation result
         """
-        data = self.trainingData if onTrainingData else self.testData
-        result: VectorModelEvaluationData = self._evalModel(model, data)
-        with TrackingContext.fromOptionalExperiment(self.trackedExperiment if track else None, model=model) as trackingContext:
-            multipleVars = len(result.predictedVarNames) > 1
-            for predVarName in result.predictedVarNames:
-                metrics = result.getEvalStats(predVarName).metricsDict()
-                trackingContext.trackMetrics(metrics, predVarName if multipleVars else None)
+        data = self.training_data if on_training_data else self.test_data
+        result: VectorModelEvaluationData = self._eval_model(model, data)
+        with TrackingContext.from_optional_experiment(self.tracked_experiment if track else None, model=model) as trackingContext:
+            is_multiple_pred_vars = len(result.predicted_var_names) > 1
+            for pred_var_name in result.predicted_var_names:
+                metrics = result.get_eval_stats(pred_var_name).metrics_dict()
+                trackingContext.track_metrics(metrics, pred_var_name if is_multiple_pred_vars else None)
         return result
 
     @abstractmethod
-    def _evalModel(self, model: VectorModelBase, data: InputOutputData) -> TEvalData:
+    def _eval_model(self, model: VectorModelBase, data: InputOutputData) -> TEvalData:
         pass
 
-    def _computeMetrics(self, model: VectorModel, onTrainingData=False) -> Dict[str, float]:
-        return self._computeMetricsForVarName(model, None, onTrainingData=onTrainingData)
+    def _compute_metrics(self, model: VectorModel, on_training_data=False) -> Dict[str, float]:
+        return self._compute_metrics_for_var_name(model, None, on_training_data=on_training_data)
 
-    def _computeMetricsForVarName(self, model, predictedVarName: Optional[str], onTrainingData=False):
-        self.fitModel(model)
+    def _compute_metrics_for_var_name(self, model, predicted_var_name: Optional[str], on_training_data=False):
+        self.fit_model(model)
         track = False  # avoid duplicate tracking (as this function is only called by computeMetrics, which already tracks)
-        evalData: VectorModelEvaluationData = self.evalModel(model, onTrainingData=onTrainingData, track=track)
-        return evalData.getEvalStats(predictedVarName=predictedVarName).metricsDict()
+        eval_data: VectorModelEvaluationData = self.eval_model(model, on_training_data=on_training_data, track=track)
+        return eval_data.get_eval_stats(predicted_var_name=predicted_var_name).metrics_dict()
 
-    def createMetricsDictProvider(self, predictedVarName: Optional[str]) -> MetricsDictProvider:
+    def create_metrics_dict_provider(self, predicted_var_name: Optional[str]) -> MetricsDictProvider:
         """
         Creates a metrics dictionary provider, e.g. for use in hyperparameter optimisation
 
-        :param predictedVarName: the name of the predicted variable for which to obtain evaluation metrics; may be None only
+        :param predicted_var_name: the name of the predicted variable for which to obtain evaluation metrics; may be None only
             if the model outputs but a single predicted variable
         :return: a metrics dictionary provider instance for the given variable
         """
-        return MetricsDictProviderFromFunction(functools.partial(self._computeMetricsForVarName, predictedVarName=predictedVarName))
+        return MetricsDictProviderFromFunction(functools.partial(self._compute_metrics_for_var_name, predictedVarName=predicted_var_name))
 
-    def fitModel(self, model: VectorModelFittableBase):
+    def fit_model(self, model: VectorModelFittableBase):
         """Fits the given model's parameters using this evaluator's training data"""
-        if self.trainingData is None:
+        if self.training_data is None:
             raise Exception(f"Cannot fit model with evaluator {self.__class__.__name__}: no training data provided")
-        model.fit(self.trainingData.inputs, self.trainingData.outputs)
+        model.fit(self.training_data.inputs, self.training_data.outputs)
 
 
 class VectorRegressionModelEvaluatorParams(VectorModelEvaluatorParams):
-    def __init__(self, dataSplitter: DataSplitter = None, fractionalSplitTestFraction: float = None, fractionalSplitRandomSeed=42,
-            fractionalSplitShuffle=True, metrics: Sequence[RegressionMetric] = None, additionalMetrics: Sequence[RegressionMetric] = None,
-            outputDataFrameTransformer: DataFrameTransformer = None):
+    def __init__(self,
+            data_splitter: DataSplitter = None,
+            fractional_split_test_fraction: float = None,
+            fractional_split_random_seed=42,
+            fractional_split_shuffle=True,
+            metrics: Sequence[RegressionMetric] = None,
+            additional_metrics: Sequence[RegressionMetric] = None,
+            output_data_frame_transformer: DataFrameTransformer = None):
         """
-        :param dataSplitter: [if test data must be obtained via split] a splitter to use in order to obtain; if None, must specify
+        :param data_splitter: [if test data must be obtained via split] a splitter to use in order to obtain; if None, must specify
             fractionalSplitTestFraction for fractional split (default)
-        :param fractionalSplitTestFraction: [if dataSplitter is None, test data must be obtained via split] the fraction of the data to use for testing/evaluation;
-        :param fractionalSplitRandomSeed: [if dataSplitter is none, test data must be obtained via split] the random seed to use for the fractional split of the data
-        :param fractionalSplitShuffle: [if dataSplitter is None, test data must be obtained via split] whether to randomly (based on randomSeed) shuffle the dataset before
-            splitting it
+        :param fractional_split_test_fraction: [if dataSplitter is None, test data must be obtained via split] the fraction of the data to
+            use for testing/evaluation;
+        :param fractional_split_random_seed: [if dataSplitter is none, test data must be obtained via split] the random seed to use for the
+            fractional split of the data
+        :param fractional_split_shuffle: [if dataSplitter is None, test data must be obtained via split] whether to randomly (based on
+            randomSeed) shuffle the dataset before splitting it
 
-        :param additionalMetrics: additional regression metrics to apply
-        :param outputDataFrameTransformer: a data frame transformer to apply to all output data frames (both model outputs and ground truth),
-            such that evaluation metrics are computed on the transformed data frame
+        :param additional_metrics: additional regression metrics to apply
+        :param output_data_frame_transformer: a data frame transformer to apply to all output data frames (both model outputs and ground
+            truth), such that evaluation metrics are computed on the transformed data frame
         """
-        super().__init__(dataSplitter, fractionalSplitTestFraction=fractionalSplitTestFraction, fractionalSplitRandomSeed=fractionalSplitRandomSeed,
-            fractionalSplitShuffle=fractionalSplitShuffle)
+        super().__init__(data_splitter,
+            fractional_split_test_fraction=fractional_split_test_fraction,
+            fractional_split_random_seed=fractional_split_random_seed,
+            fractional_split_shuffle=fractional_split_shuffle)
         self.metrics = metrics
-        self.additionalMetrics = additionalMetrics
-        self.outputDataFrameTransformer = outputDataFrameTransformer
+        self.additional_metrics = additional_metrics
+        self.output_data_frame_transformer = output_data_frame_transformer
 
     @classmethod
-    def fromDictOrInstance(cls, params: Optional[Union[Dict[str, Any], "VectorRegressionModelEvaluatorParams"]]) -> "VectorRegressionModelEvaluatorParams":
+    def from_dict_or_instance(cls,
+            params: Optional[Union[Dict[str, Any], "VectorRegressionModelEvaluatorParams"]]) -> "VectorRegressionModelEvaluatorParams":
         if params is None:
             return VectorRegressionModelEvaluatorParams()
         elif type(params) == dict:
-            return cls.fromOldKwArgs(**params)
+            raise Exception("Old-style dictionary parametrisation is no longer supported")
         elif isinstance(params, cls):
             return params
         else:
             raise ValueError(f"Must provide dictionary or {cls} instance, got {params}, type {type(params)}")
 
-    @classmethod
-    def fromOldKwArgs(cls, dataSplitter=None, testFraction=None, randomSeed=42, shuffle=True, additionalMetrics: Sequence[RegressionMetric] = None,
-            outputDataFrameTransformer: DataFrameTransformer = None) -> "VectorRegressionModelEvaluatorParams":
-        return cls(dataSplitter=dataSplitter, fractionalSplitTestFraction=testFraction, fractionalSplitRandomSeed=randomSeed,
-            fractionalSplitShuffle=shuffle, additionalMetrics=additionalMetrics, outputDataFrameTransformer=outputDataFrameTransformer)
-
 
 class VectorRegressionModelEvaluator(VectorModelEvaluator[VectorRegressionModelEvaluationData]):
-    def __init__(self, data: Optional[InputOutputData], testData: InputOutputData = None, params: VectorRegressionModelEvaluatorParams = None,
-            **kwArgsOldParams):
+    def __init__(self, data: Optional[InputOutputData], test_data: InputOutputData = None,
+            params: VectorRegressionModelEvaluatorParams = None):
         """
         Constructs an evaluator with test and training data.
 
         :param data: the full data set, or, if testData is given, the training data
-        :param testData: the data to use for testing/evaluation; if None, must specify appropriate parameters to define splitting
+        :param test_data: the data to use for testing/evaluation; if None, must specify appropriate parameters to define splitting
         :param params: the parameters
-        :param kwArgsOldParams: old-style keyword parameters (for backward compatibility only)
         """
-        params = self._createParams(params, kwArgsOldParams)
-        super().__init__(data=data, testData=testData, params=params)
+        # TODO params should not be optional
+        super().__init__(data=data, test_data=test_data, params=params)
         self.params = params
 
-    @staticmethod
-    def _createParams(params: VectorRegressionModelEvaluatorParams, kwArgsOldParams: dict) -> VectorRegressionModelEvaluatorParams:
-        if params is not None:
-            return params
-        elif len(kwArgsOldParams) > 0:
-            return VectorRegressionModelEvaluatorParams.fromOldKwArgs(**kwArgsOldParams)
-        else:
-            return VectorRegressionModelEvaluatorParams()
-
-    def _evalModel(self, model: VectorRegressionModel, data: InputOutputData) -> VectorRegressionModelEvaluationData:
-        if not model.isRegressionModel():
+    def _eval_model(self, model: VectorRegressionModel, data: InputOutputData) -> VectorRegressionModelEvaluationData:
+        if not model.is_regression_model():
             raise ValueError(f"Expected a regression model, got {model}")
-        evalStatsByVarName = {}
-        predictions, groundTruth = self._computeOutputs(model, data)
+        eval_stats_by_var_name = {}
+        predictions, ground_truth = self._compute_outputs(model, data)
         for predictedVarName in predictions.columns:
-            evalStats = RegressionEvalStats(y_predicted=predictions[predictedVarName], y_true=groundTruth[predictedVarName],
+            eval_stats = RegressionEvalStats(y_predicted=predictions[predictedVarName], y_true=ground_truth[predictedVarName],
                 metrics=self.params.metrics,
-                additionalMetrics=self.params.additionalMetrics,
+                additional_metrics=self.params.additional_metrics,
                 model=model,
-                ioData=data)
-            evalStatsByVarName[predictedVarName] = evalStats
-        return VectorRegressionModelEvaluationData(evalStatsByVarName, data, model)
+                io_data=data)
+            eval_stats_by_var_name[predictedVarName] = eval_stats
+        return VectorRegressionModelEvaluationData(eval_stats_by_var_name, data, model)
 
-    def computeTestDataOutputs(self, model: VectorModelBase) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def compute_test_data_outputs(self, model: VectorModelBase) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Applies the given model to the test data
 
         :param model: the model to apply
         :return: a pair (predictions, groundTruth)
         """
-        return self._computeOutputs(model, self.testData)
+        return self._compute_outputs(model, self.test_data)
 
-    def _computeOutputs(self, model: VectorModelBase, inputOutputData: InputOutputData):
+    def _compute_outputs(self, model: VectorModelBase, io_data: InputOutputData):
         """
         Applies the given model to the given data
 
         :param model: the model to apply
-        :param inputOutputData: the data set
-        :return: a pair (predictions, groundTruth)
+        :param io_data: the data set
+        :return: a pair (predictions, ground_truth)
         """
-        predictions = model.predict(inputOutputData.inputs)
-        groundTruth = inputOutputData.outputs
-        if self.params.outputDataFrameTransformer:
-            predictions = self.params.outputDataFrameTransformer.apply(predictions)
-            groundTruth = self.params.outputDataFrameTransformer.apply(groundTruth)
-        return predictions, groundTruth
+        predictions = model.predict(io_data.inputs)
+        ground_truth = io_data.outputs
+        if self.params.output_data_frame_transformer:
+            predictions = self.params.output_data_frame_transformer.apply(predictions)
+            ground_truth = self.params.output_data_frame_transformer.apply(ground_truth)
+        return predictions, ground_truth
 
 
 class VectorClassificationModelEvaluationData(VectorModelEvaluationData[ClassificationEvalStats]):
-    def getMisclassifiedInputsDataFrame(self) -> pd.DataFrame:
-        return self.inputData.iloc[self.getEvalStats().getMisclassifiedIndices()]
+    def get_misclassified_inputs_data_frame(self) -> pd.DataFrame:
+        return self.input_data.iloc[self.get_eval_stats().get_misclassified_indices()]
 
-    def getMisclassifiedTriplesPredTrueInput(self) -> List[Tuple[Any, Any, pd.Series]]:
+    def get_misclassified_triples_pred_true_input(self) -> List[Tuple[Any, Any, pd.Series]]:
         """
         :return: a list containing a triple (predicted class, true class, input series) for each misclassified data point
         """
-        evalStats = self.getEvalStats()
-        indices = evalStats.getMisclassifiedIndices()
-        return [(evalStats.y_predicted[i], evalStats.y_true[i], self.inputData.iloc[i]) for i in indices]
+        eval_stats = self.get_eval_stats()
+        indices = eval_stats.get_misclassified_indices()
+        return [(eval_stats.y_predicted[i], eval_stats.y_true[i], self.input_data.iloc[i]) for i in indices]
 
 
 class VectorClassificationModelEvaluatorParams(VectorModelEvaluatorParams):
-    def __init__(self, dataSplitter: DataSplitter = None, fractionalSplitTestFraction: float = None, fractionalSplitRandomSeed=42,
-            fractionalSplitShuffle=True, additionalMetrics: Sequence[ClassificationMetric] = None,
-            computeProbabilities: bool = False, binaryPositiveLabel=GUESS):
+    def __init__(self, data_splitter: DataSplitter = None, fractional_split_test_fraction: float = None, fractional_split_random_seed=42,
+            fractional_split_shuffle=True, additional_metrics: Sequence[ClassificationMetric] = None,
+            compute_probabilities: bool = False, binary_positive_label=GUESS):
         """
-        :param dataSplitter: [if test data must be obtained via split] a splitter to use in order to obtain; if None, must specify
+        :param data_splitter: [if test data must be obtained via split] a splitter to use in order to obtain; if None, must specify
             fractionalSplitTestFraction for fractional split (default)
-        :param fractionalSplitTestFraction: [if dataSplitter is None, test data must be obtained via split] the fraction of the data to use for testing/evaluation;
-        :param fractionalSplitRandomSeed: [if dataSplitter is none, test data must be obtained via split] the random seed to use for the fractional split of the data
-        :param fractionalSplitShuffle: [if dataSplitter is None, test data must be obtained via split] whether to randomly (based on randomSeed) shuffle the dataset before
-            splitting it
-        :param additionalMetrics: additional metrics to apply
-        :param computeProbabilities: whether to compute class probabilities
-        :param binaryPositiveLabel: the positive class label for binary classification; if GUESS, try to detect from labels;
+        :param fractional_split_test_fraction: [if dataSplitter is None, test data must be obtained via split] the fraction of the data to
+            use for testing/evaluation
+        :param fractional_split_random_seed: [if dataSplitter is none, test data must be obtained via split] the random seed to use for the
+            fractional split of the data
+        :param fractional_split_shuffle: [if dataSplitter is None, test data must be obtained via split] whether to randomly (based on
+            randomSeed) shuffle the dataset before splitting it
+        :param additional_metrics: additional metrics to apply
+        :param compute_probabilities: whether to compute class probabilities
+        :param binary_positive_label: the positive class label for binary classification; if GUESS, try to detect from labels;
             if None, no detection (non-binary classification)
         """
-        super().__init__(dataSplitter, fractionalSplitTestFraction=fractionalSplitTestFraction, fractionalSplitRandomSeed=fractionalSplitRandomSeed,
-            fractionalSplitShuffle=fractionalSplitShuffle)
-        self.additionalMetrics = additionalMetrics
-        self.computeProbabilities = computeProbabilities
-        self.binaryPositiveLabel = binaryPositiveLabel
+        super().__init__(data_splitter,
+            fractional_split_test_fraction=fractional_split_test_fraction,
+            fractional_split_random_seed=fractional_split_random_seed,
+            fractional_split_shuffle=fractional_split_shuffle)
+        self.additionalMetrics = additional_metrics
+        self.computeProbabilities = compute_probabilities
+        self.binaryPositiveLabel = binary_positive_label
 
     @classmethod
-    def fromOldKwArgs(cls, dataSplitter=None, testFraction=None,
-            randomSeed=42, computeProbabilities=False, shuffle=True, additionalMetrics: Sequence[ClassificationMetric] = None):
-        return cls(dataSplitter=dataSplitter, fractionalSplitTestFraction=testFraction, fractionalSplitRandomSeed=randomSeed,
-            fractionalSplitShuffle=shuffle, additionalMetrics=additionalMetrics, computeProbabilities=computeProbabilities)
-
-    @classmethod
-    def fromDictOrInstance(cls, params: Optional[Union[Dict[str, Any], "VectorClassificationModelEvaluatorParams"]]) -> "VectorClassificationModelEvaluatorParams":
+    def from_dict_or_instance(cls,
+            params: Optional[Union[Dict[str, Any], "VectorClassificationModelEvaluatorParams"]]) \
+            -> "VectorClassificationModelEvaluatorParams":
         if params is None:
             return VectorClassificationModelEvaluatorParams()
         elif type(params) == dict:
-            return cls.fromOldKwArgs(**params)
+            raise ValueError("Old-style dictionary parametrisation is no longer supported")
         elif isinstance(params, VectorClassificationModelEvaluatorParams):
             return params
         else:
@@ -395,104 +394,101 @@ class VectorClassificationModelEvaluatorParams(VectorModelEvaluatorParams):
 
 
 class VectorClassificationModelEvaluator(VectorModelEvaluator[VectorClassificationModelEvaluationData]):
-    def __init__(self, data: Optional[InputOutputData], testData: InputOutputData = None, params: VectorClassificationModelEvaluatorParams = None,
-            **kwArgsOldParams):
+    def __init__(self,
+            data: Optional[InputOutputData],
+            test_data: InputOutputData = None,
+            params: VectorClassificationModelEvaluatorParams = None):
         """
         Constructs an evaluator with test and training data.
 
         :param data: the full data set, or, if testData is given, the training data
-        :param testData: the data to use for testing/evaluation; if None, must specify appropriate parameters to define splitting
+        :param test_data: the data to use for testing/evaluation; if None, must specify appropriate parameters to define splitting
         :param params: the parameters
-        :param kwArgsOldParams: old-style keyword parameters (for backward compatibility only)
         """
-        params = self._createParams(params, kwArgsOldParams)
-        super().__init__(data=data, testData=testData, params=params)
+        # TODO params should not be optional
+        super().__init__(data=data, test_data=test_data, params=params)
         self.params = params
 
-    @staticmethod
-    def _createParams(params: VectorClassificationModelEvaluatorParams, kwArgs: dict) -> VectorClassificationModelEvaluatorParams:
-        if params is not None:
-            return params
-        elif len(kwArgs) > 0:
-            return VectorClassificationModelEvaluatorParams.fromOldKwArgs(**kwArgs)
-        else:
-            return VectorClassificationModelEvaluatorParams()
-
-    def _evalModel(self, model: VectorClassificationModel, data: InputOutputData) -> VectorClassificationModelEvaluationData:
-        if model.isRegressionModel():
+    def _eval_model(self, model: VectorClassificationModel, data: InputOutputData) -> VectorClassificationModelEvaluationData:
+        if model.is_regression_model():
             raise ValueError(f"Expected a classification model, got {model}")
-        predictions, predictions_proba, groundTruth = self._computeOutputs(model, data)
-        evalStats = ClassificationEvalStats(y_predictedClassProbabilities=predictions_proba, y_predicted=predictions, y_true=groundTruth,
-            labels=model.getClassLabels(), additionalMetrics=self.params.additionalMetrics, binaryPositiveLabel=self.params.binaryPositiveLabel)
-        predictedVarName = model.getPredictedVariableNames()[0]
-        return VectorClassificationModelEvaluationData({predictedVarName: evalStats}, data, model)
+        predictions, predictions_proba, ground_truth = self._compute_outputs(model, data)
+        eval_stats = ClassificationEvalStats(
+            y_predicted_class_probabilities=predictions_proba,
+            y_predicted=predictions,
+            y_true=ground_truth,
+            labels=model.get_class_labels(),
+            additional_metrics=self.params.additionalMetrics,
+            binary_positive_label=self.params.binaryPositiveLabel)
+        predicted_var_name = model.get_predicted_variable_names()[0]
+        return VectorClassificationModelEvaluationData({predicted_var_name: eval_stats}, data, model)
 
-    def computeTestDataOutputs(self, model) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    def compute_test_data_outputs(self, model) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """
         Applies the given model to the test data
 
         :param model: the model to apply
         :return: a triple (predictions, predicted class probability vectors, groundTruth) of DataFrames
         """
-        return self._computeOutputs(model, self.testData)
+        return self._compute_outputs(model, self.test_data)
 
-    def _computeOutputs(self, model, inputOutputData: InputOutputData) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    def _compute_outputs(self, model, io_data: InputOutputData) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """
         Applies the given model to the given data
 
         :param model: the model to apply
-        :param inputOutputData: the data set
-        :return: a triple (predictions, predicted class probability vectors, groundTruth) of DataFrames
+        :param io_data: the data set
+        :return: a triple (predictions, predicted class probability vectors, ground_truth) of DataFrames
         """
         if self.params.computeProbabilities:
-            classProbabilities = model.predictClassProbabilities(inputOutputData.inputs)
-            predictions = model.convertClassProbabilitiesToPredictions(classProbabilities)
+            class_probabilities = model.predict_class_probabilities(io_data.inputs)
+            predictions = model.convert_class_probabilities_to_predictions(class_probabilities)
         else:
-            classProbabilities = None
-            predictions = model.predict(inputOutputData.inputs)
-        groundTruth = inputOutputData.outputs
-        return predictions, classProbabilities, groundTruth
+            class_probabilities = None
+            predictions = model.predict(io_data.inputs)
+        ground_truth = io_data.outputs
+        return predictions, class_probabilities, ground_truth
 
 
 class RuleBasedVectorClassificationModelEvaluator(VectorClassificationModelEvaluator):
     def __init__(self, data: InputOutputData):
-        super().__init__(data, testData=data)
+        super().__init__(data, test_data=data)
 
-    def evalModel(self, model: VectorModelBase, onTrainingData=False, track=True) -> VectorClassificationModelEvaluationData:
+    def eval_model(self, model: VectorModelBase, on_training_data=False, track=True) -> VectorClassificationModelEvaluationData:
         """
         Evaluate the rule based model. The training data and test data coincide, thus fitting the model
         will fit the model's preprocessors on the full data set and evaluating it will evaluate the model on the
         same data set.
 
         :param model: the model to evaluate
-        :param onTrainingData: has to be False here. Setting to True is not supported and will lead to an
+        :param on_training_data: has to be False here. Setting to True is not supported and will lead to an
             exception
         :param track: whether to track the evaluation metrics for the case where a tracked experiment was set on this object
         :return: the evaluation result
         """
-        if onTrainingData:
+        if on_training_data:
             raise Exception("Evaluating rule based models on training data is not supported. In this evaluator"
                             "training and test data coincide.")
-        return super().evalModel(model)
+        return super().eval_model(model)
 
 
 class RuleBasedVectorRegressionModelEvaluator(VectorRegressionModelEvaluator):
     def __init__(self, data: InputOutputData):
-        super().__init__(data, testData=data)
+        super().__init__(data, test_data=data)
 
-    def evalModel(self, model: VectorModelBase, onTrainingData=False, track=True) -> VectorRegressionModelEvaluationData:
+    def eval_model(self, model: VectorModelBase, on_training_data=False, track=True) -> VectorRegressionModelEvaluationData:
         """
         Evaluate the rule based model. The training data and test data coincide, thus fitting the model
         will fit the model's preprocessors on the full data set and evaluating it will evaluate the model on the
         same data set.
 
         :param model: the model to evaluate
-        :param onTrainingData: has to be False here. Setting to True is not supported and will lead to an
+        :param on_training_data: has to be False here. Setting to True is not supported and will lead to an
             exception
         :param track: whether to track the evaluation metrics for the case where a tracked experiment was set on this object
         :return: the evaluation result
         """
-        if onTrainingData:
+        if on_training_data:
             raise Exception("Evaluating rule based models on training data is not supported. In this evaluator"
                             "training and test data coincide.")
-        return super().evalModel(model)
+        return super().eval_model(model)

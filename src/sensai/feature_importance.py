@@ -21,49 +21,49 @@ log = logging.getLogger(__name__)
 
 
 class FeatureImportance:
-    def __init__(self, featureImportanceDict: Union[Dict[str, float], Dict[str, Dict[str, float]]]):
-        self.featureImportanceDict = featureImportanceDict
-        self._isMultiVar = self._isDict(next(iter(featureImportanceDict.values())))
+    def __init__(self, feature_importance_dict: Union[Dict[str, float], Dict[str, Dict[str, float]]]):
+        self.feature_importance_dict = feature_importance_dict
+        self._isMultiVar = self._is_dict(next(iter(feature_importance_dict.values())))
 
     @staticmethod
-    def _isDict(x):
+    def _is_dict(x):
         return hasattr(x, "get")
 
-    def getFeatureImportanceDict(self, predictedVarName=None) -> Dict[str, float]:
+    def get_feature_importance_dict(self, predicted_var_name=None) -> Dict[str, float]:
         if self._isMultiVar:
-            self.featureImportanceDict: Dict[str, Dict[str, float]]
-            if predictedVarName is not None:
-                return self.featureImportanceDict[predictedVarName]
+            self.feature_importance_dict: Dict[str, Dict[str, float]]
+            if predicted_var_name is not None:
+                return self.feature_importance_dict[predicted_var_name]
             else:
-                if len(self.featureImportanceDict) > 1:
+                if len(self.feature_importance_dict) > 1:
                     raise ValueError("Must provide predicted variable name (multiple output variables)")
                 else:
-                    return next(iter(self.featureImportanceDict.values()))
+                    return next(iter(self.feature_importance_dict.values()))
         else:
-            return self.featureImportanceDict
+            return self.feature_importance_dict
 
-    def getSortedTuples(self, predictedVarName=None, reverse=False) -> List[Tuple[str, float]]:
+    def get_sorted_tuples(self, predicted_var_name=None, reverse=False) -> List[Tuple[str, float]]:
         """
-        :param predictedVarName: the predicted variable name for which to retrieve the sorted feature importance values
-        :param reverse: whether to reverse the order (i.e. descending order of importance values, where the most important feature comes first,
-            rather than ascending order)
+        :param predicted_var_name: the predicted variable name for which to retrieve the sorted feature importance values
+        :param reverse: whether to reverse the order (i.e. descending order of importance values, where the most important feature comes
+            first, rather than ascending order)
         :return: a sorted list of tuples (feature name, feature importance)
         """
         # noinspection PyTypeChecker
-        tuples: List[Tuple[str, float]] = list(self.getFeatureImportanceDict(predictedVarName).items())
+        tuples: List[Tuple[str, float]] = list(self.get_feature_importance_dict(predicted_var_name).items())
         tuples.sort(key=lambda t: t[1], reverse=reverse)
         return tuples
 
-    def plot(self, predictedVarName=None, sort=True) -> plt.Figure:
-        return plotFeatureImportance(self.getFeatureImportanceDict(predictedVarName=predictedVarName), sort=sort)
+    def plot(self, predicted_var_name=None, sort=True) -> plt.Figure:
+        return plot_feature_importance(self.get_feature_importance_dict(predicted_var_name=predicted_var_name), sort=sort)
 
-    def getDataFrame(self, predictedVarName=None) -> pd.DataFrame:
+    def get_data_frame(self, predicted_var_name=None) -> pd.DataFrame:
         """
-        :param predictedVarName: the predicted variable name
+        :param predicted_var_name: the predicted variable name
         :return: a data frame with two columns, "feature" and "importance"
         """
-        namesAndImportance = self.getSortedTuples(predictedVarName=predictedVarName, reverse=True)
-        return pd.DataFrame(namesAndImportance, columns=["feature", "importance"])
+        names_and_importance = self.get_sorted_tuples(predicted_var_name=predicted_var_name, reverse=True)
+        return pd.DataFrame(names_and_importance, columns=["feature", "importance"])
 
 
 class FeatureImportanceProvider(ABC):
@@ -71,7 +71,7 @@ class FeatureImportanceProvider(ABC):
     Interface for models that can provide feature importance values
     """
     @abstractmethod
-    def getFeatureImportanceDict(self) -> Union[Dict[str, float], Dict[str, Dict[str, float]]]:
+    def get_feature_importance_dict(self) -> Union[Dict[str, float], Dict[str, Dict[str, float]]]:
         """
         Gets the feature importance values
 
@@ -80,22 +80,22 @@ class FeatureImportanceProvider(ABC):
         """
         pass
 
-    def getFeatureImportance(self) -> FeatureImportance:
-        return FeatureImportance(self.getFeatureImportanceDict())
+    def get_feature_importance(self) -> FeatureImportance:
+        return FeatureImportance(self.get_feature_importance_dict())
 
     @deprecated("Use getFeatureImportanceDict or the high-level interface getFeatureImportance instead.")
-    def getFeatureImportances(self) -> Union[Dict[str, float], Dict[str, Dict[str, float]]]:
-        return self.getFeatureImportanceDict()
+    def get_feature_importances(self) -> Union[Dict[str, float], Dict[str, Dict[str, float]]]:
+        return self.get_feature_importance_dict()
 
 
-def plotFeatureImportance(featureImportanceDict: Dict[str, float], subtitle: str = None, sort=True) -> plt.Figure:
+def plot_feature_importance(feature_importance_dict: Dict[str, float], subtitle: str = None, sort=True) -> plt.Figure:
     if sort:
-        featureImportanceDict = {k: v for k, v in sorted(featureImportanceDict.items(), key=lambda x: x[1], reverse=True)}
-    numFeatures = len(featureImportanceDict)
-    defaultWidth, defaultHeight = MATPLOTLIB_DEFAULT_FIGURE_SIZE
-    height = max(defaultHeight, defaultHeight * numFeatures / 20)
-    fig, ax = plt.subplots(figsize=(defaultWidth, height))
-    sns.barplot(x=list(featureImportanceDict.values()), y=list(featureImportanceDict.keys()), ax=ax)
+        feature_importance_dict = {k: v for k, v in sorted(feature_importance_dict.items(), key=lambda x: x[1], reverse=True)}
+    num_features = len(feature_importance_dict)
+    default_width, default_height = MATPLOTLIB_DEFAULT_FIGURE_SIZE
+    height = max(default_height, default_height * num_features / 20)
+    fig, ax = plt.subplots(figsize=(default_width, height))
+    sns.barplot(x=list(feature_importance_dict.values()), y=list(feature_importance_dict.keys()), ax=ax)
     title = "Feature Importance"
     if subtitle is not None:
         title += "\n" + subtitle
@@ -110,127 +110,127 @@ class AggregatedFeatureImportance:
     models and compatible models from lightgbm, etc.)
     """
     def __init__(self, *items: Union[FeatureImportanceProvider, Dict[str, float], Dict[str, Dict[str, float]]],
-            featureAggRegEx: Sequence[str] = (), aggFn=np.mean):
+            feature_agg_reg_ex: Sequence[str] = (), agg_fn=np.mean):
         r"""
         :param items: (optional) initial list of feature importance providers or dictionaries to aggregate; further
             values can be added via method add
-        :param featureAggRegEx: a sequence of regular expressions describing which feature names to sum as one. Each regex must
+        :param feature_agg_reg_ex: a sequence of regular expressions describing which feature names to sum as one. Each regex must
             contain exactly one group. If a regex matches a feature name, the feature importance will be summed under the key
             of the matched group instead of the full feature name. For example, the regex r"(\w+)_\d+$" will cause "foo_1" and "foo_2"
             to be summed under "foo" and similarly "bar_1" and "bar_2" to be summed under "bar".
         """
-        self._aggDict = None
-        self._isNested = None
-        self._numDictsAdded = 0
-        self._featureAggRegEx = [re.compile(p) for p in featureAggRegEx]
-        self._aggFn = aggFn
+        self._agg_dict = None
+        self._is_nested = None
+        self._num_dicts_added = 0
+        self._feature_agg_reg_ex = [re.compile(p) for p in feature_agg_reg_ex]
+        self._agg_fn = agg_fn
         for item in items:
             self.add(item)
 
     @staticmethod
-    def _isDict(x):
+    def _is_dict(x):
         return hasattr(x, "get")
 
-    def add(self, featureImportance: Union[FeatureImportanceProvider, Dict[str, float], Dict[str, Dict[str, float]]]):
+    def add(self, feature_importance: Union[FeatureImportanceProvider, Dict[str, float], Dict[str, Dict[str, float]]]):
         """
         Adds the feature importance values from the given dictionary
 
-        :param featureImportance: the dictionary obtained via a model's getFeatureImportances method
+        :param feature_importance: the dictionary obtained via a model's getFeatureImportances method
         """
-        if isinstance(featureImportance, FeatureImportanceProvider):
-            featureImportance = featureImportance.getFeatureImportanceDict()
-        if self._isNested is None:
-            self._isNested = self._isDict(next(iter(featureImportance.values())))
-        if self._isNested:
-            if self._aggDict is None:
-                self._aggDict = collections.defaultdict(lambda: collections.defaultdict(list))
-            for targetName, d in featureImportance.items():
+        if isinstance(feature_importance, FeatureImportanceProvider):
+            feature_importance = feature_importance.get_feature_importance_dict()
+        if self._is_nested is None:
+            self._is_nested = self._is_dict(next(iter(feature_importance.values())))
+        if self._is_nested:
+            if self._agg_dict is None:
+                self._agg_dict = collections.defaultdict(lambda: collections.defaultdict(list))
+            for targetName, d in feature_importance.items():
                 d: dict
                 for featureName, value in d.items():
-                    self._aggDict[targetName][self._aggFeatureName(featureName)].append(value)
+                    self._agg_dict[targetName][self._agg_feature_name(featureName)].append(value)
         else:
-            if self._aggDict is None:
-                self._aggDict = collections.defaultdict(list)
-            for featureName, value in featureImportance.items():
-                self._aggDict[self._aggFeatureName(featureName)].append(value)
-        self._numDictsAdded += 1
+            if self._agg_dict is None:
+                self._agg_dict = collections.defaultdict(list)
+            for featureName, value in feature_importance.items():
+                self._agg_dict[self._agg_feature_name(featureName)].append(value)
+        self._num_dicts_added += 1
 
-    def _aggFeatureName(self, featureName: str):
-        for regex in self._featureAggRegEx:
-            m = regex.match(featureName)
+    def _agg_feature_name(self, feature_name: str):
+        for regex in self._feature_agg_reg_ex:
+            m = regex.match(feature_name)
             if m is not None:
                 return m.group(1)
-        return featureName
+        return feature_name
 
-    def getAggregatedFeatureImportanceDict(self) -> Union[Dict[str, float], Dict[str, Dict[str, float]]]:
+    def get_aggregated_feature_importance_dict(self) -> Union[Dict[str, float], Dict[str, Dict[str, float]]]:
         def aggregate(d: dict):
-            return {k: self._aggFn(l) for k, l in d.items()}
+            return {k: self._agg_fn(l) for k, l in d.items()}
 
-        if self._isNested:
-            return {k: aggregate(d) for k, d in self._aggDict.items()}
+        if self._is_nested:
+            return {k: aggregate(d) for k, d in self._agg_dict.items()}
         else:
-            return aggregate(self._aggDict)
+            return aggregate(self._agg_dict)
 
-    def getAggregatedFeatureImportance(self) -> FeatureImportance:
-        return FeatureImportance(self.getAggregatedFeatureImportanceDict())
+    def get_aggregated_feature_importance(self) -> FeatureImportance:
+        return FeatureImportance(self.get_aggregated_feature_importance_dict())
 
 
-def computePermutationFeatureImportanceDict(model, ioData: InputOutputData, scoring, numRepeats: int, randomState,
-        excludeInputPreprocessors=False, numJobs=None):
+def compute_permutation_feature_importance_dict(model, io_data: InputOutputData, scoring, num_repeats: int, random_state,
+        exclude_input_preprocessors=False, num_jobs=None):
     from sklearn.inspection import permutation_importance
-    if excludeInputPreprocessors:
-        inputs = model.computeModelInputs(ioData.inputs)
+    if exclude_input_preprocessors:
+        inputs = model.compute_model_inputs(io_data.inputs)
         model = copy.copy(model)
-        model.removeInputPreprocessors()
+        model.remove_input_preprocessors()
     else:
-        inputs = ioData.inputs
-    featureNames = inputs.columns
-    pi = permutation_importance(model, inputs, ioData.outputs, n_repeats=numRepeats, random_state=randomState, scoring=scoring,
-        n_jobs=numJobs)
-    importanceValues = pi.importances_mean
-    assert len(importanceValues) == len(featureNames)
-    featureImportanceDict = dict(zip(featureNames, importanceValues))
-    return featureImportanceDict
+        inputs = io_data.inputs
+    feature_names = inputs.columns
+    pi = permutation_importance(model, inputs, io_data.outputs, n_repeats=num_repeats, random_state=random_state, scoring=scoring,
+        n_jobs=num_jobs)
+    importance_values = pi.importances_mean
+    assert len(importance_values) == len(feature_names)
+    feature_importance_dict = dict(zip(feature_names, importance_values))
+    return feature_importance_dict
 
 
 class AggregatedPermutationFeatureImportance(ToStringMixin):
-    def __init__(self, aggregatedFeatureImportance: AggregatedFeatureImportance, scoring, numRepeats=5, randomSeed=42,
-            excludeModelInputPreprocessors=False, numJobs: Optional[int] = None):
+    def __init__(self, aggregated_feature_importance: AggregatedFeatureImportance, scoring, num_repeats=5, random_seed=42,
+            exclude_model_input_preprocessors=False, num_jobs: Optional[int] = None):
         """
-        :param aggregatedFeatureImportance: the object in which to aggregate the feature importance (to which no feature importance
+        :param aggregated_feature_importance: the object in which to aggregate the feature importance (to which no feature importance
             values should have yet been added)
         :param scoring: the scoring method; see https://scikit-learn.org/stable/modules/model_evaluation.html; e.g. "r2" for regression or
             "accuracy" for classification
-        :param numRepeats: the number of data permutations to apply for each model
-        :param randomSeed: the random seed for shuffling the data
-        :param excludeModelInputPreprocessors: whether to exclude model input preprocessors, such that the
+        :param num_repeats: the number of data permutations to apply for each model
+        :param random_seed: the random seed for shuffling the data
+        :param exclude_model_input_preprocessors: whether to exclude model input preprocessors, such that the
             feature importance will be reported on the transformed inputs that are actually fed to the model rather than the original
             inputs.
             Enabling this can, for example, help save time in cases where the input preprocessors discard many of the raw input
             columns, but it may not be a good idea of the preprocessors generate multiple columns from the original input columns.
-        :param numJobs:
+        :param num_jobs:
             Number of jobs to run in parallel. Each separate model-data permutation feature importance computation is parallelised over
             the columns. `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
             `-1` means using all processors.
         """
-        self._agg = aggregatedFeatureImportance
+        self._agg = aggregated_feature_importance
         self.scoring = scoring
-        self.numRepeats = numRepeats
-        self.randomSeed = randomSeed
-        self.excludeModelInputPreprocessors = excludeModelInputPreprocessors
-        self.numJobs = numJobs
+        self.numRepeats = num_repeats
+        self.randomSeed = random_seed
+        self.excludeModelInputPreprocessors = exclude_model_input_preprocessors
+        self.numJobs = num_jobs
 
-    def add(self, model: VectorModel, ioData: InputOutputData):
-        featureImportanceDict = computePermutationFeatureImportanceDict(model, ioData, self.scoring, numRepeats=self.numRepeats,
-            randomState=self.randomSeed, excludeInputPreprocessors=self.excludeModelInputPreprocessors, numJobs=self.numJobs)
-        self._agg.add(featureImportanceDict)
+    def add(self, model: VectorModel, io_data: InputOutputData):
+        feature_importance_dict = compute_permutation_feature_importance_dict(model, io_data, self.scoring, num_repeats=self.numRepeats,
+            random_state=self.randomSeed, exclude_input_preprocessors=self.excludeModelInputPreprocessors, num_jobs=self.numJobs)
+        self._agg.add(feature_importance_dict)
 
-    def addCrossValidationData(self, crossValData: VectorModelCrossValidationData):
-        if crossValData.trainedModels is None:
+    def add_cross_validation_data(self, cross_val_data: VectorModelCrossValidationData):
+        if cross_val_data.trained_models is None:
             raise ValueError("No models in cross-validation data; enable model collection during cross-validation")
-        for i, (model, evalData) in enumerate(zip(crossValData.trainedModels, crossValData.evalDataList), start=1):
-            log.info(f"Computing permutation feature importance for model #{i}/{len(crossValData.trainedModels)}")
-            self.add(model, evalData.ioData)
+        for i, (model, evalData) in enumerate(zip(cross_val_data.trained_models, cross_val_data.eval_data_list), start=1):
+            log.info(f"Computing permutation feature importance for model #{i}/{len(cross_val_data.trained_models)}")
+            self.add(model, evalData.io_data)
 
-    def getFeatureImportance(self) -> FeatureImportance:
-        return self._agg.getAggregatedFeatureImportance()
+    def get_feature_importance(self) -> FeatureImportance:
+        return self._agg.get_aggregated_feature_importance()

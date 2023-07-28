@@ -22,33 +22,33 @@ class RandomForestQuantileRegressorVectorRegressionModel(AbstractSkLearnMultiple
         q = [0.5, margin/2, 1 - margin/2]
         super().__init__(RandomForestQuantileRegressor, q=q, random_state=random_state, **kwargs)
 
-    def predictConfidenceIntervals(self, X: pd.DataFrame, varName: str = None):
+    def predict_confidence_intervals(self, x: pd.DataFrame, var_name: str = None):
         """
-        :param X: the input data
-        :param varName: the predicted variable name; may be None if there is only one predicted variable
+        :param x: the input data
+        :param var_name: the predicted variable name; may be None if there is only one predicted variable
         :return: an array of shape [2, N], where the first dimension contains the confidence interval's lower bounds and the second
             its upper bounds
         """
-        model = self.getSkLearnModel(varName)
+        model = self.get_sklearn_model(var_name)
         model: RandomForestQuantileRegressor
-        outputs = self._predictQuantiles(model, self.computeModelInputs(X))
+        outputs = self._predict_quantiles(model, self.compute_model_inputs(x))
         return outputs[1:]
 
-    def _predictQuantiles(self, model: RandomForestQuantileRegressor, inputs: pd.DataFrame) -> np.ndarray:
+    def _predict_quantiles(self, model: RandomForestQuantileRegressor, inputs: pd.DataFrame) -> np.ndarray:
         outputs = model.predict(inputs)
         return outputs
 
-    def _predictSkLearnSingleModel(self, model, inputs: pd.DataFrame) -> np.ndarray:
-        return self._predictQuantiles(model, inputs)[0]
+    def _predict_sklearn_single_model(self, model, inputs: pd.DataFrame) -> np.ndarray:
+        return self._predict_quantiles(model, inputs)[0]
 
 
 class QuantileRegressionMetric(RegressionMetric, ABC):
     @staticmethod
     @functools.lru_cache(maxsize=1)  # use cache for efficient reuse of results across different subclasses during evaluation
-    def computeConfidenceIntervals(model: VectorRegressionModel, ioData: InputOutputData = None) -> np.ndarray:
+    def compute_confidence_intervals(model: VectorRegressionModel, io_data: InputOutputData = None) -> np.ndarray:
         if not isinstance(model, RandomForestQuantileRegressorVectorRegressionModel):
             raise ValueError(f"Model must be of type RandomForestQuantileRegressorVectorRegressionModel, got type {type(model)}")
-        intervals: np.ndarray = model.predictConfidenceIntervals(ioData.inputs)
+        intervals: np.ndarray = model.predict_confidence_intervals(io_data.inputs)
         return intervals
 
 
@@ -60,12 +60,13 @@ class QuantileRegressionMetricAccuracyInConfidenceInterval(QuantileRegressionMet
     name = "AccuracyInCI"
 
     @classmethod
-    def computeValue(cls, y_true: np.ndarray, y_predicted: np.ndarray, model: VectorRegressionModel = None, ioData: InputOutputData = None):
-        intervals = cls.computeConfidenceIntervals(model, ioData)
+    def compute_value(cls, y_true: np.ndarray, y_predicted: np.ndarray, model: VectorRegressionModel = None,
+            io_data: InputOutputData = None):
+        intervals = cls.compute_confidence_intervals(model, io_data)
         rf = RelativeFrequencyCounter()
         for (lower, upper), gt in zip(intervals.transpose(), y_true):
             rf.count(lower <= gt <= upper)
-        return rf.getRelativeFrequency()
+        return rf.get_relative_frequency()
 
 
 class QuantileRegressionMetricConfidenceIntervalMeanSize(QuantileRegressionMetric):
@@ -75,8 +76,8 @@ class QuantileRegressionMetricConfidenceIntervalMeanSize(QuantileRegressionMetri
     name = "MeanSizeCI"
 
     @classmethod
-    def computeValue(cls, y_true: np.ndarray, y_predicted: np.ndarray, model: VectorRegressionModel = None, ioData: InputOutputData = None):
-        intervals = cls.computeConfidenceIntervals(model, ioData)
+    def compute_value(cls, y_true: np.ndarray, y_predicted: np.ndarray, model: VectorRegressionModel = None, io_data: InputOutputData = None):
+        intervals = cls.compute_confidence_intervals(model, io_data)
         values = []
         for lower, upper in intervals.transpose():
             values.append(upper-lower)
@@ -90,8 +91,8 @@ class QuantileRegressionMetricConfidenceIntervalMedianSize(QuantileRegressionMet
     name = "MedianSizeCI"
 
     @classmethod
-    def computeValue(cls, y_true: np.ndarray, y_predicted: np.ndarray, model: VectorRegressionModel = None, ioData: InputOutputData = None):
-        intervals = cls.computeConfidenceIntervals(model, ioData)
+    def compute_value(cls, y_true: np.ndarray, y_predicted: np.ndarray, model: VectorRegressionModel = None, io_data: InputOutputData = None):
+        intervals = cls.compute_confidence_intervals(model, io_data)
         values = []
         for lower, upper in intervals.transpose():
             values.append(upper-lower)
@@ -102,14 +103,14 @@ class QuantileRegressionMetricRelFreqMaxSizeConfidenceInterval(QuantileRegressio
     """
     Relative frequency of confidence interval having the given maximum size
     """
-    def __init__(self, maxSize: float):
-        super().__init__(f"RelFreqMaxSizeCI[{maxSize}]")
-        self.maxSize = maxSize
+    def __init__(self, max_size: float):
+        super().__init__(f"RelFreqMaxSizeCI[{max_size}]")
+        self.max_size = max_size
 
-    def computeValue(self, y_true: np.ndarray, y_predicted: np.ndarray, model: VectorRegressionModel = None, ioData: InputOutputData = None):
-        intervals = self.computeConfidenceIntervals(model, ioData)
+    def compute_value(self, y_true: np.ndarray, y_predicted: np.ndarray, model: VectorRegressionModel = None, io_data: InputOutputData = None):
+        intervals = self.compute_confidence_intervals(model, io_data)
         counter = RelativeFrequencyCounter()
         for lower, upper in intervals.transpose():
             size = upper-lower
-            counter.count(size <= self.maxSize)
-        return counter.getRelativeFrequency()
+            counter.count(size <= self.max_size)
+        return counter.get_relative_frequency()

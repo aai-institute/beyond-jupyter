@@ -13,7 +13,7 @@ from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, r
 from .eval_stats_base import PredictionArray, PredictionEvalStats, EvalStatsCollection, Metric, EvalStatsPlot, TMetric
 from ...util.aggregation import RelativeFrequencyCounter
 from ...util.pickle import getstate
-from ...util.plot import plotMatrix
+from ...util.plot import plot_matrix
 
 log = logging.getLogger(__name__)
 
@@ -23,40 +23,42 @@ BINARY_CLASSIFICATION_POSITIVE_LABEL_CANDIDATES = [1, True, "1", "True"]
 
 
 class ClassificationMetric(Metric["ClassificationEvalStats"], ABC):
-    requiresProbabilities = False
+    requires_probabilities = False
 
-    def __init__(self, name=None, bounds: Tuple[float, float] = (0, 1), requiresProbabilities=None):
+    def __init__(self, name=None, bounds: Tuple[float, float] = (0, 1), requires_probabilities: Optional[bool] = None):
         """
         :param name: the name of the metric; if None use the class' name attribute
         :param bounds: the minimum and maximum values the metric can take on
         """
         super().__init__(name=name, bounds=bounds)
-        self.requiresProbabilities = requiresProbabilities if requiresProbabilities is not None else self.__class__.requiresProbabilities
+        self.requires_probabilities = requires_probabilities \
+            if requires_probabilities is not None \
+            else self.__class__.requires_probabilities
 
-    def computeValueForEvalStats(self, evalStats: "ClassificationEvalStats"):
-        return self.computeValue(evalStats.y_true, evalStats.y_predicted, evalStats.y_predictedClassProbabilities)
+    def compute_value_for_eval_stats(self, eval_stats: "ClassificationEvalStats"):
+        return self.compute_value(eval_stats.y_true, eval_stats.y_predicted, eval_stats.y_predictedClassProbabilities)
 
-    def computeValue(self, y_true, y_predicted, y_predictedClassProbabilities=None):
-        if self.requiresProbabilities and y_predictedClassProbabilities is None:
+    def compute_value(self, y_true, y_predicted, y_predicted_class_probabilities=None):
+        if self.requires_probabilities and y_predicted_class_probabilities is None:
             raise ValueError(f"{self} requires class probabilities")
-        return self._computeValue(y_true, y_predicted, y_predictedClassProbabilities)
+        return self._compute_value(y_true, y_predicted, y_predicted_class_probabilities)
 
     @abstractmethod
-    def _computeValue(self, y_true, y_predicted, y_predictedClassProbabilities):
+    def _compute_value(self, y_true, y_predicted, y_predicted_class_probabilities):
         pass
 
 
 class ClassificationMetricAccuracy(ClassificationMetric):
     name = "accuracy"
 
-    def _computeValue(self, y_true, y_predicted, y_predictedClassProbabilities):
+    def _compute_value(self, y_true, y_predicted, y_predicted_class_probabilities):
         return accuracy_score(y_true=y_true, y_pred=y_predicted)
 
 
 class ClassificationMetricBalancedAccuracy(ClassificationMetric):
     name = "balancedAccuracy"
 
-    def _computeValue(self, y_true, y_predicted, y_predictedClassProbabilities):
+    def _compute_value(self, y_true, y_predicted, y_predicted_class_probabilities):
         return balanced_accuracy_score(y_true=y_true, y_pred=y_predicted)
 
 
@@ -64,74 +66,75 @@ class ClassificationMetricAccuracyWithoutLabels(ClassificationMetric):
     """
     Accuracy score with set of data points limited to the ones where the ground truth label is not one of the given labels
     """
-    def __init__(self, *labels: Any, probabilityThreshold=None, zeroValue=0.0):
+    def __init__(self, *labels: Any, probability_threshold=None, zero_value=0.0):
         """
         :param labels: one or more labels which are not to be considered (all data points where the ground truth is
             one of these labels will be ignored)
-        :param probabilityThreshold: a probability threshold: the probability of the most likely class must be at least this value for a data point
-            to be considered in the metric computation (analogous to :class:`ClassificationMetricAccuracyMaxProbabilityBeyondThreshold`)
-        :param zeroValue: the metric value to assume for the case where the condition never applies (no countable instances without
+        :param probability_threshold: a probability threshold: the probability of the most likely class must be at least this value for a
+            data point to be considered in the metric computation (analogous to
+            :class:`ClassificationMetricAccuracyMaxProbabilityBeyondThreshold`)
+        :param zero_value: the metric value to assume for the case where the condition never applies (no countable instances without
             the given label/beyond the given threshold)
         """
-        if probabilityThreshold is not None:
-            nameAdd = f", p_max >= {probabilityThreshold}"
+        if probability_threshold is not None:
+            name_add = f", p_max >= {probability_threshold}"
         else:
-            nameAdd = ""
-        name = f"{ClassificationMetricAccuracy.name}Without[{','.join(map(str, labels))}{nameAdd}]"
-        super().__init__(name, requiresProbabilities=probabilityThreshold is not None)
+            name_add = ""
+        name = f"{ClassificationMetricAccuracy.name}Without[{','.join(map(str, labels))}{name_add}]"
+        super().__init__(name, requires_probabilities=probability_threshold is not None)
         self.labels = set(labels)
-        self.probabilityThreshold = probabilityThreshold
-        self.zeroValue = zeroValue
+        self.probability_threshold = probability_threshold
+        self.zero_value = zero_value
 
-    def _computeValue(self, y_true, y_predicted, y_predictedClassProbabilities):
+    def _compute_value(self, y_true, y_predicted, y_predicted_class_probabilities):
         y_true = np.array(y_true)
         y_predicted = np.array(y_predicted)
         indices = []
-        for i, (trueLabel, predictedLabel) in enumerate(zip(y_true, y_predicted)):
-            if trueLabel not in self.labels:
-                if self.probabilityThreshold is not None:
-                    if y_predictedClassProbabilities[predictedLabel].iloc[i] < self.probabilityThreshold:
+        for i, (true_label, predicted_label) in enumerate(zip(y_true, y_predicted)):
+            if true_label not in self.labels:
+                if self.probability_threshold is not None:
+                    if y_predicted_class_probabilities[predicted_label].iloc[i] < self.probability_threshold:
                         continue
                 indices.append(i)
         if len(indices) == 0:
-            return self.zeroValue
+            return self.zero_value
         return accuracy_score(y_true=y_true[indices], y_pred=y_predicted[indices])
 
-    def getPairedMetrics(self) -> List[TMetric]:
-        if self.probabilityThreshold is not None:
-            return [ClassificationMetricRelFreqMaxProbabilityBeyondThreshold(self.probabilityThreshold)]
+    def get_paired_metrics(self) -> List[TMetric]:
+        if self.probability_threshold is not None:
+            return [ClassificationMetricRelFreqMaxProbabilityBeyondThreshold(self.probability_threshold)]
         else:
             return []
 
 
 class ClassificationMetricGeometricMeanOfTrueClassProbability(ClassificationMetric):
     name = "geoMeanTrueClassProb"
-    requiresProbabilities = True
+    requires_probabilities = True
 
-    def _computeValue(self, y_true, y_predicted, y_predictedClassProbabilities):
+    def _compute_value(self, y_true, y_predicted, y_predicted_class_probabilities):
         y_predicted_proba_true_class = np.zeros(len(y_true))
         for i in range(len(y_true)):
-            trueClass = y_true[i]
-            if trueClass not in y_predictedClassProbabilities.columns:
+            true_class = y_true[i]
+            if true_class not in y_predicted_class_probabilities.columns:
                 y_predicted_proba_true_class[i] = 0
             else:
-                y_predicted_proba_true_class[i] = y_predictedClassProbabilities[trueClass].iloc[i]
+                y_predicted_proba_true_class[i] = y_predicted_class_probabilities[true_class].iloc[i]
         # the 1e-3 below prevents lp = -inf due to single entries with y_predicted_proba_true_class=0
         lp = np.log(np.maximum(1e-3, y_predicted_proba_true_class))
         return np.exp(lp.sum() / len(lp))
 
 
 class ClassificationMetricTopNAccuracy(ClassificationMetric):
-    requiresProbabilities = True
+    requires_probabilities = True
 
     def __init__(self, n: int):
         self.n = n
         super().__init__(name=f"top{n}Accuracy")
 
-    def _computeValue(self, y_true, y_predicted, y_predictedClassProbabilities):
-        labels = y_predictedClassProbabilities.columns
+    def _compute_value(self, y_true, y_predicted, y_predicted_class_probabilities):
+        labels = y_predicted_class_probabilities.columns
         cnt = 0
-        for i, rowValues in enumerate(y_predictedClassProbabilities.values.tolist()):
+        for i, rowValues in enumerate(y_predicted_class_probabilities.values.tolist()):
             pairs = sorted(zip(labels, rowValues), key=lambda x: x[1], reverse=True)
             if y_true[i] in (x[0] for x in pairs[:self.n]):
                 cnt += 1
@@ -142,33 +145,33 @@ class ClassificationMetricAccuracyMaxProbabilityBeyondThreshold(ClassificationMe
     """
     Accuracy limited to cases where the probability of the most likely class is at least a given threshold
     """
-    requiresProbabilities = True
+    requires_probabilities = True
 
-    def __init__(self, threshold: float, zeroValue=0.0):
+    def __init__(self, threshold: float, zero_value=0.0):
         """
         :param threshold: minimum probability of the most likely class
-        :param zeroValue: the value of the metric for the case where the probability of the most likely class never reaches the threshold
+        :param zero_value: the value of the metric for the case where the probability of the most likely class never reaches the threshold
         """
         self.threshold = threshold
-        self.zeroValue = zeroValue
+        self.zeroValue = zero_value
         super().__init__(name=f"accuracy[p_max >= {threshold}]")
 
-    def _computeValue(self, y_true, y_predicted, y_predictedClassProbabilities):
-        labels = y_predictedClassProbabilities.columns
-        labelToColIdx = {l: i for i, l in enumerate(labels)}
-        relFreq = RelativeFrequencyCounter()
-        for i, probabilities in enumerate(y_predictedClassProbabilities.values.tolist()):
-            classIdx_predicted = np.argmax(probabilities)
-            prob_predicted = probabilities[classIdx_predicted]
+    def _compute_value(self, y_true, y_predicted, y_predicted_class_probabilities):
+        labels = y_predicted_class_probabilities.columns
+        label_to_col_idx = {l: i for i, l in enumerate(labels)}
+        rel_freq = RelativeFrequencyCounter()
+        for i, probabilities in enumerate(y_predicted_class_probabilities.values.tolist()):
+            class_idx_predicted = np.argmax(probabilities)
+            prob_predicted = probabilities[class_idx_predicted]
             if prob_predicted >= self.threshold:
-                classIdx_true = labelToColIdx.get(y_true[i], -1)  # -1 if true class is unknown to model (did not appear in training data)
-                relFreq.count(classIdx_predicted == classIdx_true)
-        if relFreq.numTotal == 0:
+                class_idx_true = label_to_col_idx.get(y_true[i], -1)  # -1 if true class is unknown to model (did not appear in training data)
+                rel_freq.count(class_idx_predicted == class_idx_true)
+        if rel_freq.num_total == 0:
             return self.zeroValue
         else:
-            return relFreq.getRelativeFrequency()
+            return rel_freq.get_relative_frequency()
 
-    def getPairedMetrics(self) -> List[TMetric]:
+    def get_paired_metrics(self) -> List[TMetric]:
         return [ClassificationMetricRelFreqMaxProbabilityBeyondThreshold(self.threshold)]
 
 
@@ -176,7 +179,7 @@ class ClassificationMetricRelFreqMaxProbabilityBeyondThreshold(ClassificationMet
     """
     Relative frequency of cases where the probability of the most likely class is at least a given threshold
     """
-    requiresProbabilities = True
+    requires_probabilities = True
 
     def __init__(self, threshold: float):
         """
@@ -185,53 +188,53 @@ class ClassificationMetricRelFreqMaxProbabilityBeyondThreshold(ClassificationMet
         self.threshold = threshold
         super().__init__(name=f"relFreq[p_max >= {threshold}]")
 
-    def _computeValue(self, y_true, y_predicted, y_predictedClassProbabilities):
-        relFreq = RelativeFrequencyCounter()
-        for i, probabilities in enumerate(y_predictedClassProbabilities.values.tolist()):
-            pMax = np.max(probabilities)
-            relFreq.count(pMax >= self.threshold)
-        return relFreq.getRelativeFrequency()
+    def _compute_value(self, y_true, y_predicted, y_predicted_class_probabilities):
+        rel_freq = RelativeFrequencyCounter()
+        for i, probabilities in enumerate(y_predicted_class_probabilities.values.tolist()):
+            p_max = np.max(probabilities)
+            rel_freq.count(p_max >= self.threshold)
+        return rel_freq.get_relative_frequency()
 
 
 class BinaryClassificationMetric(ClassificationMetric, ABC):
-    def __init__(self, positiveClassLabel, name: str = None):
+    def __init__(self, positive_class_label, name: str = None):
         name = name if name is not None else self.__class__.name
-        if positiveClassLabel not in BINARY_CLASSIFICATION_POSITIVE_LABEL_CANDIDATES:
-            name = f"{name}[{positiveClassLabel}]"
+        if positive_class_label not in BINARY_CLASSIFICATION_POSITIVE_LABEL_CANDIDATES:
+            name = f"{name}[{positive_class_label}]"
         super().__init__(name)
-        self.positiveClassLabel = positiveClassLabel
+        self.positiveClassLabel = positive_class_label
 
 
 class BinaryClassificationMetricPrecision(BinaryClassificationMetric):
     name = "precision"
 
-    def __init__(self, positiveClassLabel):
-        super().__init__(positiveClassLabel)
+    def __init__(self, positive_class_label):
+        super().__init__(positive_class_label)
 
-    def _computeValue(self, y_true, y_predicted, y_predictedClassProbabilities):
+    def _compute_value(self, y_true, y_predicted, y_predicted_class_probabilities):
         return precision_score(y_true, y_predicted, pos_label=self.positiveClassLabel, zero_division=0)
 
-    def getPairedMetrics(self) -> List[BinaryClassificationMetric]:
+    def get_paired_metrics(self) -> List[BinaryClassificationMetric]:
         return [BinaryClassificationMetricRecall(self.positiveClassLabel)]
 
 
 class BinaryClassificationMetricRecall(BinaryClassificationMetric):
     name = "recall"
 
-    def __init__(self, positiveClassLabel):
-        super().__init__(positiveClassLabel)
+    def __init__(self, positive_class_label):
+        super().__init__(positive_class_label)
 
-    def _computeValue(self, y_true, y_predicted, y_predictedClassProbabilities):
+    def _compute_value(self, y_true, y_predicted, y_predicted_class_probabilities):
         return recall_score(y_true, y_predicted, pos_label=self.positiveClassLabel)
 
 
 class BinaryClassificationMetricF1Score(BinaryClassificationMetric):
     name = "F1"
 
-    def __init__(self, positiveClassLabel):
-        super().__init__(positiveClassLabel)
+    def __init__(self, positive_class_label):
+        super().__init__(positive_class_label)
 
-    def _computeValue(self, y_true, y_predicted, y_predictedClassProbabilities):
+    def _compute_value(self, y_true, y_predicted, y_predicted_class_probabilities):
         return f1_score(y_true, y_predicted, pos_label=self.positiveClassLabel)
 
 
@@ -240,28 +243,28 @@ class BinaryClassificationMetricRecallForPrecision(BinaryClassificationMetric):
     Computes the maximum recall that can be achieved (by varying the decision threshold) in cases where at least the given precision
     is reached. The given precision may not be achievable at all, in which case the metric value is ``zeroValue``.
     """
-    def __init__(self, precision: float, positiveClassLabel, zeroValue=0.0):
+    def __init__(self, precision: float, positive_class_label, zero_value=0.0):
         """
         :param precision: the minimum precision value that must be reached
-        :param positiveClassLabel: the positive class label
-        :param zeroValue: the value to return for the case where the minimum precision is never reached
+        :param positive_class_label: the positive class label
+        :param zero_value: the value to return for the case where the minimum precision is never reached
         """
         self.minPrecision = precision
-        self.zeroValue = zeroValue
-        super().__init__(positiveClassLabel, name=f"recallForPrecision[{precision}]")
+        self.zero_value = zero_value
+        super().__init__(positive_class_label, name=f"recallForPrecision[{precision}]")
 
-    def computeValueForEvalStats(self, evalStats: "ClassificationEvalStats"):
-        varData = evalStats.getBinaryClassificationProbabilityThresholdVariationData()
-        bestRecall = None
-        for c in varData.counts:
-            precision = c.getPrecision()
+    def compute_value_for_eval_stats(self, eval_stats: "ClassificationEvalStats"):
+        var_data = eval_stats.get_binary_classification_probability_threshold_variation_data()
+        best_recall = None
+        for c in var_data.counts:
+            precision = c.get_precision()
             if precision >= self.minPrecision:
-                recall = c.getRecall()
-                if bestRecall is None or recall > bestRecall:
-                    bestRecall = recall
-        return self.zeroValue if bestRecall is None else bestRecall
+                recall = c.get_recall()
+                if best_recall is None or recall > best_recall:
+                    best_recall = recall
+        return self.zero_value if best_recall is None else best_recall
 
-    def _computeValue(self, y_true, y_predicted, y_predictedClassProbabilities):
+    def _compute_value(self, y_true, y_predicted, y_predicted_class_probabilities):
         raise NotImplementedError(f"{self.__class__.__qualname__} only supports computeValueForEvalStats")
 
 
@@ -270,29 +273,29 @@ class BinaryClassificationMetricPrecisionThreshold(BinaryClassificationMetric):
     Precision for the case where predictions are considered "positive" if predicted probability of the positive class is beyond the
     given threshold
     """
-    requiresProbabilities = True
+    requires_probabilities = True
 
-    def __init__(self, threshold: float, positiveClassLabel: Any, zeroValue=0.0):
+    def __init__(self, threshold: float, positive_class_label: Any, zero_value=0.0):
         """
         :param threshold: the minimum predicted probability of the positive class for the prediction to be considered "positive"
-        :param zeroValue: the value of the metric for the case where a positive class probability beyond the threshold is never predicted
+        :param zero_value: the value of the metric for the case where a positive class probability beyond the threshold is never predicted
             (denominator = 0)
         """
         self.threshold = threshold
-        self.zeroValue = zeroValue
-        super().__init__(positiveClassLabel, name=f"precision[{threshold}]")
+        self.zero_value = zero_value
+        super().__init__(positive_class_label, name=f"precision[{threshold}]")
 
-    def _computeValue(self, y_true, y_predicted, y_predictedClassProbabilities):
-        relFreqCorrect = RelativeFrequencyCounter()
-        classIdx_positive = list(y_predictedClassProbabilities.columns).index(self.positiveClassLabel)
-        for i, (probabilities, classLabel_true) in enumerate(zip(y_predictedClassProbabilities.values.tolist(), y_true)):
-            prob_predicted = probabilities[classIdx_positive]
+    def _compute_value(self, y_true, y_predicted, y_predicted_class_probabilities):
+        rel_freq_correct = RelativeFrequencyCounter()
+        class_idx_positive = list(y_predicted_class_probabilities.columns).index(self.positiveClassLabel)
+        for i, (probabilities, classLabel_true) in enumerate(zip(y_predicted_class_probabilities.values.tolist(), y_true)):
+            prob_predicted = probabilities[class_idx_positive]
             if prob_predicted >= self.threshold:
-                relFreqCorrect.count(classLabel_true == self.positiveClassLabel)
-        f = relFreqCorrect.getRelativeFrequency()
-        return f if f is not None else self.zeroValue
+                rel_freq_correct.count(classLabel_true == self.positiveClassLabel)
+        f = rel_freq_correct.get_relative_frequency()
+        return f if f is not None else self.zero_value
 
-    def getPairedMetrics(self) -> List[BinaryClassificationMetric]:
+    def get_paired_metrics(self) -> List[BinaryClassificationMetric]:
         return [BinaryClassificationMetricRecallThreshold(self.threshold, self.positiveClassLabel)]
 
 
@@ -301,79 +304,81 @@ class BinaryClassificationMetricRecallThreshold(BinaryClassificationMetric):
     Recall for the case where predictions are considered "positive" if predicted probability of the positive class is beyond the
     given threshold
     """
-    requiresProbabilities = True
+    requires_probabilities = True
 
-    def __init__(self, threshold: float, positiveClassLabel: Any, zeroValue=0.0):
+    def __init__(self, threshold: float, positive_class_label: Any, zero_value=0.0):
         """
         :param threshold: the minimum predicted probability of the positive class for the prediction to be considered "positive"
-        :param zeroValue: the value of the metric for the case where there are no positive instances in the data set (denominator = 0)
+        :param zero_value: the value of the metric for the case where there are no positive instances in the data set (denominator = 0)
         """
         self.threshold = threshold
-        self.zeroValue = zeroValue
-        super().__init__(positiveClassLabel, name=f"recall[{threshold}]")
+        self.zero_value = zero_value
+        super().__init__(positive_class_label, name=f"recall[{threshold}]")
 
-    def _computeValue(self, y_true, y_predicted, y_predictedClassProbabilities):
-        relFreqRecalled = RelativeFrequencyCounter()
-        classIdx_positive = list(y_predictedClassProbabilities.columns).index(self.positiveClassLabel)
-        for i, (probabilities, classLabel_true) in enumerate(zip(y_predictedClassProbabilities.values.tolist(), y_true)):
+    def _compute_value(self, y_true, y_predicted, y_predicted_class_probabilities):
+        rel_freq_recalled = RelativeFrequencyCounter()
+        class_idx_positive = list(y_predicted_class_probabilities.columns).index(self.positiveClassLabel)
+        for i, (probabilities, classLabel_true) in enumerate(zip(y_predicted_class_probabilities.values.tolist(), y_true)):
             if self.positiveClassLabel == classLabel_true:
-                prob_predicted = probabilities[classIdx_positive]
-                relFreqRecalled.count(prob_predicted >= self.threshold)
-        f = relFreqRecalled.getRelativeFrequency()
-        return f if f is not None else self.zeroValue
+                prob_predicted = probabilities[class_idx_positive]
+                rel_freq_recalled.count(prob_predicted >= self.threshold)
+        f = rel_freq_recalled.get_relative_frequency()
+        return f if f is not None else self.zero_value
 
 
 class ClassificationEvalStats(PredictionEvalStats["ClassificationMetric"]):
     def __init__(self, y_predicted: PredictionArray = None,
             y_true: PredictionArray = None,
-            y_predictedClassProbabilities: pd.DataFrame = None,
+            y_predicted_class_probabilities: pd.DataFrame = None,
             labels: PredictionArray = None,
             metrics: Sequence["ClassificationMetric"] = None,
-            additionalMetrics: Sequence["ClassificationMetric"] = None,
-            binaryPositiveLabel=GUESS):
+            additional_metrics: Sequence["ClassificationMetric"] = None,
+            binary_positive_label=GUESS):
         """
         :param y_predicted: the predicted class labels
         :param y_true: the true class labels
-        :param y_predictedClassProbabilities: a data frame whose columns are the class labels and whose values are probabilities
+        :param y_predicted_class_probabilities: a data frame whose columns are the class labels and whose values are probabilities
         :param labels: the list of class labels
         :param metrics: the metrics to compute for evaluation; if None, use default metrics
-        :param additionalMetrics: the metrics to additionally compute
-        :param binaryPositiveLabel: the label of the positive class for the case where it is a binary classification, adding further
+        :param additional_metrics: the metrics to additionally compute
+        :param binary_positive_label: the label of the positive class for the case where it is a binary classification, adding further
             binary metrics by default;
             if GUESS (default), check `labels` (if length 2) for occurrence of one of BINARY_CLASSIFICATION_POSITIVE_LABEL_CANDIDATES in
             the respective order and use the first one found (if any);
             if None, treat the problem as non-binary, regardless of the labels being used.
         """
         self.labels = labels
-        self.y_predictedClassProbabilities = y_predictedClassProbabilities
-        self._probabilitiesAvailable = y_predictedClassProbabilities is not None
+        self.y_predictedClassProbabilities = y_predicted_class_probabilities
+        self._probabilitiesAvailable = y_predicted_class_probabilities is not None
         if self._probabilitiesAvailable:
-            colSet = set(y_predictedClassProbabilities.columns)
-            if colSet != set(labels):
-                raise ValueError(f"Columns in class probabilities data frame ({y_predictedClassProbabilities.columns}) do not correspond to labels ({labels}")
-            if len(y_predictedClassProbabilities) != len(y_true):
+            col_set = set(y_predicted_class_probabilities.columns)
+            if col_set != set(labels):
+                raise ValueError(f"Columns in class probabilities data frame ({y_predicted_class_probabilities.columns}) do not "
+                                 f"correspond to labels ({labels}")
+            if len(y_predicted_class_probabilities) != len(y_true):
                 raise ValueError("Row count in class probabilities data frame does not match ground truth")
 
-        numLabels = len(labels)
-        if binaryPositiveLabel == GUESS:
-            foundCandidateLabel = False
-            if numLabels == 2:
+        num_labels = len(labels)
+        if binary_positive_label == GUESS:
+            found_candidate_label = False
+            if num_labels == 2:
                 for c in BINARY_CLASSIFICATION_POSITIVE_LABEL_CANDIDATES:
                     if c in labels:
-                        binaryPositiveLabel = c
-                        foundCandidateLabel = True
+                        binary_positive_label = c
+                        found_candidate_label = True
                         break
-            if not foundCandidateLabel:
-                binaryPositiveLabel = None
-        elif binaryPositiveLabel is not None:
-            if numLabels != 2:
+            if not found_candidate_label:
+                binary_positive_label = None
+        elif binary_positive_label is not None:
+            if num_labels != 2:
                 log.warning(f"Passed binaryPositiveLabel for non-binary classification (labels={self.labels})")
-            if binaryPositiveLabel not in self.labels:
-                log.warning(f"The binary positive label {binaryPositiveLabel} does not appear in labels={labels}")
-        if numLabels == 2 and binaryPositiveLabel is None:
-            log.warning(f"Binary classification (labels={labels}) without specification of positive class label; binary classification metrics will not be considered")
-        self.binaryPositiveLabel = binaryPositiveLabel
-        self.isBinary = binaryPositiveLabel is not None
+            if binary_positive_label not in self.labels:
+                log.warning(f"The binary positive label {binary_positive_label} does not appear in labels={labels}")
+        if num_labels == 2 and binary_positive_label is None:
+            log.warning(f"Binary classification (labels={labels}) without specification of positive class label; "
+                        f"binary classification metrics will not be considered")
+        self.binaryPositiveLabel = binary_positive_label
+        self.isBinary = binary_positive_label is not None
 
         if metrics is None:
             metrics = [ClassificationMetricAccuracy(), ClassificationMetricBalancedAccuracy(),
@@ -385,46 +390,46 @@ class ClassificationEvalStats(PredictionEvalStats["ClassificationMetric"]):
                     BinaryClassificationMetricF1Score(self.binaryPositiveLabel)])
 
         metrics = list(metrics)
-        if additionalMetrics is not None:
-            for m in additionalMetrics:
-                if not self._probabilitiesAvailable and m.requiresProbabilities:
+        if additional_metrics is not None:
+            for m in additional_metrics:
+                if not self._probabilitiesAvailable and m.requires_probabilities:
                     raise ValueError(f"Additional metric {m} not supported, as class probabilities were not provided")
 
-        super().__init__(y_predicted, y_true, metrics, additionalMetrics=additionalMetrics)
+        super().__init__(y_predicted, y_true, metrics, additional_metrics=additional_metrics)
 
         # transient members
-        self._binaryClassificationProbabilityThresholdVariationData = None
+        self._binary_classification_probability_threshold_variation_data = None
 
     def __getstate__(self):
-        return getstate(ClassificationEvalStats, self, transientProperties=["_binaryClassificationProbabilityThresholdVariationData"])
+        return getstate(ClassificationEvalStats, self, transient_properties=["_binaryClassificationProbabilityThresholdVariationData"])
 
-    def getConfusionMatrix(self) -> "ConfusionMatrix":
+    def get_confusion_matrix(self) -> "ConfusionMatrix":
         return ConfusionMatrix(self.y_true, self.y_predicted)
 
-    def getBinaryClassificationProbabilityThresholdVariationData(self) -> "BinaryClassificationProbabilityThresholdVariationData":
-        if self._binaryClassificationProbabilityThresholdVariationData is None:
-            self._binaryClassificationProbabilityThresholdVariationData = BinaryClassificationProbabilityThresholdVariationData(self)
-        return self._binaryClassificationProbabilityThresholdVariationData
+    def get_binary_classification_probability_threshold_variation_data(self) -> "BinaryClassificationProbabilityThresholdVariationData":
+        if self._binary_classification_probability_threshold_variation_data is None:
+            self._binary_classification_probability_threshold_variation_data = BinaryClassificationProbabilityThresholdVariationData(self)
+        return self._binary_classification_probability_threshold_variation_data
 
-    def getAccuracy(self):
-        return self.computeMetricValue(ClassificationMetricAccuracy())
+    def get_accuracy(self):
+        return self.compute_metric_value(ClassificationMetricAccuracy())
 
-    def metricsDict(self) -> Dict[str, float]:
+    def metrics_dict(self) -> Dict[str, float]:
         d = {}
         for metric in self.metrics:
-            if not metric.requiresProbabilities or self._probabilitiesAvailable:
-                d[metric.name] = self.computeMetricValue(metric)
+            if not metric.requires_probabilities or self._probabilitiesAvailable:
+                d[metric.name] = self.compute_metric_value(metric)
         return d
 
-    def getMisclassifiedIndices(self) -> List[int]:
+    def get_misclassified_indices(self) -> List[int]:
         return [i for i, (predClass, trueClass) in enumerate(zip(self.y_predicted, self.y_true)) if predClass != trueClass]
 
-    def plotConfusionMatrix(self, normalize=True, titleAdd: str = None):
+    def plot_confusion_matrix(self, normalize=True, title_add: str = None):
         # based on https://scikit-learn.org/0.20/auto_examples/model_selection/plot_confusion_matrix.html
-        confusionMatrix = self.getConfusionMatrix()
-        return confusionMatrix.plot(normalize=normalize, titleAdd=titleAdd)
+        cm = self.get_confusion_matrix()
+        return cm.plot(normalize=normalize, title_add=title_add)
 
-    def plotPrecisionRecallCurve(self, titleAdd: str = None):
+    def plot_precision_recall_curve(self, title_add: str = None):
         from sklearn.metrics import PrecisionRecallDisplay  # only supported by newer versions of sklearn
         if not self._probabilitiesAvailable:
             raise Exception("Precision-recall curve requires probabilities")
@@ -439,8 +444,8 @@ class ClassificationEvalStats(PredictionEvalStats["ClassificationMetric"]):
         ax.set_xlabel("recall")
         ax.set_ylabel("precision")
         title = "Precision-Recall Curve"
-        if titleAdd is not None:
-            title += "\n" + titleAdd
+        if title_add is not None:
+            title += "\n" + title_add
         ax.set_title(title)
         ax.xaxis.set_major_locator(plticker.MultipleLocator(base=0.1))
         ax.yaxis.set_major_locator(plticker.MultipleLocator(base=0.1))
@@ -448,11 +453,11 @@ class ClassificationEvalStats(PredictionEvalStats["ClassificationMetric"]):
 
 
 class ClassificationEvalStatsCollection(EvalStatsCollection[ClassificationEvalStats, ClassificationMetric]):
-    def __init__(self, evalStatsList: List[ClassificationEvalStats]):
-        super().__init__(evalStatsList)
+    def __init__(self, eval_stats_list: List[ClassificationEvalStats]):
+        super().__init__(eval_stats_list)
         self.globalStats = None
 
-    def getCombinedEvalStats(self) -> ClassificationEvalStats:
+    def get_combined_eval_stats(self) -> ClassificationEvalStats:
         """
         Combines the data from all contained EvalStats objects into a single object.
         Note that this is only possible if all EvalStats objects use the same set of class labels.
@@ -469,8 +474,8 @@ class ClassificationEvalStatsCollection(EvalStatsCollection[ClassificationEvalSt
             else:
                 y_probs = None
                 labels = es0.labels
-            self.globalStats = ClassificationEvalStats(y_predicted=y_predicted, y_true=y_true, y_predictedClassProbabilities=y_probs,
-                labels=labels, binaryPositiveLabel=es0.binaryPositiveLabel, metrics=es0.metrics)
+            self.globalStats = ClassificationEvalStats(y_predicted=y_predicted, y_true=y_true, y_predicted_class_probabilities=y_probs,
+                labels=labels, binary_positive_label=es0.binaryPositiveLabel, metrics=es0.metrics)
         return self.globalStats
 
 
@@ -479,26 +484,26 @@ class ConfusionMatrix:
         self.labels = sklearn.utils.multiclass.unique_labels(y_true, y_predicted)
         self.confusionMatrix = confusion_matrix(y_true, y_predicted, labels=self.labels)
 
-    def plot(self, normalize=True, titleAdd: str = None):
+    def plot(self, normalize=True, title_add: str = None):
         title = 'Normalized Confusion Matrix' if normalize else 'Confusion Matrix (Counts)'
-        return plotMatrix(self.confusionMatrix, title, self.labels, self.labels, 'true class', 'predicted class', normalize=normalize,
-            titleAdd=titleAdd)
+        return plot_matrix(self.confusionMatrix, title, self.labels, self.labels, 'true class', 'predicted class', normalize=normalize,
+            title_add=title_add)
 
 
 class BinaryClassificationCounts:
-    def __init__(self, isPositivePrediction: Sequence[bool], isPositiveGroundTruth: Sequence[bool], zeroDenominatorMetricValue=0):
+    def __init__(self, is_positive_prediction: Sequence[bool], is_positive_ground_truth: Sequence[bool], zero_denominator_metric_value=0):
         """
-        :param isPositivePrediction: the sequence of Booleans indicating whether the model predicted the positive class
-        :param isPositiveGroundTruth: the sequence of Booleans indicating whether the true class is the positive class
-        :param zeroDenominatorMetricValue: the result to return for metrics such as precision and recall in case the denominator
+        :param is_positive_prediction: the sequence of Booleans indicating whether the model predicted the positive class
+        :param is_positive_ground_truth: the sequence of Booleans indicating whether the true class is the positive class
+        :param zero_denominator_metric_value: the result to return for metrics such as precision and recall in case the denominator
             is zero (i.e. zero counted cases)
         """
-        self.zeroDenominatorMetricValue = zeroDenominatorMetricValue
+        self.zeroDenominatorMetricValue = zero_denominator_metric_value
         self.tp = 0
         self.tn = 0
         self.fp = 0
         self.fn = 0
-        for predPositive, gtPositive in zip(isPositivePrediction, isPositiveGroundTruth):
+        for predPositive, gtPositive in zip(is_positive_prediction, is_positive_ground_truth):
             if gtPositive:
                 if predPositive:
                     self.tp += 1
@@ -511,66 +516,67 @@ class BinaryClassificationCounts:
                     self.tn += 1
 
     @classmethod
-    def fromProbabilityThreshold(cls, probabilities: Sequence[float], threshold: float, isPositiveGroundTruth: Sequence[bool]) -> "BinaryClassificationCounts":
-        return cls([p >= threshold for p in probabilities], isPositiveGroundTruth)
+    def from_probability_threshold(cls, probabilities: Sequence[float], threshold: float, is_positive_ground_truth: Sequence[bool]) \
+            -> "BinaryClassificationCounts":
+        return cls([p >= threshold for p in probabilities], is_positive_ground_truth)
 
     @classmethod
-    def fromEvalStats(cls, evalStats: ClassificationEvalStats, threshold=0.5) -> "BinaryClassificationCounts":
-        if not evalStats.isBinary:
+    def from_eval_stats(cls, eval_stats: ClassificationEvalStats, threshold=0.5) -> "BinaryClassificationCounts":
+        if not eval_stats.isBinary:
             raise ValueError("Probability threshold variation data can only be computed for binary classification problems")
-        if evalStats.y_predictedClassProbabilities is None:
+        if eval_stats.y_predictedClassProbabilities is None:
             raise ValueError("No probability data")
-        posClassLabel = evalStats.binaryPositiveLabel
-        probs = evalStats.y_predictedClassProbabilities[posClassLabel]
-        isPositiveGT = [gtLabel == posClassLabel for gtLabel in evalStats.y_true]
-        return cls.fromProbabilityThreshold(probabilities=probs, threshold=threshold, isPositiveGroundTruth=isPositiveGT)
+        pos_class_label = eval_stats.binaryPositiveLabel
+        probs = eval_stats.y_predictedClassProbabilities[pos_class_label]
+        is_positive_gt = [gtLabel == pos_class_label for gtLabel in eval_stats.y_true]
+        return cls.from_probability_threshold(probabilities=probs, threshold=threshold, is_positive_ground_truth=is_positive_gt)
 
     def _frac(self, numerator, denominator):
         if denominator == 0:
             return self.zeroDenominatorMetricValue
         return numerator / denominator
 
-    def getPrecision(self):
+    def get_precision(self):
         return self._frac(self.tp, self.tp + self.fp)
 
-    def getRecall(self):
+    def get_recall(self):
         return self._frac(self.tp, self.tp + self.fn)
 
-    def getF1(self):
+    def get_f1(self):
         return self._frac(self.tp, self.tp + 0.5 * (self.fp + self.fn))
 
-    def getRelFreqPositive(self):
+    def get_rel_freq_positive(self):
         positive = self.tp + self.fp
         negative = self.tn + self.fn
         return positive / (positive + negative)
 
 
 class BinaryClassificationProbabilityThresholdVariationData:
-    def __init__(self, evalStats: ClassificationEvalStats):
+    def __init__(self, eval_stats: ClassificationEvalStats):
         self.thresholds = np.linspace(0, 1, 101)
         self.counts: List[BinaryClassificationCounts] = []
         for threshold in self.thresholds:
-            self.counts.append(BinaryClassificationCounts.fromEvalStats(evalStats, threshold=threshold))
+            self.counts.append(BinaryClassificationCounts.from_eval_stats(eval_stats, threshold=threshold))
 
-    def plotPrecisionRecall(self, subtitle=None) -> plt.Figure:
+    def plot_precision_recall(self, subtitle=None) -> plt.Figure:
         fig = plt.figure()
         title = "Probability Threshold-Dependent Precision & Recall"
         if subtitle is not None:
             title += "\n" + subtitle
         plt.title(title)
         plt.xlabel("probability threshold")
-        precision = [c.getPrecision() for c in self.counts]
-        recall = [c.getRecall() for c in self.counts]
-        f1 = [c.getF1() for c in self.counts]
-        rfPositive = [c.getRelFreqPositive() for c in self.counts]
+        precision = [c.get_precision() for c in self.counts]
+        recall = [c.get_recall() for c in self.counts]
+        f1 = [c.get_f1() for c in self.counts]
+        rf_positive = [c.get_rel_freq_positive() for c in self.counts]
         plt.plot(self.thresholds, precision, label="precision")
         plt.plot(self.thresholds, recall, label="recall")
         plt.plot(self.thresholds, f1, label="F1-score")
-        plt.plot(self.thresholds, rfPositive, label="rel. freq. positive")
+        plt.plot(self.thresholds, rf_positive, label="rel. freq. positive")
         plt.legend()
         return fig
 
-    def plotCounts(self, subtitle=None):
+    def plot_counts(self, subtitle=None):
         fig = plt.figure()
         title = "Probability Threshold-Dependent Counts"
         if subtitle is not None:
@@ -593,26 +599,26 @@ class ClassificationEvalStatsPlotConfusionMatrix(ClassificationEvalStatsPlot):
     def __init__(self, normalise=True):
         self.normalise = normalise
 
-    def createFigure(self, evalStats: ClassificationEvalStats, subtitle: str) -> plt.Figure:
-        return evalStats.plotConfusionMatrix(normalize=self.normalise, titleAdd=subtitle)
+    def create_figure(self, eval_stats: ClassificationEvalStats, subtitle: str) -> plt.Figure:
+        return eval_stats.plot_confusion_matrix(normalize=self.normalise, title_add=subtitle)
 
 
 class ClassificationEvalStatsPlotPrecisionRecall(ClassificationEvalStatsPlot):
-    def createFigure(self, evalStats: ClassificationEvalStats, subtitle: str) -> Optional[plt.Figure]:
-        if not evalStats.isBinary:
+    def create_figure(self, eval_stats: ClassificationEvalStats, subtitle: str) -> Optional[plt.Figure]:
+        if not eval_stats.isBinary:
             return None
-        return evalStats.plotPrecisionRecallCurve(titleAdd=subtitle)
+        return eval_stats.plot_precision_recall_curve(title_add=subtitle)
 
 
 class ClassificationEvalStatsPlotProbabilityThresholdPrecisionRecall(ClassificationEvalStatsPlot):
-    def createFigure(self, evalStats: ClassificationEvalStats, subtitle: str) -> Optional[plt.Figure]:
-        if not evalStats.isBinary:
+    def create_figure(self, eval_stats: ClassificationEvalStats, subtitle: str) -> Optional[plt.Figure]:
+        if not eval_stats.isBinary:
             return None
-        return evalStats.getBinaryClassificationProbabilityThresholdVariationData().plotPrecisionRecall(subtitle=subtitle)
+        return eval_stats.get_binary_classification_probability_threshold_variation_data().plot_precision_recall(subtitle=subtitle)
 
 
 class ClassificationEvalStatsPlotProbabilityThresholdCounts(ClassificationEvalStatsPlot):
-    def createFigure(self, evalStats: ClassificationEvalStats, subtitle: str) -> Optional[plt.Figure]:
-        if not evalStats.isBinary:
+    def create_figure(self, eval_stats: ClassificationEvalStats, subtitle: str) -> Optional[plt.Figure]:
+        if not eval_stats.isBinary:
             return None
-        return evalStats.getBinaryClassificationProbabilityThresholdVariationData().plotCounts(subtitle=subtitle)
+        return eval_stats.get_binary_classification_probability_threshold_variation_data().plot_counts(subtitle=subtitle)

@@ -5,13 +5,13 @@ from typing import List, Dict, Any, Iterable
 
 import joblib
 
-from .io import isS3Path, S3Object
+from .io import is_s3_path, S3Object
 
 log = logging.getLogger(__name__)
 
 
-def loadPickle(path, backend="pickle"):
-    def readFile(f):
+def load_pickle(path, backend="pickle"):
+    def read_file(f):
         if backend == "pickle":
             try:
                 return pickle.load(f)
@@ -23,29 +23,29 @@ def loadPickle(path, backend="pickle"):
         else:
             raise ValueError(f"Unknown backend '{backend}'")
 
-    if isS3Path(path):
-        return readFile(S3Object(path).openFile("rb"))
+    if is_s3_path(path):
+        return read_file(S3Object(path).open_file("rb"))
     with open(path, "rb") as f:
-        return readFile(f)
+        return read_file(f)
 
 
-def dumpPickle(obj, picklePath, backend="pickle", protocol=pickle.HIGHEST_PROTOCOL):
-    def openFile():
-        if isS3Path(picklePath):
-            return S3Object(picklePath).openFile("wb")
+def dump_pickle(obj, pickle_path, backend="pickle", protocol=pickle.HIGHEST_PROTOCOL):
+    def open_file():
+        if is_s3_path(pickle_path):
+            return S3Object(pickle_path).open_file("wb")
         else:
-            return open(picklePath, "wb")
+            return open(pickle_path, "wb")
 
-    dirName = os.path.dirname(picklePath)
-    if dirName != "":
-        os.makedirs(dirName, exist_ok=True)
-    with openFile() as f:
+    dir_name = os.path.dirname(pickle_path)
+    if dir_name != "":
+        os.makedirs(dir_name, exist_ok=True)
+    with open_file() as f:
         if backend == "pickle":
             try:
                 pickle.dump(obj, f, protocol=protocol)
             except AttributeError as e:
-                failingPaths = PickleFailureDebugger.debugFailure(obj)
-                raise AttributeError(f"Cannot pickle paths {failingPaths} of {obj}: {str(e)}")
+                failing_paths = PickleFailureDebugger.debug_failure(obj)
+                raise AttributeError(f"Cannot pickle paths {failing_paths} of {obj}: {str(e)}")
         elif backend == "joblib":
             joblib.dump(obj, f, protocol=protocol)
         else:
@@ -60,10 +60,10 @@ class PickleFailureDebugger:
     enabled = False  # global flag controlling the behaviour of logFailureIfEnabled
 
     @classmethod
-    def _debugFailure(cls, obj, path, failures, handledObjectIds):
-        if id(obj) in handledObjectIds:
+    def _debug_failure(cls, obj, path, failures, handled_object_ids):
+        if id(obj) in handled_object_ids:
             return
-        handledObjectIds.add(id(obj))
+        handled_object_ids.add(id(obj))
 
         try:
             pickle.dumps(obj)
@@ -84,12 +84,12 @@ class PickleFailureDebugger:
                 d = {}
 
             # recursively test children
-            haveFailedChild = False
+            have_failed_child = False
             for key, child in d.items():
-                childPath = list(path) + [f"{key}[{child.__class__.__name__}]"]
-                haveFailedChild = cls._debugFailure(child, childPath, failures, handledObjectIds) or haveFailedChild
+                child_path = list(path) + [f"{key}[{child.__class__.__name__}]"]
+                have_failed_child = cls._debug_failure(child, child_path, failures, handled_object_ids) or have_failed_child
 
-            if not haveFailedChild:
+            if not have_failed_child:
                 failures.append(path)
 
             return True
@@ -97,20 +97,20 @@ class PickleFailureDebugger:
             return False
 
     @classmethod
-    def debugFailure(cls, obj) -> List[str]:
+    def debug_failure(cls, obj) -> List[str]:
         """
         Recursively tries to pickle the given object and returns a list of failed paths
 
         :param obj: the object for which to recursively test pickling
         :return: a list of object paths that failed to pickle
         """
-        handledObjectIds = set()
+        handled_object_ids = set()
         failures = []
-        cls._debugFailure(obj, [obj.__class__.__name__], failures, handledObjectIds)
+        cls._debug_failure(obj, [obj.__class__.__name__], failures, handled_object_ids)
         return [".".join(l) for l in failures]
 
     @classmethod
-    def logFailureIfEnabled(cls, obj, contextInfo: str = None):
+    def log_failure_if_enabled(cls, obj, context_info: str = None):
         """
         If the class flag 'enabled' is set to true, the pickling of the given object is
         recursively tested and the results are logged at error level if there are problems and
@@ -118,21 +118,26 @@ class PickleFailureDebugger:
         If the flag is disabled, no action is taken.
 
         :param obj: the object for which to recursively test pickling
-        :param contextInfo: optional additional string to be included in the log message
+        :param context_info: optional additional string to be included in the log message
         """
         if cls.enabled:
-            failures = cls.debugFailure(obj)
+            failures = cls.debug_failure(obj)
             prefix = f"Picklability analysis for {obj}"
-            if contextInfo is not None:
-                prefix += " (context: %s)" % contextInfo
+            if context_info is not None:
+                prefix += " (context: %s)" % context_info
             if len(failures) > 0:
                 log.error(f"{prefix}: pickling would result in failures due to: {failures}")
             else:
                 log.info(f"{prefix}: is picklable")
 
 
-def setstate(cls, obj, state: Dict[str, Any], renamedProperties: Dict[str, str] = None, newOptionalProperties: List[str] = None,
-        newDefaultProperties: Dict[str, Any] = None, removedProperties: List[str] = None) -> None:
+def setstate(cls,
+        obj,
+        state: Dict[str, Any],
+        renamed_properties: Dict[str, str] = None,
+        new_optional_properties: List[str] = None,
+        new_default_properties: Dict[str, Any] = None,
+        removed_properties: List[str] = None) -> None:
     """
     Helper function for safe implementations of __setstate__ in classes, which appropriately handles the cases where
     a parent class already implements __setstate__ and where it does not. Call this function whenever you would actually
@@ -142,27 +147,27 @@ def setstate(cls, obj, state: Dict[str, Any], renamedProperties: Dict[str, str] 
     :param cls: the class in which you are implementing __setstate__
     :param obj: the instance of cls
     :param state: the state dictionary
-    :param renamedProperties: a mapping from old property names to new property names
-    :param newOptionalProperties: a list of names of new property names, which, if not present, shall be initialised with None
-    :param newDefaultProperties: a dictionary mapping property names to their default values, which shall be added if they are not present
-    :param removedProperties: a list of names of properties that are no longer being used
+    :param renamed_properties: a mapping from old property names to new property names
+    :param new_optional_properties: a list of names of new property names, which, if not present, shall be initialised with None
+    :param new_default_properties: a dictionary mapping property names to their default values, which shall be added if they are not present
+    :param removed_properties: a list of names of properties that are no longer being used
     """
     # handle new/changed properties
-    if renamedProperties is not None:
-        for mOld, mNew in renamedProperties.items():
+    if renamed_properties is not None:
+        for mOld, mNew in renamed_properties.items():
             if mOld in state:
                 state[mNew] = state[mOld]
                 del state[mOld]
-    if newOptionalProperties is not None:
-        for mNew in newOptionalProperties:
+    if new_optional_properties is not None:
+        for mNew in new_optional_properties:
             if mNew not in state:
                 state[mNew] = None
-    if newDefaultProperties is not None:
-        for mNew, mValue in newDefaultProperties.items():
+    if new_default_properties is not None:
+        for mNew, mValue in new_default_properties.items():
             if mNew not in state:
                 state[mNew] = mValue
-    if removedProperties is not None:
-        for p in removedProperties:
+    if removed_properties is not None:
+        for p in removed_properties:
             if p in state:
                 del state[p]
     # call super implementation, if any
@@ -173,8 +178,12 @@ def setstate(cls, obj, state: Dict[str, Any], renamedProperties: Dict[str, str] 
         obj.__dict__ = state
 
 
-def getstate(cls, obj, transientProperties: Iterable[str] = None, excludedProperties: Iterable[str] = None,
-             overrideProperties: Dict[str, Any] = None, excludedDefaultProperties: Dict[str, Any] = None) -> Dict[str, Any]:
+def getstate(cls,
+        obj,
+        transient_properties: Iterable[str] = None,
+        excluded_properties: Iterable[str] = None,
+        override_properties: Dict[str, Any] = None,
+        excluded_default_properties: Dict[str, Any] = None) -> Dict[str, Any]:
     """
     Helper function for safe implementations of __getstate__ in classes, which appropriately handles the cases where
     a parent class already implements __getstate__ and where it does not. Call this function whenever you would actually
@@ -183,11 +192,11 @@ def getstate(cls, obj, transientProperties: Iterable[str] = None, excludedProper
 
     :param cls: the class in which you are implementing __getstate__
     :param obj: the instance of cls
-    :param transientProperties: transient properties which be set to None in serialisations
-    :param excludedProperties: properties which shall be completely removed from serialisations
-    :param overrideProperties: a mapping from property names to values specifying (new or existing) properties which are to be set;
+    :param transient_properties: transient properties which be set to None in serialisations
+    :param excluded_properties: properties which shall be completely removed from serialisations
+    :param override_properties: a mapping from property names to values specifying (new or existing) properties which are to be set;
         use this to set a fixed value for an existing property or to add a completely new property
-    :param excludedDefaultProperties: properties which shall be completely removed from serialisations, if they are set
+    :param excluded_default_properties: properties which shall be completely removed from serialisations, if they are set
         to the given default value
     :return: the state dictionary, which may be modified by the receiver
     """
@@ -196,19 +205,19 @@ def getstate(cls, obj, transientProperties: Iterable[str] = None, excludedProper
         d = s.__getstate__()
     else:
         d = obj.__dict__.copy()
-    if transientProperties is not None:
-        for p in transientProperties:
+    if transient_properties is not None:
+        for p in transient_properties:
             if p in d:
                 d[p] = None
-    if excludedProperties is not None:
-        for p in excludedProperties:
+    if excluded_properties is not None:
+        for p in excluded_properties:
             if p in d:
                 del d[p]
-    if overrideProperties is not None:
-        for k, v in overrideProperties.items():
+    if override_properties is not None:
+        for k, v in override_properties.items():
             d[k] = v
-    if excludedDefaultProperties is not None:
-        for p, v in excludedDefaultProperties.items():
+    if excluded_default_properties is not None:
+        for p, v in excluded_default_properties.items():
             if p in d and d[p] == v:
                 del d[p]
     return d

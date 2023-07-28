@@ -4,7 +4,7 @@ import pandas as pd
 import torch
 import torchtext
 
-from .torch_data import toTensor, TorchDataSet, TorchDataSetProvider
+from .torch_data import to_tensor, TorchDataSet, TorchDataSetProvider
 
 
 class TorchtextDataSetFromDataFrame(torchtext.data.Dataset):
@@ -46,16 +46,16 @@ class TorchDataSetFromTorchtextDataSet(TorchDataSet):
         self.dataSet = dataSet
         self.cuda = cuda
 
-    def iterBatches(self, batchSize: int, shuffle: bool = False, inputOnly=False) -> Generator[Union[Tuple[torch.Tensor, torch.Tensor], torch.Tensor], None, None]:
+    def iter_batches(self, batch_size: int, shuffle: bool = False, input_only=False) -> Generator[Union[Tuple[torch.Tensor, torch.Tensor], torch.Tensor], None, None]:
         iterator = torchtext.data.BucketIterator(self.dataSet,
-            batch_size=batchSize,
+            batch_size=batch_size,
             sort_key=lambda x: len(x.text),
             sort_within_batch=False)
 
         for batch in iterator:
-            x = toTensor(getattr(batch, self.inputField), self.cuda)
-            if not inputOnly and self.outputField is not None:
-                y = toTensor(getattr(batch, self.outputField), self.cuda)
+            x = to_tensor(getattr(batch, self.inputField), self.cuda)
+            if not input_only and self.outputField is not None:
+                y = to_tensor(getattr(batch, self.outputField), self.cuda)
                 yield x, y
             else:
                 yield x
@@ -65,15 +65,15 @@ class TorchDataSetFromTorchtextDataSet(TorchDataSet):
 
 
 class TorchDataSetProviderFromTorchtextDataSet(TorchDataSetProvider):
-    def __init__(self, dataSet: torchtext.data.Dataset, inputField: str, outputField: str, cuda: bool, modelOutputDim, inputDim=None):
-        super().__init__(modelOutputDim=modelOutputDim, inputDim=inputDim)
+    def __init__(self, dataSet: torchtext.data.Dataset, inputField: str, outputField: str, cuda: bool, model_output_dim, input_dim=None):
+        super().__init__(model_output_dim=model_output_dim, input_dim=input_dim)
         self.dataSet = dataSet
         self.outputField = outputField
         self.inputField = inputField
         self.cuda = cuda
 
-    def provideSplit(self, fractionalSizeOfFirstSet: float) -> Tuple[TorchDataSet, TorchDataSet]:
-        d1, d2 = self.dataSet.split(fractionalSizeOfFirstSet)
+    def provide_split(self, fractional_size_of_first_set: float) -> Tuple[TorchDataSet, TorchDataSet]:
+        d1, d2 = self.dataSet.split(fractional_size_of_first_set)
         return self._createDataSet(d1), self._createDataSet(d2)
 
     def _createDataSet(self, d: torchtext.data.Dataset):

@@ -14,74 +14,75 @@ class MySQLPersistentKeyValueCache(PersistentKeyValueCache):
         DOUBLE = ("DOUBLE", False)  # (SQL data type, isCachedValuePickled)
         BLOB = ("BLOB", True)
 
-    def __init__(self, host, db, user, pw, valueType: ValueType, tableName="cache", deferredCommitDelaySecs=1.0, inMemory=False):
+    def __init__(self, host, db, user, pw, value_type: ValueType, table_name="cache", deferred_commit_delay_secs=1.0, in_memory=False):
         import MySQLdb
         self.conn = MySQLdb.connect(host=host, database=db, user=user, password=pw)
-        self.tableName = tableName
-        self.maxKeyLength = 255
-        self._updateHook = DelayedUpdateHook(self._commit, deferredCommitDelaySecs)
-        self._numEntriesToBeCommitted = 0
+        self.table_name = table_name
+        self.max_key_length = 255
+        self._update_hook = DelayedUpdateHook(self._commit, deferred_commit_delay_secs)
+        self._num_entries_to_be_committed = 0
 
-        cacheValueSqlType, self.isCacheValuePickled = valueType.value
+        cache_value_sql_type, self.is_cache_value_pickled = value_type.value
 
         cursor = self.conn.cursor()
         cursor.execute(f"SHOW TABLES;")
-        if tableName not in [r[0] for r in cursor.fetchall()]:
-            cursor.execute(f"CREATE TABLE {tableName} (cache_key VARCHAR({self.maxKeyLength}) PRIMARY KEY, cache_value {cacheValueSqlType});")
+        if table_name not in [r[0] for r in cursor.fetchall()]:
+            cursor.execute(f"CREATE TABLE {table_name} (cache_key VARCHAR({self.max_key_length}) PRIMARY KEY, "
+                           f"cache_value {cache_value_sql_type});")
         cursor.close()
 
-        self._inMemoryDf = None if not inMemory else self._loadTableToDataFrame()
+        self._in_memory_df = None if not in_memory else self._load_table_to_data_frame()
 
-    def _loadTableToDataFrame(self):
-        df = pd.read_sql(f"SELECT * FROM {self.tableName};", con=self.conn, index_col="cache_key")
-        if self.isCacheValuePickled:
+    def _load_table_to_data_frame(self):
+        df = pd.read_sql(f"SELECT * FROM {self.table_name};", con=self.conn, index_col="cache_key")
+        if self.is_cache_value_pickled:
             df["cache_value"] = df["cache_value"].apply(pickle.loads)
         return df
 
     def set(self, key, value):
         key = str(key)
-        if len(key) > self.maxKeyLength:
-            raise ValueError(f"Key too long, maximal key length is {self.maxKeyLength}")
+        if len(key) > self.max_key_length:
+            raise ValueError(f"Key too long, maximal key length is {self.max_key_length}")
         cursor = self.conn.cursor()
-        cursor.execute(f"SELECT COUNT(*) FROM {self.tableName} WHERE cache_key=%s", (key, ))
-        storedValue = pickle.dumps(value) if self.isCacheValuePickled else value
+        cursor.execute(f"SELECT COUNT(*) FROM {self.table_name} WHERE cache_key=%s", (key,))
+        stored_value = pickle.dumps(value) if self.is_cache_value_pickled else value
         if cursor.fetchone()[0] == 0:
-            cursor.execute(f"INSERT INTO {self.tableName} (cache_key, cache_value) VALUES (%s, %s)",
-                (key, storedValue))
+            cursor.execute(f"INSERT INTO {self.table_name} (cache_key, cache_value) VALUES (%s, %s)",
+                (key, stored_value))
         else:
-            cursor.execute(f"UPDATE {self.tableName} SET cache_value=%s WHERE cache_key=%s", (storedValue, key))
-        self._numEntriesToBeCommitted += 1
-        self._updateHook.handleUpdate()
+            cursor.execute(f"UPDATE {self.table_name} SET cache_value=%s WHERE cache_key=%s", (stored_value, key))
+        self._num_entries_to_be_committed += 1
+        self._update_hook.handle_update()
         cursor.close()
-        if self._inMemoryDf is not None:
-            self._inMemoryDf["cache_value"][str(key)] = value
+        if self._in_memory_df is not None:
+            self._in_memory_df["cache_value"][str(key)] = value
 
     def get(self, key):
-        value = self._getFromInMemoryDf(key)
+        value = self._get_from_in_memory_df(key)
         if value is None:
-            value = self._getFromTable(key)
+            value = self._get_from_table(key)
         return value
 
-    def _getFromTable(self, key):
+    def _get_from_table(self, key):
         cursor = self.conn.cursor()
-        cursor.execute(f"SELECT cache_value FROM {self.tableName} WHERE cache_key=%s", (str(key), ))
+        cursor.execute(f"SELECT cache_value FROM {self.table_name} WHERE cache_key=%s", (str(key),))
         row = cursor.fetchone()
         if row is None:
             return None
-        storedValue = row[0]
-        value = pickle.loads(storedValue) if self.isCacheValuePickled else storedValue
+        stored_value = row[0]
+        value = pickle.loads(stored_value) if self.is_cache_value_pickled else stored_value
         return value
 
-    def _getFromInMemoryDf(self, key):
-        if self._inMemoryDf is None:
+    def _get_from_in_memory_df(self, key):
+        if self._in_memory_df is None:
             return None
         try:
-            return self._inMemoryDf["cache_value"][str(key)]
+            return self._in_memory_df["cache_value"][str(key)]
         except Exception as e:
             log.debug(f"Unable to load value for key {str(key)} from in-memory dataframe: {e}")
             return None
 
     def _commit(self):
-        log.info(f"Committing {self._numEntriesToBeCommitted} cache entries to the database")
+        log.info(f"Committing {self._num_entries_to_be_committed} cache entries to the database")
         self.conn.commit()
-        self._numEntriesToBeCommitted = 0
+        self._num_entries_to_be_committed = 0

@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-def toFloatArray(data: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
+def to_float_array(data: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
     if type(data) is np.ndarray:
         values = data
     elif type(data) is pd.DataFrame:
@@ -26,7 +26,7 @@ def toFloatArray(data: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
     return values
 
 
-def dict2OrderedTuples(d: dict):
+def dict_to_ordered_tuples(d: dict):
     keys = sorted(d.keys())
     values = [d[k] for k in keys]
     return tuple(keys), tuple(values)

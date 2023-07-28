@@ -34,7 +34,7 @@ class LSTNetwork(MCDropoutCapableNNModule):
         
     The model ultimately combines the outputs of these two paths via a combination function.
     Many parts of the model are optional and can be completely disabled.
-    The model can produce one or more (potentially multi-dimensional) outputs, where each output typically typically corresponds
+    The model can produce one or more (potentially multi-dimensional) outputs, where each output typically corresponds
     to a time slice for which a prediction is made.
 
     The model expects as input a tensor of size (batchSize, numInputTimeSlices, inputDimPerTimeSlice).
@@ -115,13 +115,13 @@ class LSTNetwork(MCDropoutCapableNNModule):
             else:
                 raise ValueError("Unknown highway combination function '%s'" % hwCombine)
 
-        self.output = ActivationFunction.torchFunctionFromAny(outputActivation)
+        self.output = ActivationFunction.torch_function_from_any(outputActivation)
 
     def forward(self, x):
         batch_size = x.size(0)
         # x has size (batch_size, window=numInputTimeSlices, inputDimPerTimeSlice)
 
-        dropout = lambda x: self._dropout(x, pTraining=self.pDropout, pInference=self.pDropout)
+        dropout = lambda x: self._dropout(x, p_training=self.pDropout, p_inference=self.pDropout)
 
         res = None
 

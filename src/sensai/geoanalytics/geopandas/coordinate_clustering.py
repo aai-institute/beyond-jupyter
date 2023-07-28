@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import MultiPoint
 
-from .coordinates import validateCoordinates, extractCoordinatesArray, TCoordinates, GeoDataFrameWrapper
+from .coordinates import validate_coordinates, extract_coordinates_array, TCoordinates, GeoDataFrameWrapper
 from ...clustering import SkLearnEuclideanClusterer
 from ...clustering.clustering_base import EuclideanClusterer
 from ...clustering.sklearn_clustering import SkLearnClustererProtocol
@@ -25,8 +25,8 @@ class CoordinateEuclideanClusterer(EuclideanClusterer, GeoDataFrameWrapper):
     """
     def __init__(self, clusterer: EuclideanClusterer):
         self.clusterer = clusterer
-        super().__init__(noiseLabel=clusterer.noiseLabel,
-            maxClusterSize=clusterer.maxClusterSize, minClusterSize=clusterer.minClusterSize)
+        super().__init__(noise_label=clusterer.noiseLabel,
+            max_cluster_size=clusterer.maxClusterSize, min_cluster_size=clusterer.minClusterSize)
 
     class Cluster(EuclideanClusterer.Cluster, GeoDataFrameWrapper, LoadSaveInterface):
         """
@@ -37,10 +37,10 @@ class CoordinateEuclideanClusterer(EuclideanClusterer, GeoDataFrameWrapper):
         """
 
         def __init__(self, coordinates: np.ndarray, identifier: Union[str, int]):
-            validateCoordinates(coordinates)
+            validate_coordinates(coordinates)
             super().__init__(coordinates, identifier)
 
-        def toGeoDF(self, crs='epsg:3857'):
+        def to_geodf(self, crs='epsg:3857'):
             """
             Export the cluster as a GeoDataFrame of length 1 with the cluster as an instance of
             MultiPoint and the identifier as index.
@@ -48,12 +48,12 @@ class CoordinateEuclideanClusterer(EuclideanClusterer, GeoDataFrameWrapper):
             :param crs: projection. By default pseudo-mercator
             :return: GeoDataFrame
             """
-            gdf = gp.GeoDataFrame({"geometry": [self.asMultipoint()]}, index=[self.identifier])
+            gdf = gp.GeoDataFrame({"geometry": [self.as_multipoint()]}, index=[self.identifier])
             gdf.index.name = "identifier"
             gdf.crs = crs
             return gdf
 
-        def asMultipoint(self):
+        def as_multipoint(self):
             """
             :return: The cluster's coordinates as a MultiPoint object
             """
@@ -84,11 +84,11 @@ class CoordinateEuclideanClusterer(EuclideanClusterer, GeoDataFrameWrapper):
             :return:
             """
             log.info(f"Saving instance of {self.__class__.__name__} as shapefile to {path}")
-            self.toGeoDF(crs).to_file(path, index=True)
+            self.to_geodf(crs).to_file(path, index=True)
 
-    def _computeLabels(self, x: np.ndarray) -> np.ndarray:
-        validateCoordinates(x)
-        return self.clusterer._computeLabels(x)
+    def _compute_labels(self, x: np.ndarray) -> np.ndarray:
+        validate_coordinates(x)
+        return self.clusterer._compute_labels(x)
 
     def fit(self, coordinates: TCoordinates):
         """
@@ -97,52 +97,51 @@ class CoordinateEuclideanClusterer(EuclideanClusterer, GeoDataFrameWrapper):
         :param coordinates:
         :return:
         """
-        coordinates = extractCoordinatesArray(coordinates)
+        coordinates = extract_coordinates_array(coordinates)
         super().fit(coordinates)
 
     @timed
-    def toGeoDF(self, condition: Callable[[Cluster], bool] = None, crs='epsg:3857',
-            includeNoise=False) -> gp.GeoDataFrame:
+    def to_geodf(self, condition: Callable[[Cluster], bool] = None, crs='epsg:3857',
+            include_noise=False) -> gp.GeoDataFrame:
         """
         GeoDataFrame containing all clusters found by the model.
         It is a concatenation of GeoDataFrames of individual clusters
 
         :param condition: if provided, only clusters fulfilling the condition will be included
         :param crs: projection. By default pseudo-mercator
-        :param includeNoise:
+        :param include_noise:
         :return: GeoDataFrame with all clusters indexed by their identifier
         """
         geodf = gp.GeoDataFrame()
         geodf.crs = crs
-        # TODO or not TODO: parallelize this or improve performance some another way
         for cluster in self.clusters(condition):
-            geodf = pd.concat((geodf, cluster.toGeoDF(crs=crs)))
-        if includeNoise:
-            geodf = pd.concat((geodf, self.noiseCluster().toGeoDF(crs=crs)))
+            geodf = pd.concat((geodf, cluster.to_geodf(crs=crs)))
+        if include_noise:
+            geodf = pd.concat((geodf, self.noise_cluster().to_geodf(crs=crs)))
         return geodf
 
-    def plot(self, includeNoise=False, condition=None, **kwargs):
+    def plot(self, include_noise=False, condition=None, **kwargs):
         """
         Plots the resulting clusters with random coloring
 
-        :param includeNoise: Whether to include the noise cluster
+        :param include_noise: Whether to include the noise cluster
         :param condition: If provided, only clusters fulfilling this condition will be included
         :param kwargs: passed to GeoDataFrame.plot
         :return:
         """
-        geodf = self.toGeoDF(condition=condition, includeNoise=includeNoise)
+        geodf = self.to_geodf(condition=condition, include_noise=include_noise)
         geodf["color"] = np.random.random(len(geodf))
-        if includeNoise:
+        if include_noise:
             geodf.loc[self.noiseLabel, "color"] = 0
         geodf.plot(column="color", **kwargs)
 
     # the overriding of the following methods is only necessary for getting the type annotations right
     # if mypy ever permits annotating nested classes correctly, these methods can be removed
-    def getCluster(self, clusterId: int) -> Cluster:
-        return super().getCluster(clusterId)
+    def get_cluster(self, cluster_id: int) -> Cluster:
+        return super().get_cluster(cluster_id)
 
-    def noiseCluster(self) -> Cluster:
-        return super().noiseCluster()
+    def noise_cluster(self) -> Cluster:
+        return super().noise_cluster()
 
     def clusters(self, condition: Callable[[Cluster], bool] = None) -> Iterable[Cluster]:
         return super().clusters(condition=condition)
@@ -154,12 +153,12 @@ class SkLearnCoordinateClustering(CoordinateEuclideanClusterer):
     for handling geospatial data
 
     :param clusterer: a clusterer object compatible the sklearn API
-    :param noiseLabel: label that is associated with the noise cluster or None
-    :param minClusterSize: if not None, clusters below this size will be labeled as noise
-    :param maxClusterSize: if not None, clusters above this size will be labeled as noise
+    :param noise_label: label that is associated with the noise cluster or None
+    :param min_cluster_size: if not None, clusters below this size will be labeled as noise
+    :param max_cluster_size: if not None, clusters above this size will be labeled as noise
     """
-    def __init__(self, clusterer: SkLearnClustererProtocol, noiseLabel=-1,
-                 minClusterSize: int = None, maxClusterSize: int = None):
-        clusterer = SkLearnEuclideanClusterer(clusterer, noiseLabel=noiseLabel,
-                           minClusterSize=minClusterSize, maxClusterSize=maxClusterSize)
+    def __init__(self, clusterer: SkLearnClustererProtocol, noise_label=-1,
+                 min_cluster_size: int = None, max_cluster_size: int = None):
+        clusterer = SkLearnEuclideanClusterer(clusterer, noise_label=noise_label,
+                           min_cluster_size=min_cluster_size, max_cluster_size=max_cluster_size)
         super().__init__(clusterer)

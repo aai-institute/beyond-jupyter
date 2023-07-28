@@ -3,6 +3,6 @@ from .torch_base import MCDropoutCapableNNModule
 from .torch_models.mlp.mlp_modules import MultiLayerPerceptron
 from .torch_models.lstnet.lstnet_modules import LSTNetwork
 from .torch_models.residualffn.residualffn_modules import ResidualFeedForwardNetwork
-from ..util import markUsed
+from ..util import mark_used
 
-markUsed(MCDropoutCapableNNModule, MultiLayerPerceptron, LSTNetwork, ResidualFeedForwardNetwork)
+mark_used(MCDropoutCapableNNModule, MultiLayerPerceptron, LSTNetwork, ResidualFeedForwardNetwork)

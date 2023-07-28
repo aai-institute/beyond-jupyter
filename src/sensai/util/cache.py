@@ -11,8 +11,8 @@ import time
 from abc import abstractmethod, ABC
 from typing import Any, Callable, Iterator, List, Optional, TypeVar, Generic
 
-from .hash import pickleHash
-from .pickle import loadPickle, dumpPickle, setstate
+from .hash import pickle_hash
+from .pickle import load_pickle, dump_pickle, setstate
 
 log = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ class PersistentList(Generic[TValue], ABC):
         pass
 
     @abstractmethod
-    def iterItems(self) -> Iterator[TValue]:
+    def iter_items(self) -> Iterator[TValue]:
         """
         Iterates over the items in the persisted list
 
@@ -79,42 +79,43 @@ class DelayedUpdateHook:
     Ensures that a given function is executed after an update happens, but delay the execution until
     there are no further updates for a certain time period
     """
-    def __init__(self, fn: Callable[[], Any], timePeriodSecs, periodicallyExecutedFn: Optional[Callable[[], Any]] = None):
+    def __init__(self, fn: Callable[[], Any], time_period_secs, periodically_executed_fn: Optional[Callable[[], Any]] = None):
         """
         :param fn: the function to eventually call after an update
-        :param timePeriodSecs: the time that must pass while not receiving further updates for fn to be called
-        :param periodicallyExecutedFn: a function to execute periodically (every timePeriodSecs seconds) in the busy waiting loop,
+        :param time_period_secs: the time that must pass while not receiving further updates for fn to be called
+        :param periodically_executed_fn: a function to execute periodically (every timePeriodSecs seconds) in the busy waiting loop,
             which may, for example, log information or apply additional executions, which must not interfere with the correctness of
             the execution of fn
         """
-        self.periodicallyExecutedFn = periodicallyExecutedFn
+        self.periodicallyExecutedFn = periodically_executed_fn
         self.fn = fn
-        self.timePeriodSecs = timePeriodSecs
+        self.timePeriodSecs = time_period_secs
         self._lastUpdateTime = None
         self._thread = None
         self._threadLock = threading.Lock()
 
-    def handleUpdate(self):
+    def handle_update(self):
         """
         Notifies of an update and ensures that the function passed at construction is eventually called
         (after no more updates are received within the respective time window)
         """
         self._lastUpdateTime = time.time()
 
-        def doPeriodicCheck():
+        def do_periodic_check():
             while True:
                 time.sleep(self.timePeriodSecs)
-                timePassedSinceLastUpdate = time.time() - self._lastUpdateTime
+                time_passed_since_last_update = time.time() - self._lastUpdateTime
                 if self.periodicallyExecutedFn is not None:
                     self.periodicallyExecutedFn()
-                if timePassedSinceLastUpdate >= self.timePeriodSecs:
+                if time_passed_since_last_update >= self.timePeriodSecs:
                     self.fn()
                     return
 
+        # noinspection DuplicatedCode
         if self._thread is None or not self._thread.is_alive():
             self._threadLock.acquire()
             if self._thread is None or not self._thread.is_alive():
-                self._thread = threading.Thread(target=doPeriodicCheck, daemon=False)
+                self._thread = threading.Thread(target=do_periodic_check, daemon=False)
                 self._thread.start()
             self._threadLock.release()
 
@@ -130,138 +131,139 @@ class PeriodicUpdateHook:
         * a function which is called periodically
 
     """
-    def __init__(self, checkIntervalSecs: float, noUpdateTimePeriodSecs: float = None, noUpdateFn: Callable[[], Any] = None,
-            periodicFn: Optional[Callable[[], Any]] = None):
+    def __init__(self, check_interval_secs: float, no_update_time_period_secs: float = None, no_update_fn: Callable[[], Any] = None,
+            periodic_fn: Optional[Callable[[], Any]] = None):
         """
-        :param checkIntervalSecs: the time period, in seconds, between checks
-        :param noUpdateTimePeriodSecs: the time period after which to execute noUpdateFn if no further updates have come in.
+        :param check_interval_secs: the time period, in seconds, between checks
+        :param no_update_time_period_secs: the time period after which to execute noUpdateFn if no further updates have come in.
             This must be at least as large as checkIntervalSecs. If None, use checkIntervalSecs.
-        :param noUpdateFn: the function to call if there have been no further updates for noUpdateTimePeriodSecs seconds
-        :param periodicFn: a function to execute periodically (every checkIntervalSecs seconds) in the busy waiting loop,
+        :param no_update_fn: the function to call if there have been no further updates for noUpdateTimePeriodSecs seconds
+        :param periodic_fn: a function to execute periodically (every checkIntervalSecs seconds) in the busy waiting loop,
             which may, for example, log information or apply additional executions, which must not interfere with the correctness of
             the execution of fn
         """
-        if noUpdateTimePeriodSecs is None:
-            noUpdateTimePeriodSecs = checkIntervalSecs
-        elif noUpdateTimePeriodSecs < checkIntervalSecs:
+        if no_update_time_period_secs is None:
+            no_update_time_period_secs = check_interval_secs
+        elif no_update_time_period_secs < check_interval_secs:
             raise ValueError("noUpdateTimePeriodSecs must be at least as large as checkIntervalSecs")
-        self._periodicFn = periodicFn
-        self._checkIntervalSecs = checkIntervalSecs
-        self._noUpdateTimePeriodSecs = noUpdateTimePeriodSecs
-        self._noUpdateFn = noUpdateFn
-        self._lastUpdateTime = None
+        self._periodic_fn = periodic_fn
+        self._check_interval_secs = check_interval_secs
+        self._no_update_time_period_secs = no_update_time_period_secs
+        self._no_update_fn = no_update_fn
+        self._last_update_time = None
         self._thread = None
-        self._threadLock = threading.Lock()
+        self._thread_lock = threading.Lock()
 
-    def handleUpdate(self):
+    def handle_update(self):
         """
         Notifies of an update, making sure the functions given at construction will be called as specified
         """
-        self._lastUpdateTime = time.time()
+        self._last_update_time = time.time()
 
-        def doPeriodicCheck():
+        def do_periodic_check():
             while True:
-                time.sleep(self._checkIntervalSecs)
-                checkTime = time.time()
-                if self._periodicFn is not None:
-                    self._periodicFn()
-                timePassedSinceLastUpdate = checkTime - self._lastUpdateTime
-                if timePassedSinceLastUpdate >= self._noUpdateTimePeriodSecs:
-                    if self._noUpdateFn is not None:
-                        self._noUpdateFn()
+                time.sleep(self._check_interval_secs)
+                check_time = time.time()
+                if self._periodic_fn is not None:
+                    self._periodic_fn()
+                time_passed_since_last_update = check_time - self._last_update_time
+                if time_passed_since_last_update >= self._no_update_time_period_secs:
+                    if self._no_update_fn is not None:
+                        self._no_update_fn()
                     # if no further updates have come in, we terminate the thread
-                    if self._lastUpdateTime < checkTime:
+                    if self._last_update_time < check_time:
                         return
 
+        # noinspection DuplicatedCode
         if self._thread is None or not self._thread.is_alive():
-            self._threadLock.acquire()
+            self._thread_lock.acquire()
             if self._thread is None or not self._thread.is_alive():
-                self._thread = threading.Thread(target=doPeriodicCheck, daemon=False)
+                self._thread = threading.Thread(target=do_periodic_check, daemon=False)
                 self._thread.start()
-            self._threadLock.release()
+            self._thread_lock.release()
 
 
 class PicklePersistentKeyValueCache(PersistentKeyValueCache[TKey, TValue]):
     """
     Represents a key-value cache as a dictionary which is persisted in a file using pickle
     """
-    def __init__(self, picklePath, version=1, saveOnUpdate=True, deferredSaveDelaySecs=1.0):
+    def __init__(self, pickle_path, version=1, save_on_update=True, deferred_save_delay_secs=1.0):
         """
-        :param picklePath: the path of the file where the cache values are to be persisted
+        :param pickle_path: the path of the file where the cache values are to be persisted
         :param version: the version of cache entries. If a persisted cache with a non-matching version is found,
             it is discarded
-        :param saveOnUpdate: whether to persist the cache after an update; the cache is saved in a deferred
+        :param save_on_update: whether to persist the cache after an update; the cache is saved in a deferred
             manner and will be saved after deferredSaveDelaySecs if no new updates have arrived in the meantime,
             i.e. it will ultimately be saved deferredSaveDelaySecs after the latest update
-        :param deferredSaveDelaySecs: the number of seconds to wait for additional data to be added to the cache
+        :param deferred_save_delay_secs: the number of seconds to wait for additional data to be added to the cache
             before actually storing the cache after a cache update
         """
-        self.deferredSaveDelaySecs = deferredSaveDelaySecs
-        self.picklePath = picklePath
+        self.deferred_save_delay_secs = deferred_save_delay_secs
+        self.pickle_path = pickle_path
         self.version = version
-        self.saveOnUpdate = saveOnUpdate
-        cacheFound = False
-        if os.path.exists(picklePath):
+        self.save_on_update = save_on_update
+        cache_found = False
+        if os.path.exists(pickle_path):
             try:
-                log.info(f"Loading cache from {picklePath}")
-                persistedVersion, self.cache = loadPickle(picklePath)
-                if persistedVersion == version:
-                    cacheFound = True
+                log.info(f"Loading cache from {pickle_path}")
+                persisted_version, self.cache = load_pickle(pickle_path)
+                if persisted_version == version:
+                    cache_found = True
             except EOFError:
-                log.warning(f"The cache file in {picklePath} is corrupt")
-        if not cacheFound:
+                log.warning(f"The cache file in {pickle_path} is corrupt")
+        if not cache_found:
             self.cache = {}
-        self._updateHook = DelayedUpdateHook(self.save, deferredSaveDelaySecs)
-        self._writeLock = threading.Lock()
+        self._update_hook = DelayedUpdateHook(self.save, deferred_save_delay_secs)
+        self._write_lock = threading.Lock()
 
     def save(self):
         """
         Saves the cache in the file whose path was provided at construction
         """
-        with self._writeLock:  # avoid concurrent modification while saving
-            log.info(f"Saving cache to {self.picklePath}")
-            dumpPickle((self.version, self.cache), self.picklePath)
+        with self._write_lock:  # avoid concurrent modification while saving
+            log.info(f"Saving cache to {self.pickle_path}")
+            dump_pickle((self.version, self.cache), self.pickle_path)
 
     def get(self, key: TKey) -> Optional[TValue]:
         return self.cache.get(key)
 
     def set(self, key: TKey, value: TValue):
-        with self._writeLock:
+        with self._write_lock:
             self.cache[key] = value
-            if self.saveOnUpdate:
-                self._updateHook.handleUpdate()
+            if self.save_on_update:
+                self._update_hook.handle_update()
 
 
 class SlicedPicklePersistentList(PersistentList):
     """
     Object handling the creation and access to sliced pickle caches
     """
-    def __init__(self, directory, pickleBaseName, numEntriesPerSlice=100000):
+    def __init__(self, directory, pickle_base_name, num_entries_per_slice=100000):
         """
         :param directory: path to the directory where the sliced caches are to be stored
-        :param pickleBaseName: base name for the pickle, where slices will have the names {pickleBaseName}_sliceX.pickle
-        :param numEntriesPerSlice: how many entries should be stored in each cache
+        :param pickle_base_name: base name for the pickle, where slices will have the names {pickleBaseName}_sliceX.pickle
+        :param num_entries_per_slice: how many entries should be stored in each cache
         """
         self.directory = directory
-        self.pickleBaseName = pickleBaseName
-        self.numEntriesPerSlice = numEntriesPerSlice
+        self.pickleBaseName = pickle_base_name
+        self.numEntriesPerSlice = num_entries_per_slice
 
         # Set up the variables for the sliced cache
-        self.sliceId = 0
-        self.indexInSlice = 0
-        self.cacheOfSlice = []
+        self.slice_id = 0
+        self.index_in_slice = 0
+        self.cache_of_slice = []
 
         # Search directory for already present sliced caches
-        self.slicedFiles = self._findSlicedCaches()
+        self.slicedFiles = self._find_sliced_caches()
 
         # Helper variable to ensure object is only modified within a with-clause
         self._currentlyInWithClause = False
 
     def __enter__(self):
         self._currentlyInWithClause = True
-        if self.cacheExists():
+        if self.cache_exists():
             # Reset state to enable the appending of more items to the cache
-            self._setLastCacheState()
+            self._set_last_cache_state()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -276,116 +278,116 @@ class SlicedPicklePersistentList(PersistentList):
         if not self._currentlyInWithClause:
             raise Exception("Class needs to be instantiated within a with-clause to ensure correct storage")
 
-        if (self.indexInSlice + 1) % self.numEntriesPerSlice == 0:
+        if (self.index_in_slice + 1) % self.numEntriesPerSlice == 0:
             self._dump()
 
-        self.cacheOfSlice.append(item)
-        self.indexInSlice += 1
+        self.cache_of_slice.append(item)
+        self.index_in_slice += 1
 
-    def iterItems(self) -> Iterator[Any]:
+    def iter_items(self) -> Iterator[Any]:
         """
         Iterate over entries in the sliced cache
         :return: iterator over all items in the cache
         """
         for filePath in self.slicedFiles:
             log.info(f"Loading sliced pickle list from {filePath}")
-            cachedPickle = self._loadPickle(filePath)
-            for item in cachedPickle:
+            cached_pickle = self._load_pickle(filePath)
+            for item in cached_pickle:
                 yield item
 
     def clear(self):
         """
         Clears the cache if it exists
         """
-        if self.cacheExists():
+        if self.cache_exists():
             for filePath in self.slicedFiles:
                 os.unlink(filePath)
 
-    def cacheExists(self) -> bool:
+    def cache_exists(self) -> bool:
         """
         Does this cache already exist
         :return: True if cache exists, False if not
         """
         return len(self.slicedFiles) > 0
 
-    def _setLastCacheState(self):
+    def _set_last_cache_state(self):
         """
-        Sets the state such as to be able to add items to an existant cache
+        Sets the state so as to be able to add items to an existing cache
         """
         log.info("Resetting last state of cache...")
-        self.sliceId = len(self.slicedFiles) - 1
-        self.cacheOfSlice = self._loadPickle(self._picklePath(self.sliceId))
-        self.indexInSlice = len(self.cacheOfSlice) - 1
-        if self.indexInSlice >= self.numEntriesPerSlice:
-            self._nextSlice()
+        self.slice_id = len(self.slicedFiles) - 1
+        self.cache_of_slice = self._load_pickle(self._pickle_path(self.slice_id))
+        self.index_in_slice = len(self.cache_of_slice) - 1
+        if self.index_in_slice >= self.numEntriesPerSlice:
+            self._next_slice()
 
     def _dump(self):
         """
         Dumps the current cache (if non-empty)
         """
-        if len(self.cacheOfSlice) > 0:
-            picklePath = self._picklePath(str(self.sliceId))
-            log.info(f"Saving sliced cache to {picklePath}")
-            dumpPickle(self.cacheOfSlice, picklePath)
-            self.slicedFiles.append(picklePath)
+        if len(self.cache_of_slice) > 0:
+            pickle_path = self._pickle_path(str(self.slice_id))
+            log.info(f"Saving sliced cache to {pickle_path}")
+            dump_pickle(self.cache_of_slice, pickle_path)
+            self.slicedFiles.append(pickle_path)
 
             # Update slice number and reset indexing and cache
-            self._nextSlice()
+            self._next_slice()
         else:
             log.warning("Unexpected behavior: Dump was called when cache of slice is 0!")
 
-    def _nextSlice(self):
+    def _next_slice(self):
         """
         Updates sliced cache state for the next slice
         """
-        self.sliceId += 1
-        self.indexInSlice = 0
-        self.cacheOfSlice = []
+        self.slice_id += 1
+        self.index_in_slice = 0
+        self.cache_of_slice = []
 
-    def _findSlicedCaches(self) -> List[str]:
+    def _find_sliced_caches(self) -> List[str]:
         """
         Finds all pickled slices associated with this cache
         :return: list of sliced pickled files
         """
         # glob.glob permits the usage of unix-style pathnames matching. (below we find all ..._slice*.pickle files)
-        listOfFileNames = glob.glob(self._picklePath("*"))
+        list_of_file_names = glob.glob(self._pickle_path("*"))
         # Sort the slices to ensure it is in the same order as they was produced (regex replaces everything not a number with empty string).
-        listOfFileNames.sort(key=lambda f: int(re.sub('\D', '', f)))
-        return listOfFileNames
+        list_of_file_names.sort(key=lambda f: int(re.sub('\D', '', f)))
+        return list_of_file_names
 
-    def _loadPickle(self, picklePath: str) -> List[Any]:
+    def _load_pickle(self, pickle_path: str) -> List[Any]:
         """
         Loads pickle if file path exists, and persisted version is correct.
-        :param picklePath: file path
+        :param pickle_path: file path
         :return: list with objects
         """
-        cachedPickle = []
-        if os.path.exists(picklePath):
+        cached_pickle = []
+        if os.path.exists(pickle_path):
             try:
-                cachedPickle = loadPickle(picklePath)
+                cached_pickle = load_pickle(pickle_path)
             except EOFError:
-                log.warning(f"The cache file in {picklePath} is corrupt")
+                log.warning(f"The cache file in {pickle_path} is corrupt")
         else:
-            raise Exception(f"The file {picklePath} does not exist!")
-        return cachedPickle
+            raise Exception(f"The file {pickle_path} does not exist!")
+        return cached_pickle
 
-    def _picklePath(self, sliceSuffix) -> str:
-        return f"{os.path.join(self.directory, self.pickleBaseName)}_slice{sliceSuffix}.pickle"
+    def _pickle_path(self, slice_suffix) -> str:
+        return f"{os.path.join(self.directory, self.pickleBaseName)}_slice{slice_suffix}.pickle"
 
 
 class SqliteConnectionManager:
     _connections: List[sqlite3.Connection] = []
-    _atexitHandlerRegistered = False
+    _atexit_handler_registered = False
 
     @classmethod
-    def _registerAtExitHandler(cls):
-        if not cls._atexitHandlerRegistered:
-            cls._atexitHandlerRegistered = True
+    def _register_at_exit_handler(cls):
+        if not cls._atexit_handler_registered:
+            cls._atexit_handler_registered = True
             atexit.register(cls._cleanup)
 
     @classmethod
-    def openConnection(cls, path):
-        cls._registerAtExitHandler()
+    def open_connection(cls, path):
+        cls._register_at_exit_handler()
         conn = sqlite3.connect(path, check_same_thread=False)
         cls._connections.append(conn)
         return conn
@@ -402,71 +404,71 @@ class SqlitePersistentKeyValueCache(PersistentKeyValueCache[TKey, TValue]):
         STRING = ("VARCHAR(%d)", )
         INTEGER = ("LONG", )
 
-    def __init__(self, path, tableName="cache", deferredCommitDelaySecs=1.0, keyType: KeyType = KeyType.STRING,
-            maxKeyLength=255):
+    def __init__(self, path, table_name="cache", deferred_commit_delay_secs=1.0, key_type: KeyType = KeyType.STRING,
+            max_key_length=255):
         """
         :param path: the path to the file that is to hold the SQLite database
-        :param tableName: the name of the table to create in the database
-        :param deferredCommitDelaySecs: the time frame during which no new data must be added for a pending transaction to be committed
-        :param keyType: the type to use for keys; for complex keys (i.e. tuples), use STRING (conversions to string are automatic)
-        :param maxKeyLength: the maximum key length for the case where the keyType can be parametrised (e.g. STRING)
+        :param table_name: the name of the table to create in the database
+        :param deferred_commit_delay_secs: the time frame during which no new data must be added for a pending transaction to be committed
+        :param key_type: the type to use for keys; for complex keys (i.e. tuples), use STRING (conversions to string are automatic)
+        :param max_key_length: the maximum key length for the case where the key_type can be parametrised (e.g. STRING)
         """
         self.path = path
-        self.conn = SqliteConnectionManager.openConnection(path)
-        self.tableName = tableName
-        self.maxKeyLength = 255
-        self.keyType = keyType
-        self._updateHook = DelayedUpdateHook(self._commit, deferredCommitDelaySecs)
-        self._numEntriesToBeCommitted = 0
-        self._connMutex = threading.Lock()
+        self.conn = SqliteConnectionManager.open_connection(path)
+        self.table_name = table_name
+        self.max_key_length = 255
+        self.key_type = key_type
+        self._update_hook = DelayedUpdateHook(self._commit, deferred_commit_delay_secs)
+        self._num_entries_to_be_committed = 0
+        self._conn_mutex = threading.Lock()
 
         cursor = self.conn.cursor()
         cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table';")
-        if tableName not in [r[0] for r in cursor.fetchall()]:
-            log.info(f"Creating cache table '{self.tableName}' in {path}")
-            keyDbType = keyType.value[0]
-            if "%d" in keyDbType:
-                keyDbType = keyDbType % maxKeyLength
-            cursor.execute(f"CREATE TABLE {tableName} (cache_key {keyDbType} PRIMARY KEY, cache_value BLOB);")
+        if table_name not in [r[0] for r in cursor.fetchall()]:
+            log.info(f"Creating cache table '{self.table_name}' in {path}")
+            key_db_type = key_type.value[0]
+            if "%d" in key_db_type:
+                key_db_type = key_db_type % max_key_length
+            cursor.execute(f"CREATE TABLE {table_name} (cache_key {key_db_type} PRIMARY KEY, cache_value BLOB);")
         cursor.close()
 
-    def _keyDbValue(self, key):
-        if self.keyType == self.KeyType.STRING:
+    def _key_db_value(self, key):
+        if self.key_type == self.KeyType.STRING:
             s = str(key)
-            if len(s) > self.maxKeyLength:
-                raise ValueError(f"Key too long, maximal key length is {self.maxKeyLength}")
+            if len(s) > self.max_key_length:
+                raise ValueError(f"Key too long, maximal key length is {self.max_key_length}")
             return s
-        elif self.keyType == self.KeyType.INTEGER:
+        elif self.key_type == self.KeyType.INTEGER:
             return int(key)
         else:
-            raise Exception(f"Unhandled key type {self.keyType}")
+            raise Exception(f"Unhandled key type {self.key_type}")
 
     def _commit(self):
-        self._connMutex.acquire()
+        self._conn_mutex.acquire()
         try:
-            log.info(f"Committing {self._numEntriesToBeCommitted} cache entries to the SQLite database {self.path}")
+            log.info(f"Committing {self._num_entries_to_be_committed} cache entries to the SQLite database {self.path}")
             self.conn.commit()
-            self._numEntriesToBeCommitted = 0
+            self._num_entries_to_be_committed = 0
         finally:
-            self._connMutex.release()
+            self._conn_mutex.release()
 
     def set(self, key: TKey, value: TValue):
-        self._connMutex.acquire()
+        self._conn_mutex.acquire()
         try:
             cursor = self.conn.cursor()
-            key = self._keyDbValue(key)
-            cursor.execute(f"SELECT COUNT(*) FROM {self.tableName} WHERE cache_key=?", (key, ))
+            key = self._key_db_value(key)
+            cursor.execute(f"SELECT COUNT(*) FROM {self.table_name} WHERE cache_key=?", (key,))
             if cursor.fetchone()[0] == 0:
-                cursor.execute(f"INSERT INTO {self.tableName} (cache_key, cache_value) VALUES (?, ?)",
+                cursor.execute(f"INSERT INTO {self.table_name} (cache_key, cache_value) VALUES (?, ?)",
                                (key, pickle.dumps(value)))
             else:
-                cursor.execute(f"UPDATE {self.tableName} SET cache_value=? WHERE cache_key=?", (pickle.dumps(value), key))
-            self._numEntriesToBeCommitted += 1
+                cursor.execute(f"UPDATE {self.table_name} SET cache_value=? WHERE cache_key=?", (pickle.dumps(value), key))
+            self._num_entries_to_be_committed += 1
             cursor.close()
         finally:
-            self._connMutex.release()
+            self._conn_mutex.release()
 
-        self._updateHook.handleUpdate()
+        self._update_hook.handle_update()
 
     def _execute(self, cursor, *query):
         try:
@@ -475,35 +477,35 @@ class SqlitePersistentKeyValueCache(PersistentKeyValueCache[TKey, TValue]):
             raise Exception(f"Error executing query for {self.path}: {e}")
 
     def get(self, key: TKey) -> Optional[TValue]:
-        self._connMutex.acquire()
+        self._conn_mutex.acquire()
         try:
             cursor = self.conn.cursor()
-            key = self._keyDbValue(key)
-            self._execute(cursor, f"SELECT cache_value FROM {self.tableName} WHERE cache_key=?", (key, ))
+            key = self._key_db_value(key)
+            self._execute(cursor, f"SELECT cache_value FROM {self.table_name} WHERE cache_key=?", (key,))
             row = cursor.fetchone()
             cursor.close()
             if row is None:
                 return None
             return pickle.loads(row[0])
         finally:
-            self._connMutex.release()
+            self._conn_mutex.release()
 
     def __len__(self):
-        self._connMutex.acquire()
+        self._conn_mutex.acquire()
         try:
             cursor = self.conn.cursor()
-            cursor.execute(f"SELECT COUNT(*) FROM {self.tableName}")
+            cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
             cnt = cursor.fetchone()[0]
             cursor.close()
             return cnt
         finally:
-            self._connMutex.release()
+            self._conn_mutex.release()
 
-    def iterItems(self):
-        self._connMutex.acquire()
+    def iter_items(self):
+        self._conn_mutex.acquire()
         try:
             cursor = self.conn.cursor()
-            cursor.execute(f"SELECT cache_key, cache_value FROM {self.tableName}")
+            cursor.execute(f"SELECT cache_key, cache_value FROM {self.table_name}")
             while True:
                 row = cursor.fetchone()
                 if row is None:
@@ -511,20 +513,20 @@ class SqlitePersistentKeyValueCache(PersistentKeyValueCache[TKey, TValue]):
                 yield row[0], pickle.loads(row[1])
             cursor.close()
         finally:
-            self._connMutex.release()
+            self._conn_mutex.release()
 
 
 class SqlitePersistentList(PersistentList):
     def __init__(self, path):
-        self.keyValueCache = SqlitePersistentKeyValueCache(path, keyType=SqlitePersistentKeyValueCache.KeyType.INTEGER)
+        self.keyValueCache = SqlitePersistentKeyValueCache(path, key_type=SqlitePersistentKeyValueCache.KeyType.INTEGER)
         self.nextKey = len(self.keyValueCache)
 
     def append(self, item):
         self.keyValueCache.set(self.nextKey, item)
         self.nextKey += 1
 
-    def iterItems(self):
-        for item in self.keyValueCache.iterItems():
+    def iter_items(self):
+        for item in self.keyValueCache.iter_items():
             yield item[1]
 
 
@@ -534,20 +536,20 @@ class CachedValueProviderMixin(Generic[TKey, TValue, TData], ABC):
     cached values are not yet present, by computing them.
     """
     def __init__(self, cache: Optional[PersistentKeyValueCache[TKey, TValue]] = None,
-            cacheFactory: Optional[Callable[[], PersistentKeyValueCache[TKey, TValue]]] = None, persistCache=False, boxValues=False):
+            cache_factory: Optional[Callable[[], PersistentKeyValueCache[TKey, TValue]]] = None, persist_cache=False, box_values=False):
         """
         :param cache: the cache to use or None. If None, caching will be disabled
-        :param cacheFactory: a factory with which to create the cache (or recreate it after unpickling if `persistCache` is False, in which
+        :param cache_factory: a factory with which to create the cache (or recreate it after unpickling if `persistCache` is False, in which
             case this factory must be picklable)
-        :param persistCache: whether to persist the cache when pickling
-        :param boxValues: whether to box values, such that None is admissible as a value
+        :param persist_cache: whether to persist the cache when pickling
+        :param box_values: whether to box values, such that None is admissible as a value
         """
-        self._persistCache = persistCache
-        self._boxValues = boxValues
+        self._persistCache = persist_cache
+        self._boxValues = box_values
         self._cache = cache
-        self._cacheFactory = cacheFactory
-        if self._cache is None and cacheFactory is not None:
-            self._cache = cacheFactory()
+        self._cacheFactory = cache_factory
+        if self._cache is None and cache_factory is not None:
+            self._cache = cache_factory()
 
     def __getstate__(self):
         if not self._persistCache:
@@ -557,11 +559,11 @@ class CachedValueProviderMixin(Generic[TKey, TValue, TData], ABC):
         return self.__dict__
 
     def __setstate__(self, state):
-        setstate(CachedValueProviderMixin, self, state, renamedProperties={"persistCache": "_persistCache"})
+        setstate(CachedValueProviderMixin, self, state, renamed_properties={"persistCache": "_persistCache"})
         if not self._persistCache and self._cacheFactory is not None:
             self._cache = self._cacheFactory()
 
-    def _provideValue(self, key, data: Optional[TData] = None):
+    def _provide_value(self, key, data: Optional[TData] = None):
         """
         Provides the value for the key by retrieving the associated value from the cache or, if no entry in the
         cache is found, by computing the value via _computeValue
@@ -571,10 +573,10 @@ class CachedValueProviderMixin(Generic[TKey, TValue, TData], ABC):
         :return: the retrieved or computed value
         """
         if self._cache is None:
-            return self._computeValue(key, data)
+            return self._compute_value(key, data)
         value = self._cache.get(key)
         if value is None:
-            value = self._computeValue(key, data)
+            value = self._compute_value(key, data)
             self._cache.set(key, value if not self._boxValues else BoxedValue(value))
         else:
             if self._boxValues:
@@ -583,7 +585,7 @@ class CachedValueProviderMixin(Generic[TKey, TValue, TData], ABC):
         return value
 
     @abstractmethod
-    def _computeValue(self, key: TKey, data: Optional[TData]) -> TValue:
+    def _compute_value(self, key: TKey, data: Optional[TData]) -> TValue:
         """
         Computes the value for the given key
 
@@ -593,14 +595,14 @@ class CachedValueProviderMixin(Generic[TKey, TValue, TData], ABC):
         pass
 
 
-def cached(fn: Callable[[], T], picklePath, functionName=None, validityCheckFn: Optional[Callable[[T], bool]] = None,
+def cached(fn: Callable[[], T], pickle_path, function_name=None, validity_check_fn: Optional[Callable[[T], bool]] = None,
         backend="pickle", protocol=pickle.HIGHEST_PROTOCOL, load=True, version=None) -> T:
     """
     :param fn: the function whose result is to be cached
-    :param picklePath: the path in which to store the cached result
-    :param functionName: the name of the function fn (for the case where its __name__ attribute is not
+    :param pickle_path: the path in which to store the cached result
+    :param function_name: the name of the function fn (for the case where its __name__ attribute is not
         informative)
-    :param validityCheckFn: an optional function to call in order to check whether a cached result is still valid;
+    :param validity_check_fn: an optional function to call in order to check whether a cached result is still valid;
         the function shall return True if the result is still valid and false otherwise. If a cached result is invalid,
         the function fn is called to compute the result and the cached result is updated.
     :param backend: pickle or joblib
@@ -609,54 +611,55 @@ def cached(fn: Callable[[], T], picklePath, functionName=None, validityCheckFn: 
     :param version: if not None, previously persisted data will only be returned if it was stored with the same version
     :return: the result (either obtained from the cache or the function)
     """
-    if functionName is None:
-        functionName = fn.__name__
+    if function_name is None:
+        function_name = fn.__name__
 
-    def callFnAndCacheResult():
+    def call_fn_and_cache_result():
         res = fn()
-        log.info(f"Saving cached result in {picklePath}")
+        log.info(f"Saving cached result in {pickle_path}")
         if version is not None:
-            persistedRes = {"__cacheVersion": version, "obj": res}
+            persisted_res = {"__cacheVersion": version, "obj": res}
         else:
-            persistedRes = res
-        dumpPickle(persistedRes, picklePath, backend=backend, protocol=protocol)
+            persisted_res = res
+        dump_pickle(persisted_res, pickle_path, backend=backend, protocol=protocol)
         return res
 
-    if os.path.exists(picklePath):
+    if os.path.exists(pickle_path):
         if load:
-            log.info(f"Loading cached result of function '{functionName}' from {picklePath}")
-            result = loadPickle(picklePath, backend=backend)
-            if validityCheckFn is not None:
-                if not validityCheckFn(result):
+            log.info(f"Loading cached result of function '{function_name}' from {pickle_path}")
+            result = load_pickle(pickle_path, backend=backend)
+            if validity_check_fn is not None:
+                if not validity_check_fn(result):
                     log.info(f"Cached result is no longer valid, recomputing ...")
-                    result = callFnAndCacheResult()
+                    result = call_fn_and_cache_result()
             if version is not None:
-                cachedVersion = None
+                cached_version = None
                 if type(result) == dict:
-                    cachedVersion = result.get("__cacheVersion")
-                if cachedVersion != version:
-                    log.info(f"Cached result has incorrect version ({cachedVersion}, expected {version}), recomputing ...")
-                    result = callFnAndCacheResult()
+                    cached_version = result.get("__cacheVersion")
+                if cached_version != version:
+                    log.info(f"Cached result has incorrect version ({cached_version}, expected {version}), recomputing ...")
+                    result = call_fn_and_cache_result()
                 else:
                     result = result["obj"]
             return result
         else:
-            log.info(f"Ignoring previously stored result in {picklePath}, calling function '{functionName}' ...")
-            return callFnAndCacheResult()
+            log.info(f"Ignoring previously stored result in {pickle_path}, calling function '{function_name}' ...")
+            return call_fn_and_cache_result()
     else:
-        log.info(f"No cached result found in {picklePath}, calling function '{functionName}' ...")
-        return callFnAndCacheResult()
+        log.info(f"No cached result found in {pickle_path}, calling function '{function_name}' ...")
+        return call_fn_and_cache_result()
 
 
+# TODO consider renaming to pickle_cached (in line with other decorators)
 class PickleCached(object):
     """
     Function decorator for caching function results via pickle
     """
-    def __init__(self, cacheBasePath: str, filenamePrefix: str = None, filename: str = None, backend="pickle",
+    def __init__(self, cache_base_path: str, filename_prefix: str = None, filename: str = None, backend="pickle",
             protocol=pickle.HIGHEST_PROTOCOL, load=True, version=None):
         """
-        :param cacheBasePath: the directory where the pickle cache file will be stored
-        :param filenamePrefix: a prefix of the name of the cache file to be created, to which the function name and, where applicable,
+        :param cache_base_path: the directory where the pickle cache file will be stored
+        :param filename_prefix: a prefix of the name of the cache file to be created, to which the function name and, where applicable,
             a hash code of the function arguments will be appended and ".cache.pickle" will be appended; if None, use "" (if filename
             has not been provided)
         :param filename: the full file name of the cache file to be created; if the function takes arguments, the filename must
@@ -667,41 +670,42 @@ class PickleCached(object):
         :param version: if not None, previously persisted data will only be returned if it was stored with the same version
         """
         self.filename = filename
-        self.cacheBasePath = cacheBasePath
-        self.filenamePrefix = filenamePrefix
+        self.cache_base_path = cache_base_path
+        self.filename_prefix = filename_prefix
         self.backend = backend
         self.protocol = protocol
         self.load = load
         self.version = version
 
-        if self.filenamePrefix is None:
-            self.filenamePrefix = ""
+        if self.filename_prefix is None:
+            self.filename_prefix = ""
         else:
-            self.filenamePrefix += "-"
+            self.filename_prefix += "-"
 
     def __call__(self, fn: Callable, *_args, **_kwargs):
 
         def wrapped(*args, **kwargs):
-            hashCodeStr = None
-            haveArgs = len(args) > 0 or len(kwargs) > 0
-            if haveArgs:
-                hashCodeStr = pickleHash((args, kwargs))
+            hash_code_str = None
+            have_args = len(args) > 0 or len(kwargs) > 0
+            if have_args:
+                hash_code_str = pickle_hash((args, kwargs))
             if self.filename is None:
-                filename = self.filenamePrefix + fn.__qualname__.replace(".<locals>.", ".")
-                if hashCodeStr is not None:
-                    filename += "-" + hashCodeStr
+                filename = self.filename_prefix + fn.__qualname__.replace(".<locals>.", ".")
+                if hash_code_str is not None:
+                    filename += "-" + hash_code_str
                 filename += ".cache.pickle"
             else:
-                if hashCodeStr is not None:
-                    if not "%s" in self.filename:
-                        raise Exception("Function called with arguments but full cache filename contains no placeholder (%s) for argument hash")
-                    filename = self.filename % hashCodeStr
+                if hash_code_str is not None:
+                    if "%s" not in self.filename:
+                        raise Exception("Function called with arguments but full cache filename contains no placeholder (%s) "
+                                        "for argument hash")
+                    filename = self.filename % hash_code_str
                 else:
                     if "%s" in self.filename:
                         raise Exception("Function without arguments but full cache filename with placeholder (%s) was specified")
                     filename = self.filename
-            picklePath = os.path.join(self.cacheBasePath, filename)
-            return cached(lambda: fn(*args, **kwargs), picklePath, functionName=fn.__name__, backend=self.backend, load=self.load,
+            pickle_path = os.path.join(self.cache_base_path, filename)
+            return cached(lambda: fn(*args, **kwargs), pickle_path, function_name=fn.__name__, backend=self.backend, load=self.load,
                 version=self.version)
 
         return wrapped
@@ -726,7 +730,7 @@ class PickleLoadSaveMixin(LoadSaveInterface):
         :param path:
         :param backend: pickle or joblib
         """
-        dumpPickle(self, path, backend=backend)
+        dump_pickle(self, path, backend=backend)
 
     @classmethod
     def load(cls, path, backend="pickle"):
@@ -738,7 +742,7 @@ class PickleLoadSaveMixin(LoadSaveInterface):
         :return: instance of the present class
         """
         log.info(f"Loading instance of {cls} from {path}")
-        result = loadPickle(path, backend=backend)
+        result = load_pickle(path, backend=backend)
         if not isinstance(result, cls):
             raise Exception(f"Excepted instance of {cls}, instead got: {result.__class__.__name__}")
         return result

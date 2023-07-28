@@ -9,43 +9,43 @@ class RelativeFrequencyCounter(ToStringMixin):
     Counts the absolute and relative frequency of an event
     """
     def __init__(self):
-        self.numTotal = 0
-        self.numRelevant = 0
+        self.num_total = 0
+        self.num_relevant = 0
 
-    def count(self, isRelevantEvent) -> None:
+    def count(self, is_relevant_event) -> None:
         """
-        Adds to the the count.
+        Adds to the count.
         The nominator is incremented only if we are counting a relevant event.
         The denominator is always incremented.
 
-        :param isRelevantEvent: whether we are counting a relevant event
+        :param is_relevant_event: whether we are counting a relevant event
         """
-        self.numTotal += 1
-        if isRelevantEvent:
-            self.numRelevant += 1
+        self.num_total += 1
+        if is_relevant_event:
+            self.num_relevant += 1
 
-    def _toStringObjectInfo(self):
-        info = f"{self.numRelevant}/{self.numTotal}"
-        if self.numTotal > 0:
-            info += f", {100 * self.numRelevant / self.numTotal:.2f}%"
+    def _tostring_object_info(self):
+        info = f"{self.num_relevant}/{self.num_total}"
+        if self.num_total > 0:
+            info += f", {100 * self.num_relevant / self.num_total:.2f}%"
         return info
 
-    def add(self, relativeFrequencyCounter: __qualname__) -> None:
+    def add(self, relative_frequency_counter: "RelativeFrequencyCounter") -> None:
         """
         Adds the counts of the given counter to this object
 
-        :param relativeFrequencyCounter: the counter whose data to add
+        :param relative_frequency_counter: the counter whose data to add
         """
-        self.numTotal += relativeFrequencyCounter.numTotal
-        self.numRelevant += relativeFrequencyCounter.numRelevant
+        self.num_total += relative_frequency_counter.num_total
+        self.num_relevant += relative_frequency_counter.num_relevant
 
-    def getRelativeFrequency(self) -> Optional[float]:
+    def get_relative_frequency(self) -> Optional[float]:
         """
         :return: the relative frequency (between 0 and 1) or None if nothing was counted (0 events considered)
         """
-        if self.numTotal == 0:
+        if self.num_total == 0:
             return None
-        return self.numRelevant / self.numTotal
+        return self.num_relevant / self.num_total
 
 
 class DistributionCounter(ToStringMixin):
@@ -54,7 +54,7 @@ class DistributionCounter(ToStringMixin):
     """
     def __init__(self):
         self.counts = collections.defaultdict(self._zero)
-        self.totalCount = 0
+        self.total_count = 0
 
     @staticmethod
     def _zero():
@@ -66,17 +66,17 @@ class DistributionCounter(ToStringMixin):
 
         :param event: the event/key whose count to increment, which must be hashable
         """
-        self.totalCount += 1
+        self.total_count += 1
         self.counts[event] += 1
 
-    def getDistribution(self) -> Dict[Hashable, float]:
+    def get_distribution(self) -> Dict[Hashable, float]:
         """
         :return: a dictionary mapping events (as previously passed to count) to their relative frequencies
         """
-        return {k: v/self.totalCount for k, v in self.counts.items()}
+        return {k: v/self.total_count for k, v in self.counts.items()}
 
-    def _toStringObjectInfo(self):
-        return ", ".join([f"{str(k)}: {v} ({v/self.totalCount:.3f})" for k, v in self.counts.items()])
+    def _tostring_object_info(self):
+        return ", ".join([f"{str(k)}: {v} ({v/self.total_count:.3f})" for k, v in self.counts.items()])
 
 
 class WeightedMean(ToStringMixin):
@@ -84,11 +84,11 @@ class WeightedMean(ToStringMixin):
     Computes a weighted mean of values
     """
     def __init__(self):
-        self.weightedValueSum = 0
-        self.weightSum = 0
+        self.weighted_value_sum = 0
+        self.weight_sum = 0
 
-    def _toStringObjectInfo(self) -> str:
-        return f"{self.weightedValueSum/self.weightSum}"
+    def _tostring_object_info(self) -> str:
+        return f"{self.weighted_value_sum / self.weight_sum}"
 
     def add(self, value, weight=1) -> None:
         """
@@ -97,11 +97,11 @@ class WeightedMean(ToStringMixin):
         :param value: the value
         :param weight: the weight with which to consider the value
         """
-        self.weightedValueSum += value * weight
-        self.weightSum += weight
+        self.weighted_value_sum += value * weight
+        self.weight_sum += weight
 
-    def getWeightedMean(self):
+    def get_weighted_mean(self):
         """
         :return: the weighted mean of all values that have been added
         """
-        return self.weightedValueSum / self.weightSum
+        return self.weighted_value_sum / self.weight_sum

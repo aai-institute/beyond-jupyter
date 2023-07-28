@@ -18,17 +18,17 @@ class SkLearnEuclideanClusterer(EuclideanClusterer):
     Wrapper around an sklearn-type clustering algorithm
 
     :param clusterer: a clusterer object compatible the sklearn API
-    :param noiseLabel: label that is associated with the noise cluster or None
-    :param minClusterSize: if not None, clusters below this size will be labeled as noise
-    :param maxClusterSize: if not None, clusters above this size will be labeled as noise
+    :param noise_label: label that is associated with the noise cluster or None
+    :param min_cluster_size: if not None, clusters below this size will be labeled as noise
+    :param max_cluster_size: if not None, clusters above this size will be labeled as noise
     """
 
-    def __init__(self, clusterer: SkLearnClustererProtocol, noiseLabel=-1,
-             minClusterSize: int = None, maxClusterSize: int = None):
-        super().__init__(noiseLabel=noiseLabel, minClusterSize=minClusterSize, maxClusterSize=maxClusterSize)
+    def __init__(self, clusterer: SkLearnClustererProtocol, noise_label=-1,
+             min_cluster_size: int = None, max_cluster_size: int = None):
+        super().__init__(noise_label=noise_label, min_cluster_size=min_cluster_size, max_cluster_size=max_cluster_size)
         self.clusterer = clusterer
 
-    def _computeLabels(self, x: np.ndarray):
+    def _compute_labels(self, x: np.ndarray):
         self.clusterer.fit(x)
         return self.clusterer.labels_
 

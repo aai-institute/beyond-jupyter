@@ -6,7 +6,7 @@ import numpy as np
 
 from .util import LogTime
 from .util.pickle import setstate
-from .util.string import listString, ToStringMixin
+from .util.string import list_string, ToStringMixin
 
 T = TypeVar("T")
 
@@ -33,18 +33,18 @@ class Vectoriser(Generic[T], ToStringMixin):
         self.name = None
 
     def __setstate__(self, state):
-        setstate(Vectoriser, self, state, newOptionalProperties=["_resultType", "name"], renamedProperties={"f": "_fn"})
+        setstate(Vectoriser, self, state, new_optional_properties=["_resultType", "name"], renamed_properties={"f": "_fn"})
 
-    def _toStringExcludePrivate(self) -> bool:
+    def _tostring_exclude_private(self) -> bool:
         return True
 
-    def setName(self, name):
+    def set_name(self, name):
         self.name = name
 
-    def getName(self):
+    def get_name(self):
         """
-        :return: the name of this feature generator, which may be a default name if the name has not been set. Note that feature generators created
-            by a FeatureGeneratorFactory always get the name with which the generator factory was registered.
+        :return: the name of this feature generator, which may be a default name if the name has not been set. Note that feature generators
+            created by a FeatureGeneratorFactory always get the name with which the generator factory was registered.
         """
         if self.name is None:
             return f"{self.__class__.__name__}-{id(self)}"
@@ -59,7 +59,7 @@ class Vectoriser(Generic[T], ToStringMixin):
         y = self._fn(x)
 
         if self._resultType is None:
-            self._resultType = self.ResultType.fromValue(y)
+            self._resultType = self.ResultType.from_value(y)
 
         if self._resultType == self.ResultType.LIST:
             y = np.array(y)
@@ -79,7 +79,7 @@ class Vectoriser(Generic[T], ToStringMixin):
             value = self.transformer.transform([value])[0]
         return value
 
-    def applyMulti(self, items: Iterable[T], transform=True, useCache=False, verbose=False) -> List[np.array]:
+    def apply_multi(self, items: Iterable[T], transform=True, use_cache=False, verbose=False) -> List[np.array]:
         """
         Applies this vectoriser to multiple items at once.
         Especially for cases where this vectoriser uses a transformer, this method is significantly faster than
@@ -87,7 +87,7 @@ class Vectoriser(Generic[T], ToStringMixin):
 
         :param items: the items to be vectorised
         :param transform: whether to apply this instance's transformer (if any)
-        :param useCache: whether to apply caching of the value function f given at construction (keeping track of outputs for
+        :param use_cache: whether to apply caching of the value function f given at construction (keeping track of outputs for
             each input object id), which can significantly speed up computation in cases where an items appears more than
             once in the collection of items
         :param verbose: whether to generate log messages
@@ -97,12 +97,12 @@ class Vectoriser(Generic[T], ToStringMixin):
             self.log.info(f"Applying {self}")
 
         with LogTime("Application", enabled=verbose, logger=self.log):
-            if not useCache:
-                computeValue = self._f
+            if not use_cache:
+                compute_value = self._f
             else:
                 cache = {}
 
-                def computeValue(x):
+                def compute_value(x):
                     key = id(x)
                     value = cache.get(key)
                     if value is None:
@@ -110,7 +110,7 @@ class Vectoriser(Generic[T], ToStringMixin):
                         cache[key] = value
                     return value
 
-            values = [computeValue(x) for x in items]
+            values = [compute_value(x) for x in items]
             if self.transformer is not None and transform:
                 values = self.transformer.transform(values)
             return values
@@ -121,7 +121,7 @@ class Vectoriser(Generic[T], ToStringMixin):
         NUMPY_ARRAY = 2
 
         @classmethod
-        def fromValue(cls, y):
+        def from_value(cls, y):
             if type(y) == list:
                 return cls.LIST
             elif np.isscalar(y):
@@ -134,10 +134,11 @@ class Vectoriser(Generic[T], ToStringMixin):
 
 class EmptyVectoriser(Vectoriser):
     def __init__(self):
-        super().__init__(self._createEmptyVector)
+        super().__init__(self._create_empty_vector)
 
+    # noinspection PyUnusedLocal
     @staticmethod
-    def _createEmptyVector(x):
+    def _create_empty_vector(x):
         return np.zeros(0)
 
 
@@ -162,13 +163,13 @@ class SequenceVectoriser(Generic[T], ToStringMixin):
         UNIQUE = "unique"  # use collection of unique items
         CONCAT = "concat"  # use collection obtained by concatenating all sequences using numpy.concatenate
 
-    def __init__(self, vectorisers: Union[Sequence[Vectoriser[T]], Vectoriser[T]], fittingMode: FittingMode = FittingMode.UNIQUE):
+    def __init__(self, vectorisers: Union[Sequence[Vectoriser[T]], Vectoriser[T]], fitting_mode: FittingMode = FittingMode.UNIQUE):
         """
         :param vectorisers: zero or more vectorisers that are to be applied. If more than one vectoriser is supplied,
             vectors are generated from input instances of type T by concatenating the results of the vectorisers in
             the order the vectorisers are given.
         """
-        self.fittingMode = fittingMode
+        self.fittingMode = fitting_mode
         if isinstance(vectorisers, Vectoriser):
             self.vectorisers = [vectorisers]
         else:
@@ -204,14 +205,14 @@ class SequenceVectoriser(Generic[T], ToStringMixin):
         :param transform: whether to apply any post-vectorisation transformers
         :return:
         """
-        vectorsList = []
+        vectors_list = []
         for item in seq:
             vectors = [vec.apply(item, transform=transform) for vec in self.vectorisers]
             conc = np.concatenate(vectors, axis=0)
-            vectorsList.append(conc)
-        return vectorsList
+            vectors_list.append(conc)
+        return vectors_list
 
-    def applyMulti(self, sequences: Iterable[Sequence[T]], useCache=False, verbose=False) -> Tuple[List[List[np.array]], List[int]]:
+    def apply_multi(self, sequences: Iterable[Sequence[T]], use_cache=False, verbose=False) -> Tuple[List[List[np.array]], List[int]]:
         """
         Applies this vectoriser to multiple sequences of objects of type T, where each sequence is mapped to a sequence
         of 1D arrays.
@@ -219,7 +220,7 @@ class SequenceVectoriser(Generic[T], ToStringMixin):
         use transformers.
 
         :param sequences: the sequences to vectorise
-        :param useCache: whether to apply caching of the value functions of contained vectorisers (keeping track of outputs for
+        :param use_cache: whether to apply caching of the value functions of contained vectorisers (keeping track of outputs for
             each input object id), which can significantly speed up computation in cases where the given sequences contain individual
             items more than once
         :param verbose: whether to generate log messages
@@ -227,28 +228,30 @@ class SequenceVectoriser(Generic[T], ToStringMixin):
             of the sequences
         """
         if verbose:
-            self.log.info(f"Applying {self} (useCache={useCache})")
+            self.log.info(f"Applying {self} (useCache={use_cache})")
 
         lengths = [len(s) for s in sequences]
 
         if verbose:
             self.log.info("Generating combined sequence")
-        combinedSeq = []
+        combined_seq = []
         for seq in sequences:
-            combinedSeq.extend(seq)
+            combined_seq.extend(seq)
 
-        individualVectoriserResults = [vectoriser.applyMulti(combinedSeq, useCache=useCache, verbose=verbose) for vectoriser in self.vectorisers]
-        concVectors = [np.concatenate(x, axis=0) for x in zip(*individualVectoriserResults)]
+        individual_vectoriser_results = [vectoriser.apply_multi(combined_seq, use_cache=use_cache, verbose=verbose)
+            for vectoriser in self.vectorisers]
+        conc_vectors = [np.concatenate(x, axis=0) for x in zip(*individual_vectoriser_results)]
 
-        vectorSequences = []
-        idxStart = 0
+        vector_sequences = []
+        idx_start = 0
         for l in lengths:
-            vectorSequences.append(concVectors[idxStart:idxStart+l])
-            idxStart += l
+            vector_sequences.append(conc_vectors[idx_start:idx_start+l])
+            idx_start += l
 
-        return vectorSequences, lengths
+        return vector_sequences, lengths
 
-    def applyMultiWithPadding(self, sequences: Sequence[Sequence[T]], useCache=False, verbose=False) -> Tuple[List[List[np.array]], List[int]]:
+    def apply_multi_with_padding(self, sequences: Sequence[Sequence[T]], use_cache=False, verbose=False) \
+            -> Tuple[List[List[np.array]], List[int]]:
         """
         Applies this vectoriser to multiple sequences of objects of type T, where each sequence is mapped to a sequence
         of 1D arrays.
@@ -256,25 +259,25 @@ class SequenceVectoriser(Generic[T], ToStringMixin):
         is reached (padding).
 
         :param sequences: the sequences to vectorise
-        :param useCache: whether to apply caching of the value functions of contained vectorisers (keeping track of outputs for
+        :param use_cache: whether to apply caching of the value functions of contained vectorisers (keeping track of outputs for
             each input object id), which can significantly speed up computation in cases where the given sequences contain individual
             items more than once
         :param verbose: whether to generate log messages
         :return: a pair (vl, l) where vl is a list of lists of vectors/arrays, each list having the same length, and l is a list of
             integers containing the original unpadded lengths of the sequences
         """
-        result, lengths = self.applyMulti(sequences, useCache=useCache, verbose=verbose)
+        result, lengths = self.apply_multi(sequences, use_cache=use_cache, verbose=verbose)
         if verbose:
             self.log.info("Applying padding")
-        maxLength = max(lengths)
+        max_length = max(lengths)
         dim = len(result[0][0])
-        dummyVec = np.zeros((dim,))
+        dummy_vec = np.zeros((dim,))
         for seq in result:
-            for i in range(maxLength - len(seq)):
-                seq.append(dummyVec)
+            for i in range(max_length - len(seq)):
+                seq.append(dummy_vec)
         return result, lengths
 
-    def getVectorDim(self, seq: Sequence[T]):
+    def get_vector_dim(self, seq: Sequence[T]):
         """
         Determines the dimensionality of generated vectors by applying the vectoriser to the given sequence
 
@@ -284,29 +287,11 @@ class SequenceVectoriser(Generic[T], ToStringMixin):
         return len(self.apply(seq, transform=False)[0])
 
 
-if __name__ == '__main__':
-    def myf(x):
-        return np.array([x/2, x*x])
-
-    import sklearn.preprocessing
-
-    items = [1,2,3]
-    items2 = [4,5,6,7]
-    data = [items, items2]
-    vectoriser = Vectoriser(myf, transformer=sklearn.preprocessing.MaxAbsScaler())
-    #vectoriser.fit(items)
-    #result = vectoriser.apply(items[1])
-
-    svec = SequenceVectoriser([vectoriser, vectoriser])
-    svec.fit(data)
-    result, lengths = svec.applyMultiWithPadding(data)
-
-
 class VectoriserRegistry:
     def __init__(self):
         self._factories: Dict[Hashable, Callable[[Callable], Vectoriser]] = {}
 
-    def getAvailableVectorisers(self):
+    def get_available_vectorisers(self):
         return list(self._factories.keys())
 
     @staticmethod
@@ -316,41 +301,42 @@ class VectoriserRegistry:
             name = name.name
         return name
 
-    def registerFactory(self, name: Hashable, factory: Callable[[Callable], Vectoriser],
-            additionalNames: Optional[Iterable[Hashable]] = None):
+    def register_factory(self, name: Hashable, factory: Callable[[Callable], Vectoriser],
+            additional_names: Optional[Iterable[Hashable]] = None):
         """
         Registers a vectoriser factory which can subsequently be referenced via their name
 
         :param name: the name (which can, in particular, be a string or an enum item)
         :param factory: the factory, which takes the default transformer factory as an argument
-        :param additionalNames: (optional) additional names under which to register the factory
+        :param additional_names: (optional) additional names under which to register the factory
         """
-        self._registerFactory(name, factory)
-        if additionalNames is not None:
-            for n in additionalNames:
-                self._registerFactory(n, factory)
+        self._register_factory(name, factory)
+        if additional_names is not None:
+            for n in additional_names:
+                self._register_factory(n, factory)
 
-    def _registerFactory(self, name: Hashable, factory):
+    def _register_factory(self, name: Hashable, factory):
         name = self._name(name)
         if name in self._factories:
             raise ValueError(f"Vectoriser factory for name '{name}' already registered")
         self._factories[name] = factory
 
-    def getVectoriser(self, name: Hashable, defaultTransformerFactory: Callable) -> Vectoriser:
+    def get_vectoriser(self, name: Hashable, default_transformer_factory: Callable) -> Vectoriser:
         """
         Creates a vectoriser from a name, which must have been previously registered.
 
         :param name: the name (which can, in particular, be a string or an enum item)
-        :param defaultTransformerFactory: the default transformer factory
+        :param default_transformer_factory: the default transformer factory
         :return: a new vectoriser instance
         """
         name = self._name(name)
         factory = self._factories.get(name)
         if factory is None:
-            raise ValueError(f"No vectoriser factory registered for name '{name}': known names: {listString(self._factories.keys())}. Register the factory first.")
-        instance = factory(defaultTransformerFactory)
-        instance.setName(name)
+            raise ValueError(f"No vectoriser factory registered for name '{name}': known names: {list_string(self._factories.keys())}. "
+                             f"Register the factory first.")
+        instance = factory(default_transformer_factory)
+        instance.set_name(name)
         return instance
 
-    def getVectorisers(self, names: List[Hashable], defaultTransformerFactory: Callable) -> List[Vectoriser]:
-        return [self.getVectoriser(name, defaultTransformerFactory) for name in names]
+    def get_vectorisers(self, names: List[Hashable], default_transformer_factory: Callable) -> List[Vectoriser]:
+        return [self.get_vectoriser(name, default_transformer_factory) for name in names]

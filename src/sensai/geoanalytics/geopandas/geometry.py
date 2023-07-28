@@ -6,8 +6,8 @@ from scipy.spatial.qhull import Delaunay
 from shapely.geometry import MultiLineString, Polygon
 from shapely.ops import polygonize, unary_union
 
-from .coordinates import extractCoordinatesArray, TCoordinates
-from .graph import delaunayGraph
+from .coordinates import extract_coordinates_array, TCoordinates
+from .graph import delaunay_graph
 
 log = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 # after already having implemented this, I found the following package: https://github.com/bellockk/alphashape
 # It will compute the same polygons (I have verified it). It also contains an optimizer for alpha, which is, however,
 # extremely slow and therefore unusable in most practical applications.
-def alphaShape(coordinates: TCoordinates, alpha=0.5):
+def alpha_shape(coordinates: TCoordinates, alpha=0.5):
     """
     Compute the `alpha shape`_ of a set of points. Based on `this implementation`_. In contrast to the standard
     definition of the parameter alpha here we normalize it by the mean edge size of the cluster. This results in
@@ -29,11 +29,11 @@ def alphaShape(coordinates: TCoordinates, alpha=0.5):
         don't fall inward as much as smaller numbers.
     :return: a shapely Polygon
     """
-    coordinates = extractCoordinatesArray(coordinates)
+    coordinates = extract_coordinates_array(coordinates)
 
     edge_index_pairs = set()
     edge_vertex_pairs = []
-    graph = delaunayGraph(coordinates)
+    graph = delaunay_graph(coordinates)
     mean_edge_size = graph.size(weight="weight") / graph.number_of_edges()
 
     def add_edge(edge_index_pair, edge_vertex_pair):

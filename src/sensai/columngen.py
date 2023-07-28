@@ -15,20 +15,20 @@ class ColumnGenerator:
     """
     Generates a single column (pd.Series) from an input data frame, which is to have the same index as the input
     """
-    def __init__(self, generatedColumnName: str):
+    def __init__(self, generated_column_name: str):
         """
-        :param generatedColumnName: the name of the column being generated
+        :param generated_column_name: the name of the column being generated
         """
-        self.generatedColumnName = generatedColumnName
+        self.generatedColumnName = generated_column_name
 
-    def generateColumn(self, df: pd.DataFrame) -> pd.Series:
+    def generate_column(self, df: pd.DataFrame) -> pd.Series:
         """
         Generates a column from the input data frame
 
         :param df: the input data frame
         :return: the column as a named series, which has the same index as the input
         """
-        result = self._generateColumn(df)
+        result = self._generate_column(df)
         if isinstance(result, pd.Series):
             result.name = self.generatedColumnName
         else:
@@ -36,7 +36,7 @@ class ColumnGenerator:
         return result
 
     @abstractmethod
-    def _generateColumn(self, df: pd.DataFrame) -> Union[pd.Series, list, np.ndarray]:
+    def _generate_column(self, df: pd.DataFrame) -> Union[pd.Series, list, np.ndarray]:
         """
         Performs the actual column generation
 
@@ -48,8 +48,8 @@ class ColumnGenerator:
 
 class IndexCachedColumnGenerator(ColumnGenerator):
     """
-    Decorator for a column generator which adds support for cached column generation where cache keys are given by the input data frame's index.
-    Entries not found in the cache are computed by the wrapped column generator.
+    Decorator for a column generator which adds support for cached column generation where cache keys are given by the input data frame's
+    index. Entries not found in the cache are computed by the wrapped column generator.
 
     The main use case for this class is to add caching to existing ColumnGenerators. For creating a new caching
     ColumnGenerator the use of ColumnGeneratorCachedByIndex is encouraged.
@@ -57,30 +57,31 @@ class IndexCachedColumnGenerator(ColumnGenerator):
 
     log = log.getChild(__qualname__)
 
-    def __init__(self, columnGenerator: ColumnGenerator, cache: PersistentKeyValueCache):
+    def __init__(self, column_generator: ColumnGenerator, cache: PersistentKeyValueCache):
         """
-        :param columnGenerator: the column generator with which to generate values for keys not found in the cache
+        :param column_generator: the column generator with which to generate values for keys not found in the cache
         :param cache: the cache in which to store key-value pairs
         """
-        super().__init__(columnGenerator.generatedColumnName)
-        self.columnGenerator = columnGenerator
+        super().__init__(column_generator.generatedColumnName)
+        self.columnGenerator = column_generator
         self.cache = cache
 
-    def _generateColumn(self, df: pd.DataFrame) -> pd.Series:
+    def _generate_column(self, df: pd.DataFrame) -> pd.Series:
         # compute series of cached values
-        cacheValues = [self.cache.get(nt.Index) for nt in df.itertuples()]
-        cacheSeries = pd.Series(cacheValues, dtype=object, index=df.index).dropna()
+        cache_values = [self.cache.get(nt.Index) for nt in df.itertuples()]
+        cache_series = pd.Series(cache_values, dtype=object, index=df.index).dropna()
 
         # compute missing values (if any) via wrapped generator, storing them in the cache
-        missingValuesDF = df[~df.index.isin(cacheSeries.index)]
-        self.log.info(f"Retrieved {len(cacheSeries)} values from the cache, {len(missingValuesDF)} still to be computed by {self.columnGenerator}")
-        if len(missingValuesDF) == 0:
-            return cacheSeries
+        missing_values_df = df[~df.index.isin(cache_series.index)]
+        self.log.info(f"Retrieved {len(cache_series)} values from the cache, {len(missing_values_df)} still to be computed by "
+                      f"{self.columnGenerator}")
+        if len(missing_values_df) == 0:
+            return cache_series
         else:
-            missingSeries = self.columnGenerator.generateColumn(missingValuesDF)
-            for key, value in missingSeries.iteritems():
+            missing_series = self.columnGenerator.generate_column(missing_values_df)
+            for key, value in missing_series.iteritems():
                 self.cache.set(key, value)
-            return pd.concat((cacheSeries, missingSeries))
+            return pd.concat((cache_series, missing_series))
 
 
 class ColumnGeneratorCachedByIndex(ColumnGenerator, ABC):
@@ -91,41 +92,41 @@ class ColumnGeneratorCachedByIndex(ColumnGenerator, ABC):
 
     log = log.getChild(__qualname__)
 
-    def __init__(self, generatedColumnName: str, cache: Optional[PersistentKeyValueCache], persistCache=False):
+    def __init__(self, generated_column_name: str, cache: Optional[PersistentKeyValueCache], persist_cache=False):
         """
-        :param generatedColumnName: the name of the column being generated
+        :param generated_column_name: the name of the column being generated
         :param cache: the cache in which to store key-value pairs. If None, caching will be disabled
-        :param persistCache: whether to persist the cache when pickling
+        :param persist_cache: whether to persist the cache when pickling
         """
-        super().__init__(generatedColumnName)
+        super().__init__(generated_column_name)
         self.cache = cache
-        self.persistCache = persistCache
+        self.persistCache = persist_cache
 
-    def _generateColumn(self, df: pd.DataFrame) -> Union[pd.Series, list, np.ndarray]:
+    def _generate_column(self, df: pd.DataFrame) -> Union[pd.Series, list, np.ndarray]:
         self.log.info(f"Generating column {self.generatedColumnName} with {self.__class__.__name__}")
         values = []
-        cacheHits = 0
-        columnLength = len(df)
-        percentageToLog = 0
+        cache_hits = 0
+        column_length = len(df)
+        percentage_to_log = 0
         for i, namedTuple in enumerate(df.itertuples()):
-            percentageGenerated = int(100*i/columnLength)
-            if percentageGenerated == percentageToLog:
-                self.log.debug(f"Processed {percentageToLog}% of {self.generatedColumnName}")
-                percentageToLog += 5
+            percentage_generated = int(100*i/column_length)
+            if percentage_generated == percentage_to_log:
+                self.log.debug(f"Processed {percentage_to_log}% of {self.generatedColumnName}")
+                percentage_to_log += 5
 
             key = namedTuple.Index
             if self.cache is not None:
                 value = self.cache.get(key)
                 if value is None:
-                    value = self._generateValue(namedTuple)
+                    value = self._generate_value(namedTuple)
                     self.cache.set(key, value)
                 else:
-                    cacheHits += 1
+                    cache_hits += 1
             else:
-                value = self._generateValue(namedTuple)
+                value = self._generate_value(namedTuple)
             values.append(value)
         if self.cache is not None:
-            self.log.info(f"Cached column generation resulted in {cacheHits}/{columnLength} cache hits")
+            self.log.info(f"Cached column generation resulted in {cache_hits}/{column_length} cache hits")
         return values
 
     def __getstate__(self):
@@ -136,5 +137,5 @@ class ColumnGeneratorCachedByIndex(ColumnGenerator, ABC):
         return self.__dict__
 
     @abstractmethod
-    def _generateValue(self, namedTuple) -> Any:
+    def _generate_value(self, named_tuple) -> Any:
         pass

@@ -11,62 +11,62 @@ from ..util.pickle import PickleFailureDebugger
 
 
 class EnsembleVectorModel(VectorModel, ABC):
-    def __init__(self, models: Sequence[VectorModel], numProcesses=1):
+    def __init__(self, models: Sequence[VectorModel], num_processes=1):
         """
         :param models:
-        :param numProcesses:
+        :param num_processes:
         """
-        self.numProcesses = numProcesses
+        self.num_processes = num_processes
         self.models = list(models)
-        super().__init__(checkInputColumns=False)
+        super().__init__(check_input_columns=False)
 
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        if self.numProcesses == 1 or len(self.models) == 1:
+    def _fit(self, x: pd.DataFrame, y: pd.DataFrame):
+        if self.num_processes == 1 or len(self.models) == 1:
             for model in self.models:
-                model.fit(X, Y)
+                model.fit(x, y)
             return
 
-        fittedModelFutures = []
-        executor = ProcessPoolExecutor(max_workers=self.numProcesses)
+        fitted_model_futures = []
+        executor = ProcessPoolExecutor(max_workers=self.num_processes)
         fitters = [VectorModelWithSeparateFeatureGeneration(model) for model in self.models]
         for fitter in fitters:
-            intermediateStep = fitter.fitStart(X, Y)
-            frameinfo = getframeinfo(currentframe())
-            PickleFailureDebugger.logFailureIfEnabled(intermediateStep,
-                contextInfo=f"Submitting {fitter} in {frameinfo.filename}:{frameinfo.lineno}")
-            fittedModelFutures.append(executor.submit(intermediateStep.execute))
-        for i, fittedModelFuture in enumerate(fittedModelFutures):
-            self.models[i] = fitters[i].fitEnd(fittedModelFuture.result())
+            intermediate_step = fitter.fit_start(x, y)
+            frame_info = getframeinfo(currentframe())
+            PickleFailureDebugger.log_failure_if_enabled(intermediate_step,
+                context_info=f"Submitting {fitter} in {frame_info.filename}:{frame_info.lineno}")
+            fitted_model_futures.append(executor.submit(intermediate_step.execute))
+        for i, fittedModelFuture in enumerate(fitted_model_futures):
+            self.models[i] = fitters[i].fit_end(fittedModelFuture.result())
 
-    def computeAllPredictions(self, X: pd.DataFrame):
-        if self.numProcesses == 1 or len(self.models) == 1:
-            return [model.predict(X) for model in self.models]
+    def compute_all_predictions(self, x: pd.DataFrame):
+        if self.num_processes == 1 or len(self.models) == 1:
+            return [model.predict(x) for model in self.models]
 
-        predictionFutures = []
-        executor = ProcessPoolExecutor(max_workers=self.numProcesses)
+        prediction_futures = []
+        executor = ProcessPoolExecutor(max_workers=self.num_processes)
         predictors = [VectorModelWithSeparateFeatureGeneration(model) for model in self.models]
         for predictor in predictors:
-            predictFinaliser = predictor.predictStart(X)
-            frameinfo = getframeinfo(currentframe())
-            PickleFailureDebugger.logFailureIfEnabled(predictFinaliser,
-                contextInfo=f"Submitting {predictFinaliser} in {frameinfo.filename}:{frameinfo.lineno}")
-            predictionFutures.append(executor.submit(predictFinaliser.execute))
-        return [predictionFuture.result() for predictionFuture in predictionFutures]
+            predict_finaliser = predictor.predict_start(x)
+            frame_info = getframeinfo(currentframe())
+            PickleFailureDebugger.log_failure_if_enabled(predict_finaliser,
+                context_info=f"Submitting {predict_finaliser} in {frame_info.filename}:{frame_info.lineno}")
+            prediction_futures.append(executor.submit(predict_finaliser.execute))
+        return [predictionFuture.result() for predictionFuture in prediction_futures]
 
     def _predict(self, x):
-        predictionsDataFrames = self.computeAllPredictions(x)
-        return self.aggregatePredictions(predictionsDataFrames)
+        predictions_data_frames = self.compute_all_predictions(x)
+        return self.aggregate_predictions(predictions_data_frames)
 
     @abstractmethod
-    def aggregatePredictions(self, predictionsDataFrames: List[pd.DataFrame]) -> pd.DataFrame:
+    def aggregate_predictions(self, predictions_data_frames: List[pd.DataFrame]) -> pd.DataFrame:
         pass
 
 
 class EnsembleRegressionVectorModel(EnsembleVectorModel, ABC):
-    def isRegressionModel(self):
+    def is_regression_model(self):
         return True
 
 
 class EnsembleClassificationVectorModel(EnsembleVectorModel, ABC):
-    def isRegressionModel(self):
+    def is_regression_model(self):
         return False

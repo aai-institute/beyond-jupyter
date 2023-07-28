@@ -54,8 +54,8 @@ class Color:
             raise ValueError(f"Opacity must be between 0 and 1, got {opacity}")
         return Color((*self.rgba[:3], opacity))
 
-    def toHex(self, keepAlpha=True) -> str:
-        return matplotlib.colors.to_hex(self.rgba, keepAlpha)
+    def to_hex(self, keep_alpha=True) -> str:
+        return matplotlib.colors.to_hex(self.rgba, keep_alpha)
 
 
 class LinearColorMap:
@@ -63,43 +63,43 @@ class LinearColorMap:
     Facilitates usage of linear segmented colour maps by combining a colour map (member `cmap`), which transforms normalised values in [0,1]
     into colours, with a normaliser that transforms the original values. The member `scalarMapper`
     """
-    def __init__(self, normMin, normMax, cmapPoints: List[Tuple[float, Any]], cmapPointsNormalised=False):
+    def __init__(self, norm_min, norm_max, cmap_points: List[Tuple[float, Any]], cmap_points_normalised=False):
         """
-        :param normMin: the value that shall be mapped to 0 in the normalised representation (any smaller values are also clipped to 0)
-        :param normMax: the value that shall be mapped to 1 in the normalised representation (any larger values are also clipped to 1)
-        :param cmapPoints: a list (of at least two) tuples (v, c) where v is the value and c is the colour associated with the value;
+        :param norm_min: the value that shall be mapped to 0 in the normalised representation (any smaller values are also clipped to 0)
+        :param norm_max: the value that shall be mapped to 1 in the normalised representation (any larger values are also clipped to 1)
+        :param cmap_points: a list (of at least two) tuples (v, c) where v is the value and c is the colour associated with the value;
             any colour specification supported by matplotlib is admissible
-        :param cmapPointsNormalised: whether the values in `cmapPoints` are already normalised
+        :param cmap_points_normalised: whether the values in `cmap_points` are already normalised
         """
-        self.norm = matplotlib.colors.Normalize(vmin=normMin, vmax=normMax, clip=True)
-        if not cmapPointsNormalised:
-            cmapPoints = [(self.norm(v), c) for v, c in cmapPoints]
-        self.cmap = LinearSegmentedColormap.from_list(f"cmap{id(self)}", cmapPoints)
+        self.norm = matplotlib.colors.Normalize(vmin=norm_min, vmax=norm_max, clip=True)
+        if not cmap_points_normalised:
+            cmap_points = [(self.norm(v), c) for v, c in cmap_points]
+        self.cmap = LinearSegmentedColormap.from_list(f"cmap{id(self)}", cmap_points)
         self.scalarMapper = matplotlib.cm.ScalarMappable(norm=self.norm, cmap=self.cmap)
 
-    def getColor(self, value):
+    def get_color(self, value):
         rgba = self.scalarMapper.to_rgba(value)
         return '#%02x%02x%02x%02x' % tuple(int(v * 255) for v in rgba)
 
 
-def plotMatrix(matrix: np.ndarray, title: str, xticklabels: Sequence[str], yticklabels: Sequence[str], xlabel: str,
-        ylabel: str, normalize=True, figsize: Tuple[int, int] = (9, 9), titleAdd: str = None) -> matplotlib.figure.Figure:
+def plot_matrix(matrix: np.ndarray, title: str, xtick_labels: Sequence[str], ytick_labels: Sequence[str], xlabel: str,
+        ylabel: str, normalize=True, figsize: Tuple[int, int] = (9, 9), title_add: str = None) -> matplotlib.figure.Figure:
     """
     :param matrix: matrix whose data to plot, where matrix[i, j] will be rendered at x=i, y=j
     :param title: the plot's title
-    :param xticklabels: the labels for the x-axis ticks
-    :param yticklabels: the labels for the y-axis ticks
+    :param xtick_labels: the labels for the x-axis ticks
+    :param ytick_labels: the labels for the y-axis ticks
     :param xlabel: the label for the x-axis
     :param ylabel: the label for the y-axis
     :param normalize: whether to normalise the matrix before plotting it (dividing each entry by the sum of all entries)
     :param figsize: an optional size of the figure to be created
-    :param titleAdd: an optional second line to add to the title
+    :param title_add: an optional second line to add to the title
     :return: the figure object
     """
     matrix = np.transpose(matrix)
 
-    if titleAdd is not None:
-        title += f"\n {titleAdd} "
+    if title_add is not None:
+        title += f"\n {title_add} "
 
     if normalize:
         matrix = matrix.astype('float') / matrix.sum()
@@ -109,7 +109,7 @@ def plotMatrix(matrix: np.ndarray, title: str, xticklabels: Sequence[str], ytick
     ax.set(xticks=np.arange(matrix.shape[1]),
         yticks=np.arange(matrix.shape[0]),
         # ... and label them with the respective list entries
-        xticklabels=xticklabels, yticklabels=yticklabels,
+        xticklabels=xtick_labels, yticklabels=ytick_labels,
         title=title,
         xlabel=xlabel,
         ylabel=ylabel)
@@ -161,12 +161,12 @@ class Plot:
         self.ax.set_title(title)
         return self
 
-    def xlim(self: TPlot, minValue, maxValue) -> TPlot:
-        self.ax.set_xlim(minValue, maxValue)
+    def xlim(self: TPlot, min_value, max_value) -> TPlot:
+        self.ax.set_xlim(min_value, max_value)
         return self
 
-    def ylim(self: TPlot, minValue, maxValue) -> TPlot:
-        self.ax.set_ylim(minValue, maxValue)
+    def ylim(self: TPlot, min_value, max_value) -> TPlot:
+        self.ax.set_ylim(min_value, max_value)
         return self
 
     def save(self, path):
@@ -183,23 +183,22 @@ class Plot:
         :return: self
         """
         if major is not None:
-            self.xtickMajor(major)
+            self.xtick_major(major)
         if minor is not None:
-            self.xtickMinor(minor)
+            self.xtick_minor(minor)
         return self
 
-    def xtickMajor(self: TPlot, base) -> TPlot:
+    def xtick_major(self: TPlot, base) -> TPlot:
         self.ax.xaxis.set_major_locator(plticker.MultipleLocator(base=base))
         return self
 
-    def xtickMinor(self: TPlot, base) -> TPlot:
+    def xtick_minor(self: TPlot, base) -> TPlot:
         self.ax.xaxis.set_minor_locator(plticker.MultipleLocator(base=base))
         return self
 
-    def ytickMajor(self: TPlot, base) -> TPlot:
+    def ytick_major(self: TPlot, base) -> TPlot:
         self.ax.yaxis.set_major_locator(plticker.MultipleLocator(base=base))
         return self
-
 
 
 class ScatterPlot(Plot):
@@ -208,7 +207,7 @@ class ScatterPlot(Plot):
     MAX_OPACITY = 0.5
     MIN_OPACITY = 0.05
 
-    def __init__(self, x, y, c=None, c_base: Tuple[float, float, float]=(0, 0, 1), c_opacity=None, x_label=None, y_label=None, **kwargs):
+    def __init__(self, x, y, c=None, c_base: Tuple[float, float, float] = (0, 0, 1), c_opacity=None, x_label=None, y_label=None, **kwargs):
         """
         :param x: the x values; if has name (e.g. pd.Series), will be used as axis label
         :param y: the y values; if has name (e.g. pd.Series), will be used as axis label
@@ -250,53 +249,54 @@ class ScatterPlot(Plot):
 
 
 class HeatMapPlot(Plot):
-    DEFAULT_CMAP_FACTORY = lambda numPoints: LinearSegmentedColormap.from_list("whiteToRed", ((0, (1, 1, 1)), (1/numPoints, (1, 0.96, 0.96)), (1, (0.7, 0, 0))), numPoints)
+    DEFAULT_CMAP_FACTORY = lambda num_points: LinearSegmentedColormap.from_list("whiteToRed",
+        ((0, (1, 1, 1)), (1 / num_points, (1, 0.96, 0.96)), (1, (0.7, 0, 0))), num_points)
 
-    def __init__(self, x, y, xLabel=None, yLabel=None, bins=60, cmap=None, commonRange=True, diagonal=False,
-            diagonalColor="green", **kwargs):
+    def __init__(self, x, y, x_label=None, y_label=None, bins=60, cmap=None, common_range=True, diagonal=False,
+            diagonal_color="green", **kwargs):
         """
         :param x: the x values
         :param y: the y values
-        :param xLabel: the x-axis label
-        :param yLabel: the y-axis label
+        :param x_label: the x-axis label
+        :param y_label: the y-axis label
         :param bins: the number of bins to use in each dimension
         :param cmap: the colour map to use for heat values (if None, use default)
-        :param commonRange: whether the heat map is to use a common range for the x- and y-axes (set to False if x and y are completely
+        :param common_range: whether the heat map is to use a common rng for the x- and y-axes (set to False if x and y are completely
             different quantities; set to True use cases such as the evaluation of regression model quality)
         :param diagonal: whether to draw the diagonal line (useful for regression evaluation)
-        :param diagonalColor: the colour to use for the diagonal line
+        :param diagonal_color: the colour to use for the diagonal line
         :param kwargs: parameters to pass on to plt.imshow
         """
         assert len(x) == len(y)
-        if xLabel is None and hasattr(x, "name"):
-            xLabel = x.name
-        if yLabel is None and hasattr(y, "name"):
-            yLabel = y.name
+        if x_label is None and hasattr(x, "name"):
+            x_label = x.name
+        if y_label is None and hasattr(y, "name"):
+            y_label = y.name
 
         def draw():
             nonlocal cmap
             x_range = [min(x), max(x)]
             y_range = [min(y), max(y)]
-            range = [min(x_range[0], y_range[0]), max(x_range[1], y_range[1])]
-            if commonRange:
-                x_range = y_range = range
+            rng = [min(x_range[0], y_range[0]), max(x_range[1], y_range[1])]
+            if common_range:
+                x_range = y_range = rng
             if diagonal:
-                plt.plot(range, range, '-', lw=0.75, label="_not in legend", color=diagonalColor, zorder=2)
+                plt.plot(rng, rng, '-', lw=0.75, label="_not in legend", color=diagonal_color, zorder=2)
             heatmap, _, _ = np.histogram2d(x, y, range=[x_range, y_range], bins=bins, density=False)
             extent = [x_range[0], x_range[1], y_range[0], y_range[1]]
             if cmap is None:
                 cmap = HeatMapPlot.DEFAULT_CMAP_FACTORY(len(x))
-            if xLabel is not None:
-                plt.xlabel(xLabel)
-            if yLabel is not None:
-                plt.ylabel(yLabel)
+            if x_label is not None:
+                plt.xlabel(x_label)
+            if y_label is not None:
+                plt.ylabel(y_label)
             plt.imshow(heatmap.T, extent=extent, origin='lower', interpolation="none", cmap=cmap, zorder=1, aspect="auto", **kwargs)
 
         super().__init__(draw)
 
 
 class HistogramPlot(Plot):
-    def __init__(self, values, bins="auto", kde=False, cdf=False, cdfComplementary=False, cdfSecondaryAxis=True,
+    def __init__(self, values, bins="auto", kde=False, cdf=False, cdf_complementary=False, cdf_secondary_axis=True,
             binwidth=None, stat="probability", xlabel=None,
             **kwargs):
         """
@@ -304,8 +304,8 @@ class HistogramPlot(Plot):
         :param bins: a bin specification as understood by sns.histplot
         :param kde: whether to add a kernel density estimator
         :param cdf: whether to add a plot of the cumulative distribution function (cdf)
-        :param cdfComplementary: whether to plot, if cdf is enabled, the complementary values
-        :param cdfSecondaryAxis: whether to use, if cdf is enabled, a secondary
+        :param cdf_complementary: whether to plot, if cdf is enabled, the complementary values
+        :param cdf_secondary_axis: whether to use, if cdf is enabled, a secondary
         :param binwidth: the bin width; if None, inferred
         :param stat: the statistic to plot (as understood by sns.histplot)
         :param xlabel: the label for the x-axis
@@ -313,33 +313,33 @@ class HistogramPlot(Plot):
         """
 
         def draw():
-            nonlocal cdfSecondaryAxis
+            nonlocal cdf_secondary_axis
             sns.histplot(values, bins=bins, kde=kde, binwidth=binwidth, stat=stat, **kwargs)
             plt.ylabel(stat)
             if cdf:
-                ecdfStat = stat
-                if ecdfStat not in ("count", "proportion", "probability"):
-                    ecdfStat = "proportion"
-                    cdfSecondaryAxis = True
-                cdfAx: Optional[plt.Axes] = None
-                cdfAxLabel = f"{ecdfStat} (cdf)"
-                if cdfSecondaryAxis:
-                    cdfAx: plt.Axes = plt.twinx()
+                ecdf_stat = stat
+                if ecdf_stat not in ("count", "proportion", "probability"):
+                    ecdf_stat = "proportion"
+                    cdf_secondary_axis = True
+                cdf_ax: Optional[plt.Axes] = None
+                cdf_ax_label = f"{ecdf_stat} (cdf)"
+                if cdf_secondary_axis:
+                    cdf_ax: plt.Axes = plt.twinx()
                     if stat in ("proportion", "probability"):
-                        yTick = 0.1
+                        y_tick = 0.1
                     elif stat == "percent":
-                        yTick = 10
+                        y_tick = 10
                     else:
-                        yTick = None
-                    if yTick is not None:
-                        cdfAx.yaxis.set_major_locator(plticker.MultipleLocator(base=yTick))
-                if cdfComplementary or ecdfStat in ("count", "proportion", "probability"):
-                    ecdfStat = "proportion" if stat == "probability" else stat  # same semantics but "probability" not understood by ecdfplot
-                    sns.ecdfplot(values, stat=ecdfStat, complementary=cdfComplementary, color="orange", ax=cdfAx)
+                        y_tick = None
+                    if y_tick is not None:
+                        cdf_ax.yaxis.set_major_locator(plticker.MultipleLocator(base=y_tick))
+                if cdf_complementary or ecdf_stat in ("count", "proportion", "probability"):
+                    ecdf_stat = "proportion" if stat == "probability" else stat  # same semantics but "probability" not understood by ecdfplot
+                    sns.ecdfplot(values, stat=ecdf_stat, complementary=cdf_complementary, color="orange", ax=cdf_ax)
                 else:
-                    sns.histplot(values, bins=100, stat=stat, element="poly", fill=False, cumulative=True, color="orange", ax=cdfAx)
-                if cdfAx is not None:
-                    cdfAx.set_ylabel(cdfAxLabel)
+                    sns.histplot(values, bins=100, stat=stat, element="poly", fill=False, cumulative=True, color="orange", ax=cdf_ax)
+                if cdf_ax is not None:
+                    cdf_ax.set_ylabel(cdf_ax_label)
             if xlabel is not None:
                 self.xlabel(xlabel)
 

@@ -34,7 +34,7 @@ class GreedyAgglomerativeClustering(object):
         Base class for clusters that can be merged via GreedyAgglomerativeClustering
         """
         @abstractmethod
-        def mergeCost(self, other) -> float:
+        def merge_cost(self, other) -> float:
             """
             Computes the cost of merging the given cluster with this cluster
 
@@ -50,22 +50,23 @@ class GreedyAgglomerativeClustering(object):
             """
             pass
 
-    def __init__(self, clusters: Sequence[Cluster], mergeCandidateDeterminationStrategy: "GreedyAgglomerativeClustering.MergeCandidateDeterminationStrategy" = None):
+    def __init__(self, clusters: Sequence[Cluster],
+            merge_candidate_determination_strategy: "GreedyAgglomerativeClustering.MergeCandidateDeterminationStrategy" = None):
         """
         :param clusters: the initial clusters, which are to be agglomerated into larger clusters
         """
-        self.prioritisedMerges = queue.PriorityQueue()
-        self.wrappedClusters = []
+        self.prioritised_merges = queue.PriorityQueue()
+        self.wrapped_clusters = []
         for idx, c in enumerate(clusters):
-            self.wrappedClusters.append(GreedyAgglomerativeClustering.WrappedCluster(c, idx, self))
+            self.wrapped_clusters.append(GreedyAgglomerativeClustering.WrappedCluster(c, idx, self))
 
         # initialise merge candidate determination strategy
-        if mergeCandidateDeterminationStrategy is None:
-            mergeCandidateDeterminationStrategy = self.MergeCandidateDeterminationStrategyDefault()
-        mergeCandidateDeterminationStrategy.setClusterer(self)
-        self.mergeCandidateDeterminationStrategy = mergeCandidateDeterminationStrategy
+        if merge_candidate_determination_strategy is None:
+            merge_candidate_determination_strategy = self.MergeCandidateDeterminationStrategyDefault()
+        merge_candidate_determination_strategy.set_clusterer(self)
+        self.mergeCandidateDeterminationStrategy = merge_candidate_determination_strategy
         
-    def applyClustering(self) -> List[Cluster]:
+    def apply_clustering(self) -> List[Cluster]:
         """
         Applies greedy agglomerative clustering to the clusters given at construction, merging
         clusters until no further merges are admissible
@@ -75,24 +76,24 @@ class GreedyAgglomerativeClustering(object):
         """
         # compute all possible merges, adding them to the priority queue
         self.log.debug("Computing initial merges")
-        for idx, wc in enumerate(self.wrappedClusters):
+        for idx, wc in enumerate(self.wrapped_clusters):
             self.log.debug("Computing potential merges for cluster index %d" % idx)
-            wc.computeMerges(True)
+            wc.compute_merges(True)
         
         # greedily apply the least-cost merges
         steps = 0
-        while not self.prioritisedMerges.empty():
+        while not self.prioritised_merges.empty():
             self.log.debug("Clustering step %d" % (steps+1))
-            haveMerge = False
-            while not haveMerge and not self.prioritisedMerges.empty():
-                merge = self.prioritisedMerges.get()
+            have_merge = False
+            while not have_merge and not self.prioritised_merges.empty():
+                merge = self.prioritised_merges.get()
                 if not merge.evaporated:
-                    haveMerge = True
-            if haveMerge:
+                    have_merge = True
+            if have_merge:
                 merge.apply()
             steps += 1
         
-        result = filter(lambda wc: not wc.isMerged(), self.wrappedClusters)
+        result = filter(lambda wc: not wc.is_merged(), self.wrapped_clusters)
         result = list(map(lambda wc: wc.cluster, result))
         return result
 
@@ -101,51 +102,51 @@ class GreedyAgglomerativeClustering(object):
         Wrapper for clusters which stores additional data required for clustering (internal use only)
         """
         def __init__(self, cluster, idx, clusterer: "GreedyAgglomerativeClustering"):
-            self.mergedIntoCluster: Optional[GreedyAgglomerativeClustering.WrappedCluster] = None
+            self.merged_into_cluster: Optional[GreedyAgglomerativeClustering.WrappedCluster] = None
             self.merges = []
             self.cluster = cluster
             self.idx = idx
             self.clusterer = clusterer
 
-        def isMerged(self) -> bool:
-            return self.mergedIntoCluster is not None
+        def is_merged(self) -> bool:
+            return self.merged_into_cluster is not None
 
-        def getClusterAssociation(self) -> "GreedyAgglomerativeClustering.WrappedCluster":
+        def get_cluster_association(self) -> "GreedyAgglomerativeClustering.WrappedCluster":
             """
             Gets the wrapped cluster that this cluster's points have ultimately been merged into (which may be the cluster itself)
 
             :return: the wrapped cluster this cluster's points are associated with
             """
-            if self.mergedIntoCluster is None:
+            if self.merged_into_cluster is None:
                 return self
             else:
-                return self.mergedIntoCluster.getClusterAssociation()
+                return self.merged_into_cluster.get_cluster_association()
             
-        def removeMerges(self):
+        def remove_merges(self):
             for merge in self.merges:
                 merge.evaporated = True
             self.merges = []
 
-        def computeMerges(self, initial: bool, mergedClusterIndices: Tuple[int, int] = None):
+        def compute_merges(self, initial: bool, merged_cluster_indices: Tuple[int, int] = None):
             # add new merges to queue
-            wrappedClusters = self.clusterer.wrappedClusters
-            for item in self.clusterer.mergeCandidateDeterminationStrategy.iterCandidateIndices(self, initial, mergedClusterIndices):
+            wrapped_clusters = self.clusterer.wrapped_clusters
+            for item in self.clusterer.mergeCandidateDeterminationStrategy.iter_candidate_indices(self, initial, merged_cluster_indices):
                 merge: Optional[GreedyAgglomerativeClustering.ClusterMerge] = None
                 if type(item) == int:
-                    otherIdx = item
-                    if otherIdx != self.idx:
-                        other = wrappedClusters[otherIdx]
-                        if not other.isMerged():
-                            mergeCost = self.cluster.mergeCost(other.cluster)
-                            if not math.isinf(mergeCost):
-                                merge = GreedyAgglomerativeClustering.ClusterMerge(self, other, mergeCost)
+                    other_idx = item
+                    if other_idx != self.idx:
+                        other = wrapped_clusters[other_idx]
+                        if not other.is_merged():
+                            merge_cost = self.cluster.merge_cost(other.cluster)
+                            if not math.isinf(merge_cost):
+                                merge = GreedyAgglomerativeClustering.ClusterMerge(self, other, merge_cost)
                 else:
                     merge = item
                     assert merge.c1.idx == self.idx
                 if merge is not None:
                     merge.c1.merges.append(merge)
                     merge.c2.merges.append(merge)
-                    self.clusterer.prioritisedMerges.put(merge)
+                    self.clusterer.prioritised_merges.put(merge)
 
         def __str__(self):
             return "Cluster[idx=%d]" % self.idx
@@ -156,30 +157,34 @@ class GreedyAgglomerativeClustering(object):
         """
         log = log.getChild(__qualname__)
 
-        def __init__(self, c1: "GreedyAgglomerativeClustering.WrappedCluster", c2: "GreedyAgglomerativeClustering.WrappedCluster", mergeCost):
+        def __init__(self, c1: "GreedyAgglomerativeClustering.WrappedCluster", c2: "GreedyAgglomerativeClustering.WrappedCluster",
+                merge_cost):
             self.c1 = c1
             self.c2 = c2
-            self.mergeCost = mergeCost
+            self.merge_cost = merge_cost
             self.evaporated = False
 
         def apply(self):
             c1, c2 = self.c1, self.c2
             self.log.debug("Merging %s into %s..." % (str(c1), str(c2)))
             c1.cluster.merge(c2.cluster)
-            c2.mergedIntoCluster = c1
-            c1.removeMerges()
-            c2.removeMerges()
+            c2.merged_into_cluster = c1
+            c1.remove_merges()
+            c2.remove_merges()
             self.log.debug("Computing new merge costs for %s..." % str(c1))
-            c1.computeMerges(False, mergedClusterIndices=(c1.idx, c2.idx))
+            c1.compute_merges(False, merged_cluster_indices=(c1.idx, c2.idx))
         
         def __lt__(self, other):
-            return self.mergeCost < other.mergeCost
+            return self.merge_cost < other.merge_cost
 
     class MergeCandidateDeterminationStrategy(ABC):
+        def __init__(self):
+            self.clusterer: Optional["GreedyAgglomerativeClustering"] = None
+
         """
         Determines the indices of clusters which should be evaluated with regard to their merge costs
         """
-        def setClusterer(self, clusterer: "GreedyAgglomerativeClustering"):
+        def set_clusterer(self, clusterer: "GreedyAgglomerativeClustering"):
             """
             Initialises the clusterer the strategy is applied to
             :param clusterer: the clusterer
@@ -187,13 +192,13 @@ class GreedyAgglomerativeClustering(object):
             self.clusterer = clusterer
 
         @abstractmethod
-        def iterCandidateIndices(self, wc: "GreedyAgglomerativeClustering.WrappedCluster", initial: bool,
-                mergedClusterIndices: Tuple[int, int] = None) -> Iterator[Union[int, "GreedyAgglomerativeClustering.ClusterMerge"]]:
+        def iter_candidate_indices(self, wc: "GreedyAgglomerativeClustering.WrappedCluster", initial: bool,
+                merged_cluster_indices: Tuple[int, int] = None) -> Iterator[Union[int, "GreedyAgglomerativeClustering.ClusterMerge"]]:
             """
             :param wc: the wrapped cluster: the cluster for which to determine the cluster indices that are to be considered for
                 a potential merge
             :param initial: whether we are computing the initial candidates (at the start of the clustering algorithm)
-            :param mergedClusterIndices: [for initial=False] the pair of cluster indices that were just joined to form the updated
+            :param merged_cluster_indices: [for initial=False] the pair of cluster indices that were just joined to form the updated
                 cluster wc
             :return: an iterator of cluster indices that should be evaluated as potential merge partners for wc (it may contain the
                 index of wc, which will be ignored)
@@ -201,11 +206,10 @@ class GreedyAgglomerativeClustering(object):
             pass
 
     class MergeCandidateDeterminationStrategyDefault(MergeCandidateDeterminationStrategy):
-        def iterCandidateIndices(self, wc: "GreedyAgglomerativeClustering.WrappedCluster", initial: bool,
-                mergedClusterIndices: Tuple[int, int] = None) -> Iterator[Union[int, "GreedyAgglomerativeClustering.ClusterMerge"]]:
-            n = len(self.clusterer.wrappedClusters)
+        def iter_candidate_indices(self, wc: "GreedyAgglomerativeClustering.WrappedCluster", initial: bool,
+                merged_cluster_indices: Tuple[int, int] = None) -> Iterator[Union[int, "GreedyAgglomerativeClustering.ClusterMerge"]]:
+            n = len(self.clusterer.wrapped_clusters)
             if initial:
                 return range(wc.idx + 1, n)
             else:
                 return range(n)
-

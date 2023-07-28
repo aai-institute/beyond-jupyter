@@ -1,20 +1,19 @@
 import atexit
-from datetime import datetime
 import logging as lg
-from logging import *
 import sys
 import time
-from typing import List, Tuple
+from datetime import datetime
+from logging import *
+from typing import List
 
 import pandas as pd
-
 
 log = getLogger(__name__)
 
 LOG_DEFAULT_FORMAT = '%(levelname)-5s %(asctime)-15s %(name)s:%(funcName)s - %(message)s'
 
 
-def removeLogHandlers():
+def remove_log_handlers():
     """
     Removes all current log handlers
     """
@@ -23,12 +22,13 @@ def removeLogHandlers():
         logger.removeHandler(logger.handlers[0])
 
 
-def isLogHandlerActive(handler):
+def is_log_handler_active(handler):
     return handler in getLogger().handlers
 
 
-def configureLogging(format=LOG_DEFAULT_FORMAT, level=lg.DEBUG):
-    removeLogHandlers()
+# noinspection PyShadowingBuiltins
+def configure(format=LOG_DEFAULT_FORMAT, level=lg.DEBUG):
+    remove_log_handlers()
     basicConfig(level=level, format=format, stream=sys.stdout)
     getLogger("matplotlib").setLevel(lg.INFO)
     getLogger("urllib3").setLevel(lg.INFO)
@@ -36,7 +36,7 @@ def configureLogging(format=LOG_DEFAULT_FORMAT, level=lg.DEBUG):
     pd.set_option('display.max_colwidth', 255)
 
 
-def datetimeTag() -> str:
+def datetime_tag() -> str:
     """
     :return: a string tag for use in log file names which contains the current date and time (compact but readable)
     """
@@ -47,12 +47,12 @@ _fileLoggerPaths: List[str] = []
 _isAtExitReportFileLoggerRegistered = False
 
 
-def _atExitReportFileLogger():
+def _at_exit_report_file_logger():
     for path in _fileLoggerPaths:
         print(f"A log file was saved to {path}")
 
 
-def addFileLogger(path):
+def add_file_logger(path):
     global _isAtExitReportFileLoggerRegistered
     log.info(f"Logging to {path} ...")
     handler = FileHandler(path)
@@ -60,7 +60,7 @@ def addFileLogger(path):
     Logger.root.addHandler(handler)
     _fileLoggerPaths.append(path)
     if not _isAtExitReportFileLoggerRegistered:
-        atexit.register(_atExitReportFileLogger)
+        atexit.register(_at_exit_report_file_logger)
         _isAtExitReportFileLoggerRegistered = True
 
 
@@ -69,9 +69,9 @@ class StopWatch:
     Represents a stop watch for timing an execution. Constructing an instance starts the stopwatch.
     """
     def __init__(self, start=True):
-        self.startTime = time.time()
-        self._elapsedSecs = 0.0
-        self.isRunning = start
+        self.start_time = time.time()
+        self._elapsed_secs = 0.0
+        self.is_running = start
 
     def reset(self, start=True):
         """
@@ -79,9 +79,9 @@ class StopWatch:
 
         :param start: whether to start the stopwatch immediately
         """
-        self.startTime = time.time()
-        self._elapsedSecs = 0.0
-        self.isRunning = start
+        self.start_time = time.time()
+        self._elapsed_secs = 0.0
+        self.is_running = start
 
     def restart(self):
         """
@@ -89,9 +89,9 @@ class StopWatch:
         """
         self.reset(start=True)
 
-    def _getElapsedTimeSinceLastStart(self):
-        if self.isRunning:
-            return time.time() - self.startTime
+    def _get_elapsed_time_since_last_start(self):
+        if self.is_running:
+            return time.time() - self.start_time
         else:
             return 0
 
@@ -99,39 +99,39 @@ class StopWatch:
         """
         Pauses the stopwatch. It can be resumed via method 'resume'.
         """
-        self._elapsedSecs += self._getElapsedTimeSinceLastStart()
-        self.isRunning = False
+        self._elapsed_secs += self._get_elapsed_time_since_last_start()
+        self.is_running = False
 
     def resume(self):
         """
         Resumes the stopwatch (assuming that it is currently paused). If the stopwatch is not paused,
         the method has no effect (and a warning is logged).
         """
-        if not self.isRunning:
-            self.startTime = time.time()
-            self.isRunning = True
+        if not self.is_running:
+            self.start_time = time.time()
+            self.is_running = True
         else:
             log.warning("Stopwatch is already running (resume has not effect)")
 
-    def getElapsedTimeSecs(self) -> float:
+    def get_elapsed_time_secs(self) -> float:
         """
         Gets the total elapsed time, in seconds, on this stopwatch.
 
         :return: the elapsed time in seconds
         """
-        return self._elapsedSecs + self._getElapsedTimeSinceLastStart()
+        return self._elapsed_secs + self._get_elapsed_time_since_last_start()
 
-    def getElapsedTimedelta(self) -> pd.Timedelta:
+    def get_elapsed_timedelta(self) -> pd.Timedelta:
         """
         :return: the elapsed time as a pandas.Timedelta object
         """
-        return pd.Timedelta(self.getElapsedTimeSecs(), unit="s")
+        return pd.Timedelta(self.get_elapsed_time_secs(), unit="s")
 
-    def getElapsedTimeString(self) -> str:
+    def get_elapsed_time_string(self) -> str:
         """
         :return: a string representation of the elapsed time
         """
-        secs = self.getElapsedTimeSecs()
+        secs = self.get_elapsed_time_secs()
         if secs < 60:
             return f"{secs:.3f} seconds"
         else:
@@ -146,7 +146,7 @@ class StopWatchManager:
     _instance = None
 
     @classmethod
-    def getInstance(cls):
+    def get_instance(cls):
         if cls._instance is None:
             cls._instance = StopWatchManager(42)
         return cls._instance
@@ -164,11 +164,11 @@ class StopWatchManager:
         :param name: the name of the stopwatch
         :return: the time that has passed in seconds
         """
-        timePassedSecs = time.time() - self._stopWatches[name]
+        time_passed_secs = time.time() - self._stopWatches[name]
         del self._stopWatches[name]
-        return timePassedSecs
+        return time_passed_secs
 
-    def isRunning(self, name):
+    def is_running(self, name):
         return name in self._stopWatches
 
 
@@ -203,7 +203,7 @@ class LogTime:
         Stops the stopwatch and logs the time taken (if enabled)
         """
         if self.stopwatch is not None and self.enabled:
-            self.logger.info(f"{self.name} completed in {self.stopwatch.getElapsedTimeString()}")
+            self.logger.info(f"{self.name} completed in {self.stopwatch.get_elapsed_time_string()}")
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.stop()

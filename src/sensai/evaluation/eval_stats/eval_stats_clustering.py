@@ -16,13 +16,13 @@ class ClusterLabelsEvalStats(EvalStats[TMetric], ABC):
     MAX_SIZE = "maxClusterSize"
     NOISE_SIZE = "noiseClusterSize"
 
-    def __init__(self, labels: Sequence[int], noiseLabel: int, defaultMetrics: List[TMetric],
-                 additionalMetrics: List[TMetric] = None):
+    def __init__(self, labels: Sequence[int], noise_label: int, default_metrics: List[TMetric],
+                 additional_metrics: List[TMetric] = None):
         self.labels = np.array(labels)
-        self.noiseLabel = noiseLabel
+        self.noiseLabel = noise_label
 
         # splitting off noise cluster from other clusters, computing cluster size distribution
-        self.clusterLabelsMask: np.ndarray = self.labels != noiseLabel
+        self.clusterLabelsMask: np.ndarray = self.labels != noise_label
         self.noiseLabelsMask: np.ndarray = np.logical_not(self.clusterLabelsMask)
         self.clustersLabels = self.labels[self.clusterLabelsMask]
         self.clusterIdentifiers, self.clusterSizeDistribution = \
@@ -32,9 +32,9 @@ class ClusterLabelsEvalStats(EvalStats[TMetric], ABC):
         # operations like max and min raise an exception for empty arrays, this counteracts this effect
         if len(self.clusterSizeDistribution) == 0:
             self.clusterSizeDistribution = np.zeros(1)
-        super().__init__(defaultMetrics, additionalMetrics=additionalMetrics)
+        super().__init__(default_metrics, additional_metrics=additional_metrics)
 
-    def getDistributionSummary(self) -> Dict[str, float]:
+    def get_distribution_summary(self) -> Dict[str, float]:
         result = {
             self.NUM_CLUSTERS: len(self.clusterIdentifiers),
             self.AV_SIZE: self.clusterSizeDistribution.mean(),
@@ -47,10 +47,10 @@ class ClusterLabelsEvalStats(EvalStats[TMetric], ABC):
             result[self.NOISE_SIZE] = int(self.noiseClusterSize)
         return result
 
-    def metricsDict(self) -> Dict[str, float]:
-        metricsDict = super().metricsDict()
-        metricsDict.update(self.getDistributionSummary())
-        return metricsDict
+    def metrics_dict(self) -> Dict[str, float]:
+        metrics_dict = super().metrics_dict()
+        metrics_dict.update(self.get_distribution_summary())
+        return metrics_dict
 
 
 class ClusteringUnsupervisedMetric(Metric["ClusteringUnsupervisedEvalStats"], ABC):
@@ -60,14 +60,14 @@ class ClusteringUnsupervisedMetric(Metric["ClusteringUnsupervisedEvalStats"], AB
 class RemovedNoiseUnsupervisedMetric(ClusteringUnsupervisedMetric):
     worstValue = 0
 
-    def computeValueForEvalStats(self, evalStats: "ClusteringUnsupervisedEvalStats") -> float:
-        if len(evalStats.clustersLabels) == 0:  # all is noise
+    def compute_value_for_eval_stats(self, eval_stats: "ClusteringUnsupervisedEvalStats") -> float:
+        if len(eval_stats.clustersLabels) == 0:  # all is noise
             return 0
-        return self.computeValue(evalStats.clustersDatapoints, evalStats.clustersLabels)
+        return self.compute_value(eval_stats.clustersDatapoints, eval_stats.clustersLabels)
 
     @staticmethod
     @abstractmethod
-    def computeValue(datapoints: np.ndarray, labels: Sequence[int]):
+    def compute_value(datapoints: np.ndarray, labels: Sequence[int]):
         pass
 
 
@@ -75,7 +75,7 @@ class CalinskiHarabaszScore(RemovedNoiseUnsupervisedMetric):
     name = "CalinskiHarabaszScore"
 
     @staticmethod
-    def computeValue(datapoints: np.ndarray, labels: Sequence[int]):
+    def compute_value(datapoints: np.ndarray, labels: Sequence[int]):
         return sklearn.metrics.calinski_harabasz_score(datapoints, labels)
 
 
@@ -85,7 +85,7 @@ class DaviesBouldinScore(RemovedNoiseUnsupervisedMetric):
     worstValue = 1
 
     @staticmethod
-    def computeValue(datapoints: np.ndarray, labels: Sequence[int]):
+    def compute_value(datapoints: np.ndarray, labels: Sequence[int]):
         return sklearn.metrics.davies_bouldin_score(datapoints, labels)
 
 
@@ -95,7 +95,7 @@ class SilhouetteScore(RemovedNoiseUnsupervisedMetric):
     worstValue = -1
 
     @staticmethod
-    def computeValue(datapoints: np.ndarray, labels: Sequence[int]):
+    def compute_value(datapoints: np.ndarray, labels: Sequence[int]):
         return sklearn.metrics.silhouette_score(datapoints, labels)
 
 
@@ -104,28 +104,28 @@ class ClusteringUnsupervisedEvalStats(ClusterLabelsEvalStats[ClusteringUnsupervi
     Class containing methods to compute evaluation statistics of a clustering result
     """
 
-    def __init__(self, datapoints: np.ndarray, labels: Sequence[int], noiseLabel=-1,
+    def __init__(self, datapoints: np.ndarray, labels: Sequence[int], noise_label=-1,
             metrics: Sequence[ClusteringUnsupervisedMetric] = None,
-            additionalMetrics: Sequence[ClusteringUnsupervisedMetric] = None):
+            additional_metrics: Sequence[ClusteringUnsupervisedMetric] = None):
         """
         :param datapoints: datapoints that were clustered
         :param labels: sequence of labels, usually the output of some clustering algorithm
-        :param additionalMetrics: the metrics to compute. If None, will compute default metrics
-        :param additionalMetrics: the metrics to additionally compute
+        :param metrics: the metrics to compute. If None, will compute default metrics
+        :param additional_metrics: the metrics to additionally compute
         """
         if not len(labels) == len(datapoints):
             raise ValueError("Length of labels does not match length of datapoints array")
         if metrics is None:
             # Silhouette score is not included by default because it takes long to compute
             metrics = [CalinskiHarabaszScore(), DaviesBouldinScore()]
-        super().__init__(labels, noiseLabel, metrics, additionalMetrics=additionalMetrics)
+        super().__init__(labels, noise_label, metrics, additional_metrics=additional_metrics)
         self.datapoints = datapoints
         self.clustersDatapoints = self.datapoints[self.clusterLabelsMask]
         self.noiseDatapoints = self.datapoints[self.noiseLabelsMask]
 
     @classmethod
-    def fromModel(cls, clusteringModel: EuclideanClusterer):
-        return cls(clusteringModel.datapoints, clusteringModel.labels, noiseLabel=clusteringModel.noiseLabel)
+    def from_model(cls, clustering_model: EuclideanClusterer):
+        return cls(clustering_model.datapoints, clustering_model.labels, noise_label=clustering_model.noiseLabel)
 
 
 class ClusteringSupervisedMetric(Metric["ClusteringSupervisedEvalStats"], ABC):
@@ -135,15 +135,15 @@ class ClusteringSupervisedMetric(Metric["ClusteringSupervisedEvalStats"], ABC):
 class RemovedCommonNoiseSupervisedMetric(ClusteringSupervisedMetric, ABC):
     worstValue = 0
 
-    def computeValueForEvalStats(self, evalStats: "ClusteringSupervisedEvalStats") -> float:
-        labels, trueLabels = evalStats.labelsWithRemovedCommonNoise()
+    def compute_value_for_eval_stats(self, eval_stats: "ClusteringSupervisedEvalStats") -> float:
+        labels, true_labels = eval_stats.labels_with_removed_common_noise()
         if len(labels) == 0:
             return self.worstValue
-        return self.computeValue(labels, trueLabels)
+        return self.compute_value(labels, true_labels)
 
     @staticmethod
     @abstractmethod
-    def computeValue(labels: Sequence[int], trueLabels: Sequence[int]):
+    def compute_value(labels: Sequence[int], true_labels: Sequence[int]):
         pass
 
 
@@ -151,8 +151,8 @@ class VMeasureScore(RemovedCommonNoiseSupervisedMetric):
     name = "VMeasureScore"
 
     @staticmethod
-    def computeValue(labels: Sequence[int], trueLabels: Sequence[int]):
-        return sklearn.metrics.v_measure_score(labels, trueLabels)
+    def compute_value(labels: Sequence[int], true_labels: Sequence[int]):
+        return sklearn.metrics.v_measure_score(labels, true_labels)
 
 
 class AdjustedRandScore(RemovedCommonNoiseSupervisedMetric):
@@ -160,60 +160,60 @@ class AdjustedRandScore(RemovedCommonNoiseSupervisedMetric):
     worstValue = -1
 
     @staticmethod
-    def computeValue(labels: Sequence[int], trueLabels: Sequence[int]):
-        return sklearn.metrics.adjusted_rand_score(labels, trueLabels)
+    def compute_value(labels: Sequence[int], true_labels: Sequence[int]):
+        return sklearn.metrics.adjusted_rand_score(labels, true_labels)
 
 
 class FowlkesMallowsScore(RemovedCommonNoiseSupervisedMetric):
     name = "FowlkesMallowsScore"
 
     @staticmethod
-    def computeValue(labels: Sequence[int], trueLabels: Sequence[int]):
-        return sklearn.metrics.fowlkes_mallows_score(labels, trueLabels)
+    def compute_value(labels: Sequence[int], true_labels: Sequence[int]):
+        return sklearn.metrics.fowlkes_mallows_score(labels, true_labels)
 
 
 class AdjustedMutualInfoScore(RemovedCommonNoiseSupervisedMetric):
     name = "AdjustedMutualInfoScore"
 
     @staticmethod
-    def computeValue(labels: Sequence[int], trueLabels: Sequence[int]):
-        return sklearn.metrics.adjusted_mutual_info_score(labels, trueLabels)
+    def compute_value(labels: Sequence[int], true_labels: Sequence[int]):
+        return sklearn.metrics.adjusted_mutual_info_score(labels, true_labels)
 
 
 class ClusteringSupervisedEvalStats(ClusterLabelsEvalStats[ClusteringSupervisedMetric]):
     """
     Class containing methods to compute evaluation statistics a clustering result based on ground truth clusters
     """
-    def __init__(self, labels: Sequence[int], trueLabels: Sequence[int], noiseLabel=-1,
+    def __init__(self, labels: Sequence[int], true_labels: Sequence[int], noise_label=-1,
              metrics: Sequence[ClusteringSupervisedMetric] = None,
-             additionalMetrics: Sequence[ClusteringSupervisedMetric] = None):
+             additional_metrics: Sequence[ClusteringSupervisedMetric] = None):
         """
         :param labels: sequence of labels, usually the output of some clustering algorithm
-        :param trueLabels: sequence of labels that represent the ground truth clusters
-        :param additionalMetrics: the metrics to compute. If None, will compute default metrics
-        :param additionalMetrics: the metrics to additionally compute
+        :param true_labels: sequence of labels that represent the ground truth clusters
+        :param metrics: the metrics to compute. If None, will compute default metrics
+        :param additional_metrics: the metrics to additionally compute
         """
-        if len(labels) != len(trueLabels):
+        if len(labels) != len(true_labels):
             raise ValueError("true labels must be of same shape as labels")
-        self.trueLabels = np.array(trueLabels)
-        self._labelsWithRemovedCommonNoise = None
+        self.trueLabels = np.array(true_labels)
+        self._labels_with_removed_common_noise = None
         if metrics is None:
             metrics = [VMeasureScore(), FowlkesMallowsScore(), AdjustedRandScore(), AdjustedMutualInfoScore()]
-        super().__init__(labels, noiseLabel, metrics, additionalMetrics=additionalMetrics)
+        super().__init__(labels, noise_label, metrics, additional_metrics=additional_metrics)
 
     @classmethod
-    def fromModel(cls, clusteringModel: EuclideanClusterer, trueLabels: Sequence[int]):
-        return cls(clusteringModel.labels, trueLabels, noiseLabel=clusteringModel.noiseLabel)
+    def from_model(cls, clustering_model: EuclideanClusterer, true_labels: Sequence[int]):
+        return cls(clustering_model.labels, true_labels, noise_label=clustering_model.noiseLabel)
 
-    def labelsWithRemovedCommonNoise(self) -> Tuple[np.ndarray, np.ndarray]:
+    def labels_with_removed_common_noise(self) -> Tuple[np.ndarray, np.ndarray]:
         """
         :return: tuple (labels, true_labels) where points classified as noise in true and predicted data were removed
         """
-        if self._labelsWithRemovedCommonNoise is None:
+        if self._labels_with_removed_common_noise is None:
             if self.noiseLabel is None:
-                self._labelsWithRemovedCommonNoise = self.labels, self.trueLabels
+                self._labels_with_removed_common_noise = self.labels, self.trueLabels
             else:
-                commonNoiseLabelsMask = np.logical_and(self.noiseLabelsMask, self.trueLabels == self.noiseLabel)
-                keptLabelsMask = np.logical_not(commonNoiseLabelsMask)
-                self._labelsWithRemovedCommonNoise = self.labels[keptLabelsMask], self.trueLabels[keptLabelsMask]
-        return self._labelsWithRemovedCommonNoise
+                common_noise_labels_mask = np.logical_and(self.noiseLabelsMask, self.trueLabels == self.noiseLabel)
+                kept_labels_mask = np.logical_not(common_noise_labels_mask)
+                self._labels_with_removed_common_noise = self.labels[kept_labels_mask], self.trueLabels[kept_labels_mask]
+        return self._labels_with_removed_common_noise

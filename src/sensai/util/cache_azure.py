@@ -33,7 +33,7 @@ class Serialiser(ABC):
         pass
 
     @abstractmethod
-    def deSerialise(self, value: str):
+    def deserialise(self, value: str):
         pass
 
 
@@ -45,7 +45,7 @@ class NumpyArrayJsonSerialiser(Serialiser):
     def serialise(self, value: np.ndarray) -> str:
         return json.dumps(value.tolist())
 
-    def deSerialise(self, value: str):
+    def deserialise(self, value: str):
         return np.array(json.loads(value))
 
 
@@ -55,15 +55,15 @@ class PropertyLoader(ABC):
     """
 
     @abstractmethod
-    def loadPropertyValue(self, entity: Entity):
+    def load_property_value(self, entity: Entity):
         pass
 
     @abstractmethod
-    def writePropertyValue(self, entity: Entity):
+    def write_property_value(self, entity: Entity):
         pass
 
     @abstractmethod
-    def loadPropertyValueToDataFrameColumn(self, df: pd.DataFrame):
+    def load_property_value_to_data_frame_column(self, df: pd.DataFrame):
         pass
 
 
@@ -72,19 +72,19 @@ class SerialisedPropertyLoader(PropertyLoader):
     PropertyLoader to serialise and de-serialise values. Useful, if type of values is not aligned with table storage data model,
     see https://docs.microsoft.com/en-us/rest/api/storageservices/understanding-the-table-service-data-model
     """
-    def __init__(self, propertyName: str, serialiser: Serialiser):
+    def __init__(self, property_name: str, serialiser: Serialiser):
         self.serialiser = serialiser
-        self.propertyName = propertyName
+        self.property_name = property_name
 
-    def loadPropertyValue(self, entity: Entity):
-        entity[self.propertyName] = self.serialiser.deSerialise(entity[self.propertyName])
+    def load_property_value(self, entity: Entity):
+        entity[self.property_name] = self.serialiser.deserialise(entity[self.property_name])
 
-    def writePropertyValue(self, entity: Entity):
-        entity[self.propertyName] = self.serialiser.serialise(entity[self.propertyName])
+    def write_property_value(self, entity: Entity):
+        entity[self.property_name] = self.serialiser.serialise(entity[self.property_name])
 
-    def loadPropertyValueToDataFrameColumn(self, df: pd.DataFrame):
-        if self.propertyName in df.columns:
-            df.loc[:, self.propertyName] = [self.serialiser.deSerialise(value) for value in df[self.propertyName]]
+    def load_property_value_to_data_frame_column(self, df: pd.DataFrame):
+        if self.property_name in df.columns:
+            df.loc[:, self.property_name] = [self.serialiser.deserialise(value) for value in df[self.property_name]]
 
 
 class AzureTableBlobBackend(ABC):
@@ -94,15 +94,15 @@ class AzureTableBlobBackend(ABC):
     """
 
     @abstractmethod
-    def getValueFromReference(self, valueIdentifier: str):
+    def get_value_from_reference(self, value_identifier: str):
         pass
 
     @abstractmethod
-    def getValueReference(self, partitionKey: str, rowKey: str, valueName: str, blobNamePrefix: str = None) -> str:
+    def get_value_reference(self, partition_key: str, row_key: str, value_name: str, blob_name_prefix: str = None) -> str:
         pass
 
     @abstractmethod
-    def setValueForReference(self, valueIdentifier: str, value):
+    def set_value_for_reference(self, value_identifier: str, value):
         pass
 
 
@@ -113,55 +113,55 @@ class BlobPerKeyAzureTableBlobBackend(AzureTableBlobBackend, ABC):
     or /tableName/rowKey/valueName.<fileExtension>, if partitionKey equals tableName
     """
 
-    def __init__(self, blockBlobService: BlockBlobService, containerName: str):
+    def __init__(self, block_blob_service: BlockBlobService, container_name: str):
         """
 
-        :param blockBlobService: https://docs.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.blockblobservice.blockblobservice?view=azure-python-previous
+        :param block_blob_service: https://docs.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.blockblobservice.blockblobservice?view=azure-python-previous
         """
-        self.blockBlobService = blockBlobService
-        self.containerName = containerName
-        self.containerList = [container.name for container in blockBlobService.list_containers()]
-        if containerName not in self.containerList:
-            self.blockBlobService.create_container(containerName)
-            self.containerList.append(containerName)
+        self.block_blob_service = block_blob_service
+        self.container_name = container_name
+        self.container_list = [container.name for container in block_blob_service.list_containers()]
+        if container_name not in self.container_list:
+            self.block_blob_service.create_container(container_name)
+            self.container_list.append(container_name)
 
     @property
     @abstractmethod
-    def fileExtension(self):
+    def file_extension(self):
         pass
 
     @abstractmethod
-    def _getBlobValue(self, containerName, blobName):
+    def _get_blob_value(self, container_name, blob_name):
         pass
 
     @abstractmethod
-    def _writeValueToBlob(self, containerName, blobName, value):
+    def _write_value_to_blob(self, container_name, blob_name, value):
         pass
 
-    def getValueFromReference(self, valueIdentifier: str):
-        containerName = self._getContainerNameFromIdentifier(valueIdentifier)
-        blobName = self._getBlobNameFromIdentifier(valueIdentifier)
-        return self._getBlobValue(containerName, blobName)
+    def get_value_from_reference(self, value_identifier: str):
+        container_name = self._get_container_name_from_identifier(value_identifier)
+        blob_name = self._get_blob_name_from_identifier(value_identifier)
+        return self._get_blob_value(container_name, blob_name)
 
-    def getValueReference(self, partitionKey: str, rowKey: str, valueName: str, blobNamePrefix: str = None) -> str:
-        blobName = self._getBlobNameFromKeys(partitionKey, rowKey, valueName, blobPrefix=blobNamePrefix)
-        return self.blockBlobService.make_blob_url(self.containerName, blobName)
+    def get_value_reference(self, partition_key: str, row_key: str, value_name: str, blob_name_prefix: str = None) -> str:
+        blob_name = self._get_blob_name_from_keys(partition_key, row_key, value_name, blob_prefix=blob_name_prefix)
+        return self.block_blob_service.make_blob_url(self.container_name, blob_name)
 
-    def setValueForReference(self, valueIdentifier: str, value):
-        containerName = self._getContainerNameFromIdentifier(valueIdentifier)
-        blobName = self._getBlobNameFromIdentifier(valueIdentifier)
-        self._writeValueToBlob(containerName, blobName, value)
+    def set_value_for_reference(self, value_identifier: str, value):
+        container_name = self._get_container_name_from_identifier(value_identifier)
+        blob_name = self._get_blob_name_from_identifier(value_identifier)
+        self._write_value_to_blob(container_name, blob_name, value)
 
-    def _getBlobNameFromIdentifier(self, valueIdentifier: str):
-        return (valueIdentifier.partition(f"{self.blockBlobService.primary_endpoint}/")[2]).partition("/")[2]
+    def _get_blob_name_from_identifier(self, value_identifier: str):
+        return (value_identifier.partition(f"{self.block_blob_service.primary_endpoint}/")[2]).partition("/")[2]
 
-    def _getContainerNameFromIdentifier(self, valueIdentifier: str):
-        return (valueIdentifier.partition(f"{self.blockBlobService.primary_endpoint}/")[2]).partition("/")[0]
+    def _get_container_name_from_identifier(self, value_identifier: str):
+        return (value_identifier.partition(f"{self.block_blob_service.primary_endpoint}/")[2]).partition("/")[0]
 
-    def _getBlobNameFromKeys(self, partitionKey: str, rowKey: str, valueName: str, blobPrefix: str = None):
-        identifierList = [blobPrefix, partitionKey] if blobPrefix is not None and blobPrefix != partitionKey else [partitionKey]
-        identifierList.extend([rowKey, valueName])
-        return "/".join(identifierList) + self.fileExtension
+    def _get_blob_name_from_keys(self, partition_key: str, row_key: str, value_name: str, blob_prefix: str = None):
+        identifier_list = [blob_prefix, partition_key] if blob_prefix is not None and blob_prefix != partition_key else [partition_key]
+        identifier_list.extend([row_key, value_name])
+        return "/".join(identifier_list) + self.file_extension
 
 
 class TextDumpAzureTableBlobBackend(BlobPerKeyAzureTableBlobBackend):
@@ -170,14 +170,14 @@ class TextDumpAzureTableBlobBackend(BlobPerKeyAzureTableBlobBackend):
    """
 
     @property
-    def fileExtension(self):
+    def file_extension(self):
         return ""
 
-    def _getBlobValue(self, containerName, blobName):
-        return self.blockBlobService.get_blob_to_text(containerName, blobName).content
+    def _get_blob_value(self, container_name, blob_name):
+        return self.block_blob_service.get_blob_to_text(container_name, blob_name).content
 
-    def _writeValueToBlob(self, containerName, blobName, value):
-        self.blockBlobService.create_blob_from_text(containerName, blobName, value)
+    def _write_value_to_blob(self, container_name, blob_name, value):
+        self.block_blob_service.create_blob_from_text(container_name, blob_name, value)
 
 
 class JsonAzureTableBlobBackend(BlobPerKeyAzureTableBlobBackend):
@@ -186,23 +186,23 @@ class JsonAzureTableBlobBackend(BlobPerKeyAzureTableBlobBackend):
     """
 
     @property
-    def fileExtension(self):
+    def file_extension(self):
         return ".json"
 
-    def _getBlobValue(self, containerName, blobName):
-        encodedValue = self.blockBlobService.get_blob_to_bytes(containerName, blobName).content
-        return self._decodeBytesToValue(encodedValue)
+    def _get_blob_value(self, container_name, blob_name):
+        encoded_value = self.block_blob_service.get_blob_to_bytes(container_name, blob_name).content
+        return self._decode_bytes_to_value(encoded_value)
 
-    def _writeValueToBlob(self, containerName, blobName, value):
-        encodedValue = self._encodeValueToBytes(value)
-        self.blockBlobService.create_blob_from_bytes(containerName, blobName, encodedValue)
+    def _write_value_to_blob(self, container_name, blob_name, value):
+        encoded_value = self._encode_value_to_bytes(value)
+        self.block_blob_service.create_blob_from_bytes(container_name, blob_name, encoded_value)
 
     @staticmethod
-    def _encodeValueToBytes(value):
+    def _encode_value_to_bytes(value):
         return str.encode(json.dumps(value))
 
     @staticmethod
-    def _decodeBytesToValue(_bytes):
+    def _decode_bytes_to_value(_bytes):
         return json.loads(_bytes.decode())
 
 
@@ -212,15 +212,15 @@ class PickleAzureTableBlobBackend(JsonAzureTableBlobBackend):
     """
 
     @property
-    def fileExtension(self):
+    def file_extension(self):
         return ".pickle"
 
     @staticmethod
-    def _encodeValueToBytes(value):
+    def _encode_value_to_bytes(value):
         return pickle.dumps(value)
 
     @staticmethod
-    def _decodeBytesToValue(_bytes):
+    def _decode_bytes_to_value(_bytes):
         return pickle.loads(_bytes)
 
 
@@ -233,49 +233,51 @@ class BlobBackedPropertyLoader(PropertyLoader):
     be stored in table storage itself, due to not being aligned with table storage data model, 
     see https://docs.microsoft.com/en-us/rest/api/storageservices/understanding-the-table-service-data-model
     """
-    def __init__(self, propertyName: str, blobBackend: AzureTableBlobBackend, blobPrefix: str = None, propertyBooleanBlobStatusName: str = None, max_workers=None):
+    def __init__(self, property_name: str, blob_backend: AzureTableBlobBackend, blob_prefix: str = None,
+            property_boolean_blob_status_name: str = None, max_workers=None):
         """
-
-        :param propertyName: name of property in table
-        :param propertyBooleanBlobStatusName: name of property representing a boolean flag within a table, which indicates, if value is blob backed.
-                                              If None, each value is assumed to be blob backed.
-        :param blobBackend: actual backend to use for storage
-        :param blobPrefix: prefix to use for blob in storage, e.g. a table name
+        :param property_name: name of property in table
+        :param property_boolean_blob_status_name: name of property representing a boolean flag within a table, which indicates, if value is
+            blob backed. If None, each value is assumed to be blob backed.
+        :param blob_backend: actual backend to use for storage
+        :param blob_prefix: prefix to use for blob in storage, e.g. a table name
         :param max_workers: maximal number of workers to load data from blob storage
         """
-        self.blobPrefix = blobPrefix
-        self.propertyBlobStatusName = propertyBooleanBlobStatusName
-        self.blobBackend = blobBackend
+        self.blob_prefix = blob_prefix
+        self.property_blob_status_name = property_boolean_blob_status_name
+        self.blob_backend = blob_backend
         self.max_workers = max_workers
-        self.propertyName = propertyName
+        self.propertyName = property_name
 
-    def loadPropertyValue(self, entity: Entity):
-        if self._isEntityValueBlobBacked(entity):
-            entity[self.propertyName] = self.blobBackend.getValueFromReference(entity[self.propertyName])
+    def load_property_value(self, entity: Entity):
+        if self._is_entity_value_blob_backed(entity):
+            entity[self.propertyName] = self.blob_backend.get_value_from_reference(entity[self.propertyName])
 
-    def writePropertyValue(self, entity: Entity):
+    def write_property_value(self, entity: Entity):
         if self.propertyName in entity.keys():
-            if self._needToWriteToBlob(entity[self.propertyName]):
-                valueIdentifier = self.blobBackend.getValueReference(entity["PartitionKey"], entity["RowKey"], self.propertyName, blobNamePrefix=self.blobPrefix)
+            if self._need_to_write_to_blob(entity[self.propertyName]):
+                value_identifier = self.blob_backend.get_value_reference(entity["PartitionKey"], entity["RowKey"], self.propertyName,
+                    blob_name_prefix=self.blob_prefix)
                 value = entity[self.propertyName]
-                self.blobBackend.setValueForReference(valueIdentifier, value)
-                entity[self.propertyName] = valueIdentifier
-                propertyBlobStatus = True if self.propertyBlobStatusName is not None else None
+                self.blob_backend.set_value_for_reference(value_identifier, value)
+                entity[self.propertyName] = value_identifier
+                property_blob_status = True if self.property_blob_status_name is not None else None
             else:
-                propertyBlobStatus = False if self.propertyBlobStatusName is not None else None
+                property_blob_status = False if self.property_blob_status_name is not None else None
 
-            if propertyBlobStatus is not None:
-                entity[self.propertyBlobStatusName] = propertyBlobStatus
+            if property_blob_status is not None:
+                entity[self.property_blob_status_name] = property_blob_status
 
-    def loadPropertyValueToDataFrameColumn(self, df: pd.DataFrame):
+    def load_property_value_to_data_frame_column(self, df: pd.DataFrame):
         if self.propertyName in df.columns:
-            if self.propertyBlobStatusName is None:
-                df.loc[:, self.propertyName] = self._loadValuesInSeries(df[self.propertyName])
+            if self.property_blob_status_name is None:
+                df.loc[:, self.propertyName] = self._load_values_in_series(df[self.propertyName])
             else:
-                df.loc[df[self.propertyBlobStatusName], self.propertyName] = self._loadValuesInSeries(df.loc[df[self.propertyBlobStatusName], self.propertyName])
+                df.loc[df[self.property_blob_status_name], self.propertyName] = \
+                    self._load_values_in_series(df.loc[df[self.property_blob_status_name], self.propertyName])
 
-    def _needToWriteToBlob(self, value):
-        if self.propertyBlobStatusName is None:
+    def _need_to_write_to_blob(self, value):
+        if self.property_blob_status_name is None:
             return True
         if sys.getsizeof(value) > self.AZURE_ALLOWED_SIZE_PER_PROPERTY_BYTES:
             return True
@@ -283,16 +285,16 @@ class BlobBackedPropertyLoader(PropertyLoader):
             return True
         return False
 
-    def _isEntityValueBlobBacked(self, entity: Entity):
+    def _is_entity_value_blob_backed(self, entity: Entity):
         if self.propertyName not in entity.keys():
             return False
-        if self.propertyBlobStatusName is None or self.propertyBlobStatusName not in entity:
+        if self.property_blob_status_name is None or self.property_blob_status_name not in entity:
             return True
-        return entity[self.propertyBlobStatusName]
+        return entity[self.property_blob_status_name]
 
-    def _loadValuesInSeries(self, _series: pd.Series):
+    def _load_values_in_series(self, _series: pd.Series):
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            _series = list(executor.map(self.blobBackend.getValueFromReference, _series))
+            _series = list(executor.map(self.blob_backend.get_value_from_reference, _series))
         return _series
 
 
@@ -300,33 +302,33 @@ class BlobBackedSerialisedPropertyLoader(BlobBackedPropertyLoader, SerialisedPro
     """
     Property loader, which combines serialisation and blob backing.
     """
-    def __init__(self, propertyName, serialiser: Serialiser, blobBackend: AzureTableBlobBackend, blobPrefix: str = None,
-            propertyBooleanBlobStatusName: str = None, max_workers=None):
+    def __init__(self, property_name, serialiser: Serialiser, blob_backend: AzureTableBlobBackend, blob_prefix: str = None,
+            property_boolean_blob_status_name: str = None, max_workers=None):
         """
 
 
-        :param propertyName: name of property in table
+        :param property_name: name of property in table
         :param serialiser:
-        :param propertyBooleanBlobStatusName: name of property representing a boolean flag within a table, which indicates, if value is blob backed.
-                                              If None, each value is assumed to be blob backed.
-        :param blobBackend: actual backend to use for storage
-        :param blobPrefix: prefix to use for blob in storage, e.g. a table name
+        :param property_boolean_blob_status_name: name of property representing a boolean flag within a table, which indicates, if value is
+            blob backed. If None, each value is assumed to be blob backed.
+        :param blob_backend: actual backend to use for storage
+        :param blob_prefix: prefix to use for blob in storage, e.g. a table name
         :param max_workers: maximal number of workers to load data from blob storage
         """
-        SerialisedPropertyLoader.__init__(self, propertyName, serialiser)
-        BlobBackedPropertyLoader.__init__(self, propertyName, blobBackend, blobPrefix, propertyBooleanBlobStatusName, max_workers)
+        SerialisedPropertyLoader.__init__(self, property_name, serialiser)
+        BlobBackedPropertyLoader.__init__(self, property_name, blob_backend, blob_prefix, property_boolean_blob_status_name, max_workers)
 
-    def loadPropertyValue(self, entity: Entity):
-        super(BlobBackedPropertyLoader, self).loadPropertyValue(entity)
-        super(SerialisedPropertyLoader, self).loadPropertyValue(entity)
+    def load_property_value(self, entity: Entity):
+        super(BlobBackedPropertyLoader, self).load_property_value(entity)
+        super(SerialisedPropertyLoader, self).load_property_value(entity)
 
-    def writePropertyValue(self, entity: Entity):
-        super(SerialisedPropertyLoader, self).writePropertyValue(entity)
-        super(BlobBackedPropertyLoader, self).writePropertyValue(entity)
+    def write_property_value(self, entity: Entity):
+        super(SerialisedPropertyLoader, self).write_property_value(entity)
+        super(BlobBackedPropertyLoader, self).write_property_value(entity)
 
-    def loadPropertyValueToDataFrameColumn(self, df: pd.DataFrame):
-        super(BlobBackedPropertyLoader, self).loadPropertyValueToDataFrameColumn(df)
-        super(SerialisedPropertyLoader, self).loadPropertyValueToDataFrameColumn(df)
+    def load_property_value_to_data_frame_column(self, df: pd.DataFrame):
+        super(BlobBackedPropertyLoader, self).load_property_value_to_data_frame_column(df)
+        super(SerialisedPropertyLoader, self).load_property_value_to_data_frame_column(df)
 
 
 class AzureLazyBatchCommitTable:
@@ -342,273 +344,273 @@ class AzureLazyBatchCommitTable:
     class PartitionCommandsPriorityQueue:
 
         class PartitionCommands:
-            def __init__(self, partitionKey):
-                self.partitionKey = partitionKey
-                self._commandList = collections.deque()
+            def __init__(self, partition_key):
+                self.partition_key = partition_key
+                self._command_list = collections.deque()
 
             def __len__(self):
-                return len(self._commandList)
+                return len(self._command_list)
 
             def append(self, command):
-                self._commandList.append(command)
+                self._command_list.append(command)
 
-            def execute(self, contextManager: Callable[[], TableBatch],  batchSize: int):
-                while len(self._commandList) > 0:
-                    _slice = [self._commandList.popleft() for _ in range(min(batchSize, len(self._commandList)))]
+            def execute(self, context_manager: Callable[[], TableBatch], batch_size: int):
+                while len(self._command_list) > 0:
+                    _slice = [self._command_list.popleft() for _ in range(min(batch_size, len(self._command_list)))]
                     _log.info(f"Committing {len(_slice)} cache entries to the database")
-                    with contextManager() as batch:
+                    with context_manager() as batch:
                         for command in _slice:
                             command(batch)
 
         def __init__(self):
-            self.partitionCommandsQueue = []
-            self.partitionKey2Commands = {}
-            self._threadLock = threading.Lock()
+            self.partition_commands_queue = []
+            self.partition_key2_commands = {}
+            self._thread_lock = threading.Lock()
 
-        def addCommand(self, partitionKey, command: Union[Callable[[TableBatch], Any], functools.partial[TableBatch]]):
+        def add_command(self, partition_key, command: Union[Callable[[TableBatch], Any], functools.partial[TableBatch]]):
             """
             Add a command to queue of corresponding partitionKey
-            :param partitionKey:
+            :param partition_key:
             :param command: a callable on a TableBatch
             """
-            with self._threadLock:
-                if partitionKey not in self.partitionKey2Commands:
-                    commands = self.PartitionCommands(partitionKey)
-                    self.partitionCommandsQueue.append(commands)
-                    self.partitionKey2Commands[partitionKey] = commands
-                self.partitionKey2Commands[partitionKey].append(command)
+            with self._thread_lock:
+                if partition_key not in self.partition_key2_commands:
+                    commands = self.PartitionCommands(partition_key)
+                    self.partition_commands_queue.append(commands)
+                    self.partition_key2_commands[partition_key] = commands
+                self.partition_key2_commands[partition_key].append(command)
 
-        def pop(self, minLength: int = None) -> Optional[AzureLazyBatchCommitTable.PartitionCommandsPriorityQueue.PartitionCommands]:
+        def pop(self, min_length: int = None) -> Optional[AzureLazyBatchCommitTable.PartitionCommandsPriorityQueue.PartitionCommands]:
             """
-            :param minLength: minimal length of largest PartitionCommands for the pop to take place.
+            :param min_length: minimal length of largest PartitionCommands for the pop to take place.
             :return: largest PartitionCommands or None if minimal length is not reached
             """
-            with self._threadLock:
-                return self._pop(minLength)
+            with self._thread_lock:
+                return self._pop(min_length)
 
-        def popAll(self):
-            with self._threadLock:
-                commandsList = []
-                while not self._isEmpty():
-                    commandsList.append(self._pop())
-                return commandsList
+        def pop_all(self):
+            with self._thread_lock:
+                commands_list = []
+                while not self._is_empty():
+                    commands_list.append(self._pop())
+                return commands_list
 
-        def isEmpty(self):
-            with self._threadLock:
-                return self._isEmpty()
+        def is_empty(self):
+            with self._thread_lock:
+                return self._is_empty()
 
-        def _pop(self, minLength=None):
-            length, index = self._getMaxPriorityInfo()
-            if index is not None and (minLength is None or length >= minLength):
-                q = self.partitionCommandsQueue.pop(index)
-                del self.partitionKey2Commands[q.partitionKey]
+        def _pop(self, min_length=None):
+            length, index = self._get_max_priority_info()
+            if index is not None and (min_length is None or length >= min_length):
+                q = self.partition_commands_queue.pop(index)
+                del self.partition_key2_commands[q.partition_key]
                 return q
             else:
                 return None
 
-        def _isEmpty(self):
-            return len(self.partitionCommandsQueue) == 0
+        def _is_empty(self):
+            return len(self.partition_commands_queue) == 0
 
-        def _getMaxPriorityInfo(self):
-            lengthsList = list(map(len, self.partitionCommandsQueue))
-            if len(lengthsList) == 0:
+        def _get_max_priority_info(self):
+            lengths_list = list(map(len, self.partition_commands_queue))
+            if len(lengths_list) == 0:
                 return 0, None
-            maxLength = max(lengthsList)
-            return maxLength, lengthsList.index(maxLength)
+            max_length = max(lengths_list)
+            return max_length, lengths_list.index(max_length)
 
-    def __init__(self, tableName: str, tableService: TableService, propertyLoaders: Sequence[PropertyLoader] = ()):
+    def __init__(self, table_name: str, table_service: TableService, property_loaders: Sequence[PropertyLoader] = ()):
+        """
+        :param table_name: name of table
+        :param table_service: instance of :class:`azure.storage.table.TableService` to connect to Azure table storage
+        :param property_loaders:
         """
 
-        :param tableName: name of table
-        :param tableService: instance of :class:`azure.storage.table.TableService` to connect to Azure table storage
-        :param propertyLoaders:
-        """
+        if not self.AZURE_ALLOWED_TABLE_NAME_PATTERN.match(table_name):
+            raise ValueError(f"Invalid table name {table_name}, see: "
+                             f"https://docs.microsoft.com/en-us/rest/api/storageservices/Understanding-the-Table-Service-Data-Model")
 
-        if not self.AZURE_ALLOWED_TABLE_NAME_PATTERN.match(tableName):
-            raise ValueError(f"Invalid table name {tableName}, see: https://docs.microsoft.com/en-us/rest/api/storageservices/Understanding-the-Table-Service-Data-Model")
-
-        self.tableService = tableService
-        self.tableName = tableName
-        self.propertyLoaders = propertyLoaders
-        self._partitionQueues = self.PartitionCommandsPriorityQueue()
-        self._contextManager = functools.partial(self.tableService.batch, self.tableName)
+        self.table_service = table_service
+        self.table_name = table_name
+        self.property_loaders = property_loaders
+        self._partition_queues = self.PartitionCommandsPriorityQueue()
+        self._context_manager = functools.partial(self.table_service.batch, self.table_name)
 
         if not self.exists():
-            self.tableService.create_table(self.tableName)
+            self.table_service.create_table(self.table_name)
 
-    def insertOrReplaceEntity(self, entity: Union[Dict, Entity]):
+    def insert_or_replace_entity(self, entity: Union[Dict, Entity]):
         """
         Lazy wrapper method for :func:`azure.storage.table.TableService.insert_or_replace_entity`
         :param entity:
         """
-        partitionKey = entity["PartitionKey"]
-        for propertyLoader in self.propertyLoaders:
-            propertyLoader.writePropertyValue(entity)
-        executionCommand = functools.partial(self._insertOrReplaceEntityViaBatch, entity)
-        self._partitionQueues.addCommand(partitionKey, executionCommand)
+        partition_key = entity["PartitionKey"]
+        for property_loader in self.property_loaders:
+            property_loader.write_property_value(entity)
+        execution_command = functools.partial(self._insert_or_replace_entity_via_batch, entity)
+        self._partition_queues.add_command(partition_key, execution_command)
 
-    def insertEntity(self, entity: Union[Dict, Entity]):
+    def insert_entity(self, entity: Union[Dict, Entity]):
         """
         Lazy wrapper method for :func:`azure.storage.table.TableService.insert_entity`
         :param entity:
         """
-        partitionKey = entity["PartitionKey"]
-        for propertyLoader in self.propertyLoaders:
-            propertyLoader.writePropertyValue(entity)
-        executionCommand = functools.partial(self._insertEntityViaBatch, entity)
-        self._partitionQueues.addCommand(partitionKey, executionCommand)
+        partition_key = entity["PartitionKey"]
+        for property_loader in self.property_loaders:
+            property_loader.write_property_value(entity)
+        execution_command = functools.partial(self._insert_entity_via_batch, entity)
+        self._partition_queues.add_command(partition_key, execution_command)
 
-    def getEntity(self, partitionKey: str, rowKey: str) -> Optional[Entity]:
+    def get_entity(self, partition_key: str, row_key: str) -> Optional[Entity]:
         """
         Wraps :func:`azure.storage.table.TableService.get_entity`
-        :param partitionKey:
-        :param rowKey:
+        :param partition_key:
+        :param row_key:
         :return:
         """
         try:
-            entity = self.tableService.get_entity(self.tableName, partitionKey, rowKey)
-            for propertyLoader in self.propertyLoaders:
-                propertyLoader.loadPropertyValue(entity)
+            entity = self.table_service.get_entity(self.table_name, partition_key, row_key)
+            for property_loader in self.property_loaders:
+                property_loader.load_property_value(entity)
             return entity
         except Exception as e:
-            _log.debug(f"Unable to load value for partitionKey {partitionKey} and rowKey {rowKey} from table {self.tableName}: {e}")
+            _log.debug(f"Unable to load value for partitionKey {partition_key} and rowKey {row_key} from table {self.table_name}: {e}")
             return None
 
-    def commitBlockingUntilEmpty(self, maxBatchSize=AZURE_ALLOWED_TABLE_BATCH_SIZE):
+    def commit_blocking_until_empty(self, max_batch_size=AZURE_ALLOWED_TABLE_BATCH_SIZE):
         """
         Commit insertion commands. Commands are executed batch-wise per partition until partition queue is empty in a
         blocking manner.
-        :param maxBatchSize: maximal batch size to use for batch insertion, must be less or equal to batch size allowed by Azure
+        :param max_batch_size: maximal batch size to use for batch insertion, must be less or equal to batch size allowed by Azure
         """
 
-        maxBatchSize = self._validateMaxBatchSize(maxBatchSize)
+        max_batch_size = self._validate_max_batch_size(max_batch_size)
 
-        while not self._partitionQueues.isEmpty():
-            commands = self._partitionQueues.pop()
-            commands.execute(self._contextManager, maxBatchSize)
+        while not self._partition_queues.is_empty():
+            commands = self._partition_queues.pop()
+            commands.execute(self._context_manager, max_batch_size)
 
-    def commitNonBlockingCurrentQueueState(self, maxBatchSize=AZURE_ALLOWED_TABLE_BATCH_SIZE):
+    def commit_non_blocking_current_queue_state(self, max_batch_size=AZURE_ALLOWED_TABLE_BATCH_SIZE):
         """
         Commit insertion commands. Empties the current PartitionCommandsQueue in a non blocking way.
         Commands are executed batch-wise per partition.
-        :param maxBatchSize: maximal batch size to use for batch insertion, must be less or equal to batch size allowed by Azure
+        :param max_batch_size: maximal batch size to use for batch insertion, must be less or equal to batch size allowed by Azure
         """
 
-        maxBatchSize = self._validateMaxBatchSize(maxBatchSize)
+        max_batch_size = self._validate_max_batch_size(max_batch_size)
 
         def commit():
-            commandsList = self._partitionQueues.popAll()
-            for commands in commandsList:
-                commands.execute(self._contextManager, maxBatchSize)
+            commands_list = self._partition_queues.pop_all()
+            for commands in commands_list:
+                commands.execute(self._context_manager, max_batch_size)
 
         thread = threading.Thread(target=commit, daemon=False)
         thread.start()
 
-    def commitBlockingLargestPartitionFromQueue(self, maxBatchSize=AZURE_ALLOWED_TABLE_BATCH_SIZE, minLength=None):
+    def commit_blocking_largest_partition_from_queue(self, max_batch_size=AZURE_ALLOWED_TABLE_BATCH_SIZE, min_length=None):
         """
         Commits in a blocking way the largest partition from PartitionCommandsQueue
-        :param maxBatchSize: maximal batch size to use for batch insertion, must be less or equal to batch size allowed by Azure
-        :param minLength: minimal size of largest partition. If not None, pop and commit only if minLength is reached.
+        :param max_batch_size: maximal batch size to use for batch insertion, must be less or equal to batch size allowed by Azure
+        :param min_length: minimal size of largest partition. If not None, pop and commit only if minLength is reached.
         :return:
         """
-        maxBatchSize = self._validateMaxBatchSize(maxBatchSize)
-        commands = self._partitionQueues.pop(minLength)
+        max_batch_size = self._validate_max_batch_size(max_batch_size)
+        commands = self._partition_queues.pop(min_length)
         if commands is not None:
-            commands.execute(self._contextManager, maxBatchSize)
+            commands.execute(self._context_manager, max_batch_size)
 
-    def _validateMaxBatchSize(self, maxBatchSize):
-        if maxBatchSize > self.AZURE_ALLOWED_TABLE_BATCH_SIZE:
-            _log.warning(f"Provided maxBatchSize is larger than allowed size {self.AZURE_ALLOWED_TABLE_BATCH_SIZE}. Will use maxBatchSize {self.AZURE_ALLOWED_TABLE_BATCH_SIZE} instead.")
-            maxBatchSize = self.AZURE_ALLOWED_TABLE_BATCH_SIZE
-        return maxBatchSize
+    def _validate_max_batch_size(self, max_batch_size):
+        if max_batch_size > self.AZURE_ALLOWED_TABLE_BATCH_SIZE:
+            _log.warning(f"Provided maxBatchSize is larger than allowed size {self.AZURE_ALLOWED_TABLE_BATCH_SIZE}. "
+                         f"Will use maxBatchSize {self.AZURE_ALLOWED_TABLE_BATCH_SIZE} instead.")
+            max_batch_size = self.AZURE_ALLOWED_TABLE_BATCH_SIZE
+        return max_batch_size
 
-    def loadTableToDataFrame(self, columns: List[str] = None, rowFilterQuery: str = None, numRecords: int = None):
+    def load_table_to_data_frame(self, columns: List[str] = None, row_filter_query: str = None, num_records: int = None):
         """
         Load all rows of table to :class:`~pandas.DataFrame`
-        :param rowFilterQuery:
-        :param numRecords:
+        :param row_filter_query:
+        :param num_records:
         :param columns: restrict loading to provided columns
         :return: :class:`~pandas.DataFrame`
         """
-        if numRecords is None:
-            records = list(self._iterRecords(columns, rowFilterQuery))
+        if num_records is None:
+            records = list(self._iter_records(columns, row_filter_query))
         else:
             records = []
-            for record in self._iterRecords(columns, rowFilterQuery):
+            for record in self._iter_records(columns, row_filter_query):
                 records.append(record)
-                if len(records) >= numRecords:
+                if len(records) >= num_records:
                     break
         df = pd.DataFrame(records, columns=columns)
-        for propertyLoader in self.propertyLoaders:
-            propertyLoader.loadPropertyValueToDataFrameColumn(df)
+        for property_loader in self.property_loaders:
+            property_loader.load_property_value_to_data_frame_column(df)
         return df
 
-    def iterDataFrameChunks(self, chunkSize: int, columns: List[str] = None, rowFilterQuery: str = None):
+    def iter_data_frame_chunks(self, chunk_size: int, columns: List[str] = None, row_filter_query: str = None):
         """
         Get a generator of dataframe chunks
-        :param rowFilterQuery:
-        :param chunkSize:
+        :param row_filter_query:
+        :param chunk_size:
         :param columns:
         :return:
         """
         records = []
-        for record in self._iterRecords(columns, rowFilterQuery):
+        for record in self._iter_records(columns, row_filter_query):
             records.append(record)
-            if len(records) >= chunkSize:
+            if len(records) >= chunk_size:
                 df = pd.DataFrame(records, columns=columns)
-                for propertyLoader in self.propertyLoaders:
-                    propertyLoader.loadPropertyValueToDataFrameColumn(df)
+                for propertyLoader in self.property_loaders:
+                    propertyLoader.load_property_value_to_data_frame_column(df)
                 yield df
                 records = []
 
-    def iterRecords(self, columns: List[str] = None, rowFilterQuery: str = None):
+    def iter_records(self, columns: List[str] = None, row_filter_query: str = None):
         """
 
         Get a generator of table entities
-        :param rowFilterQuery:
+        :param row_filter_query:
         :param columns:
         :return:
         """
-        for entity in self._iterRecords(columns, rowFilterQuery):
-            for propertyLoader in self.propertyLoaders:
-                propertyLoader.loadPropertyValue(entity)
+        for entity in self._iter_records(columns, row_filter_query):
+            for propertyLoader in self.property_loaders:
+                propertyLoader.load_property_value(entity)
             yield entity
 
-    def _iterRecords(self, columns: Optional[List[str]], rowFilterQuery: Optional[str]):
-
-        columnNamesAsCommaSeparatedString = None
+    def _iter_records(self, columns: Optional[List[str]], row_filter_query: Optional[str]):
+        column_names_as_comma_separated_string = None
         if columns is not None:
-            columnNamesAsCommaSeparatedString = ",".join(columns)
-        return self.tableService.query_entities(self.tableName, select=columnNamesAsCommaSeparatedString,
-                filter=rowFilterQuery)
+            column_names_as_comma_separated_string = ",".join(columns)
+        return self.table_service.query_entities(self.table_name, select=column_names_as_comma_separated_string,
+                filter=row_filter_query)
 
-    def insertDataFrameToTable(self, df: pd.DataFrame, partitionKeyGenerator: Callable[[str], str] = None, numRecords: int = None):
+    def insert_data_frame_to_table(self, df: pd.DataFrame, partition_key_generator: Callable[[str], str] = None, num_records: int = None):
         """
         Inserts or replace entities of the table corresponding to rows of the DataFrame, where the index of the dataFrame acts as rowKey.
         Values of object type columns in the dataFrame may have to be serialised via json beforehand.
         :param df: DataFrame to be inserted
-        :param partitionKeyGenerator: if None, partitionKeys default to tableName
-        :param numRecords: restrict insertion to first numRecords rows, merely for testing
+        :param partition_key_generator: if None, partitionKeys default to tableName
+        :param num_records: restrict insertion to first numRecords rows, merely for testing
         """
         for (count, (idx, row)) in enumerate(df.iterrows()):
-            if numRecords is not None:
-                if count >= numRecords:
+            if num_records is not None:
+                if count >= num_records:
                     break
             entity = row.to_dict()
             entity["RowKey"] = idx
-            entity["PartitionKey"] = self.tableName if partitionKeyGenerator is None else partitionKeyGenerator(idx)
-            self.insertOrReplaceEntity(entity)
+            entity["PartitionKey"] = self.table_name if partition_key_generator is None else partition_key_generator(idx)
+            self.insert_or_replace_entity(entity)
 
     @staticmethod
-    def _insertOrReplaceEntityViaBatch(entity, batch: TableBatch):
+    def _insert_or_replace_entity_via_batch(entity, batch: TableBatch):
         return batch.insert_or_replace_entity(entity)
 
     @staticmethod
-    def _insertEntityViaBatch(entity, batch: TableBatch):
+    def _insert_entity_via_batch(entity, batch: TableBatch):
         return batch.insert_entity(entity)
 
     def exists(self):
-        return self.tableService.exists(self.tableName)
+        return self.table_service.exists(self.table_name)
 
 
 class AzureTablePersistentKeyValueCache(PersistentKeyValueCache):
@@ -617,89 +619,88 @@ class AzureTablePersistentKeyValueCache(PersistentKeyValueCache):
     """
     CACHE_VALUE_IDENTIFIER = "cache_value"
 
-    def __init__(self, tableService: TableService, tableName="cache", partitionKeyGenerator: Callable[[str], str] = None,
-            maxBatchSize=100, minSizeForPeriodicCommit: Optional[int] = 100, deferredCommitDelaySecs=1.0, inMemory=False,
-            blobBackend: AzureTableBlobBackend = None, serialiser: Serialiser = None, max_workers: int = None):
+    def __init__(self, table_service: TableService, table_name="cache", partition_key_generator: Callable[[str], str] = None,
+            max_batch_size=100, min_size_for_periodic_commit: Optional[int] = 100, deferred_commit_delay_secs=1.0, in_memory=False,
+            blob_backend: AzureTableBlobBackend = None, serialiser: Serialiser = None, max_workers: int = None):
         """
-
-
-        :param tableService: https://docs.microsoft.com/en-us/python/api/azure-cosmosdb-table/azure.cosmosdb.table.tableservice.tableservice?view=azure-python
-        :param tableName: name of table, needs to match restrictions for Azure storage resources, see https://docs.microsoft.com/en-gb/azure/azure-resource-manager/management/resource-name-rules
-        :param partitionKeyGenerator: callable to generate a partitionKey from provided string, if None partitionKey in requests defaults to tableName
-        :param maxBatchSize: maximal batch size for each commit.
-        :param deferredCommitDelaySecs: the time frame during which no new data must be added for a pending transaction to be committed
-        :param minSizeForPeriodicCommit: minimal size of a batch to be committed in a periodic thread.
-                                         If None, commits are only executed in a deferred manner, i.e. commit only if there is no update for deferredCommitDelaySecs
-        :param inMemory: boolean flag, to indicate, if table should be loaded in memory at construction
-        :param blobBackend: if not None, blob storage will be used to store actual value and cache_value in table only contains a reference
+        :param table_service: https://docs.microsoft.com/en-us/python/api/azure-cosmosdb-table/azure.cosmosdb.table.tableservice.tableservice?view=azure-python
+        :param table_name: name of table, needs to match restrictions for Azure storage resources, see https://docs.microsoft.com/en-gb/azure/azure-resource-manager/management/resource-name-rules
+        :param partition_key_generator: callable to generate a partitionKey from provided string, if None partitionKey in requests defaults
+            to tableName
+        :param max_batch_size: maximal batch size for each commit.
+        :param deferred_commit_delay_secs: the time frame during which no new data must be added for a pending transaction to be committed
+        :param min_size_for_periodic_commit: minimal size of a batch to be committed in a periodic thread.
+            If None, commits are only executed in a deferred manner, i.e. commit only if there is no update for `deferred_commit_delay_secs`
+        :param in_memory: boolean flag, to indicate, if table should be loaded in memory at construction
+        :param blob_backend: if not None, blob storage will be used to store actual value and cache_value in table only contains a reference
         :param max_workers: maximal number of workers to load data from blob backend
         """
 
-        self._deferredCommitDelaySecs = deferredCommitDelaySecs
-        self._partitionKeyGenerator = partitionKeyGenerator
+        self._deferredCommitDelaySecs = deferred_commit_delay_secs
+        self._partitionKeyGenerator = partition_key_generator
 
-        def createPropertyLoaders():
-            if blobBackend is None and serialiser is None:
-                _propertyLoaders = ()
-            elif blobBackend is None and serialiser is not None:
-                _propertyLoaders = (SerialisedPropertyLoader(self.CACHE_VALUE_IDENTIFIER, serialiser),)
-            elif blobBackend is not None and serialiser is None:
-                propertyBlobStatusName = self.CACHE_VALUE_IDENTIFIER + "_blob_backed"
-                _propertyLoaders = (BlobBackedPropertyLoader(self.CACHE_VALUE_IDENTIFIER, blobBackend, tableName,
-                    propertyBlobStatusName, max_workers),)
+        def create_property_loaders():
+            if blob_backend is None and serialiser is None:
+                _property_loaders = ()
+            elif blob_backend is None and serialiser is not None:
+                _property_loaders = (SerialisedPropertyLoader(self.CACHE_VALUE_IDENTIFIER, serialiser),)
+            elif blob_backend is not None and serialiser is None:
+                property_blob_status_name = self.CACHE_VALUE_IDENTIFIER + "_blob_backed"
+                _property_loaders = (BlobBackedPropertyLoader(self.CACHE_VALUE_IDENTIFIER, blob_backend, table_name,
+                    property_blob_status_name, max_workers),)
             else:
-                propertyBlobStatusName = self.CACHE_VALUE_IDENTIFIER + "_blob_backed"
-                _propertyLoaders = (BlobBackedSerialisedPropertyLoader(self.CACHE_VALUE_IDENTIFIER, serialiser, blobBackend,
-                tableName, propertyBlobStatusName, max_workers),)
-            return _propertyLoaders
+                property_blob_status_name = self.CACHE_VALUE_IDENTIFIER + "_blob_backed"
+                _property_loaders = (BlobBackedSerialisedPropertyLoader(self.CACHE_VALUE_IDENTIFIER, serialiser, blob_backend,
+                table_name, property_blob_status_name, max_workers),)
+            return _property_loaders
 
-        propertyLoaders = createPropertyLoaders()
-        self._batchCommitTable = AzureLazyBatchCommitTable(tableName, tableService, propertyLoaders=propertyLoaders)
-        self._minSizeForPeriodicCommit = minSizeForPeriodicCommit
-        self._maxBatchSize = maxBatchSize
-        self._updateHook = PeriodicUpdateHook(deferredCommitDelaySecs, noUpdateFn=self._commit, periodicFn=self._periodicallyCommit)
+        property_loaders = create_property_loaders()
+        self._batch_commit_table = AzureLazyBatchCommitTable(table_name, table_service, property_loaders=property_loaders)
+        self._minSizeForPeriodicCommit = min_size_for_periodic_commit
+        self._maxBatchSize = max_batch_size
+        self._updateHook = PeriodicUpdateHook(deferred_commit_delay_secs, no_update_fn=self._commit, periodic_fn=self._periodically_commit)
 
-        self._inMemoryCache = None
+        self._in_memory_cache = None
 
-        if inMemory:
-            df = self._batchCommitTable.loadTableToDataFrame(columns=['RowKey', self.CACHE_VALUE_IDENTIFIER]).set_index("RowKey")
-            _log.info(f"Loaded {len(df)} entries of table {tableName} in memory")
-            self._inMemoryCache = df[self.CACHE_VALUE_IDENTIFIER].to_dict()
+        if in_memory:
+            df = self._batch_commit_table.load_table_to_data_frame(columns=['RowKey', self.CACHE_VALUE_IDENTIFIER]).set_index("RowKey")
+            _log.info(f"Loaded {len(df)} entries of table {table_name} in memory")
+            self._in_memory_cache = df[self.CACHE_VALUE_IDENTIFIER].to_dict()
 
     def set(self, key, value):
-        keyAsString = str(key)
-        partitionKey = self._getPartitionKeyForRowKey(keyAsString)
-        entity = {'PartitionKey': partitionKey, 'RowKey': keyAsString, self.CACHE_VALUE_IDENTIFIER: value}
-        self._batchCommitTable.insertOrReplaceEntity(entity)
-        self._updateHook.handleUpdate()
+        key_as_string = str(key)
+        partition_key = self._get_partition_key_for_row_key(key_as_string)
+        entity = {'PartitionKey': partition_key, 'RowKey': key_as_string, self.CACHE_VALUE_IDENTIFIER: value}
+        self._batch_commit_table.insert_or_replace_entity(entity)
+        self._updateHook.handle_update()
 
-        if self._inMemoryCache is not None:
-            self._inMemoryCache[keyAsString] = value
+        if self._in_memory_cache is not None:
+            self._in_memory_cache[key_as_string] = value
 
     def get(self, key):
-        keyAsString = str(key)
-        value = self._getFromInMemoryCache(keyAsString)
+        key_as_string = str(key)
+        value = self._get_from_in_memory_cache(key_as_string)
         if value is None:
-            value = self._getFromTable(keyAsString)
+            value = self._get_from_table(key_as_string)
         return value
 
-    def _getFromTable(self, key: str):
-        partitionKey = self._getPartitionKeyForRowKey(key)
-        entity = self._batchCommitTable.getEntity(partitionKey, key)
+    def _get_from_table(self, key: str):
+        partition_key = self._get_partition_key_for_row_key(key)
+        entity = self._batch_commit_table.get_entity(partition_key, key)
         if entity is not None:
             return entity[self.CACHE_VALUE_IDENTIFIER]
         return None
 
-    def _getFromInMemoryCache(self, key):
-        if self._inMemoryCache is None:
+    def _get_from_in_memory_cache(self, key):
+        if self._in_memory_cache is None:
             return None
-        return self._inMemoryCache.get(str(key), None)
+        return self._in_memory_cache.get(str(key), None)
 
-    def _getPartitionKeyForRowKey(self, key: str):
-        return self._batchCommitTable.tableName if self._partitionKeyGenerator is None else self._partitionKeyGenerator(key)
+    def _get_partition_key_for_row_key(self, key: str):
+        return self._batch_commit_table.table_name if self._partitionKeyGenerator is None else self._partitionKeyGenerator(key)
 
     def _commit(self):
-        self._batchCommitTable.commitNonBlockingCurrentQueueState(self._maxBatchSize)
+        self._batch_commit_table.commit_non_blocking_current_queue_state(self._maxBatchSize)
 
-    def _periodicallyCommit(self):
-        self._batchCommitTable.commitBlockingLargestPartitionFromQueue(self._maxBatchSize, self._minSizeForPeriodicCommit)
+    def _periodically_commit(self):
+        self._batch_commit_table.commit_blocking_largest_partition_from_queue(self._maxBatchSize, self._minSizeForPeriodicCommit)

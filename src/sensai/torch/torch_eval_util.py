@@ -9,17 +9,19 @@ from ..evaluation.evaluator import VectorModelEvaluationData, VectorRegressionMo
 
 class TorchVectorRegressionModelEvaluationUtil(RegressionEvaluationUtil):
 
-    def _createPlots(self, data: Union[VectorRegressionModelEvaluationData, VectorRegressionModelCrossValidationData], resultCollector: EvaluationResultCollector,
+    def _create_plots(self,
+            data: Union[VectorRegressionModelEvaluationData, VectorRegressionModelCrossValidationData],
+            result_collector: EvaluationResultCollector,
             subtitle=None):
-        super()._createPlots(data, resultCollector, subtitle)
+        super()._create_plots(data, result_collector, subtitle)
         if isinstance(data, VectorModelEvaluationData):
-            self._addLossProgressionPlotIfTorchVectorRegressionModel(data.model, "loss-progression", resultCollector)
+            self._add_loss_progression_plot_if_torch_vector_regression_model(data.model, "loss-progression", result_collector)
         elif isinstance(data, VectorModelCrossValidationData):
-            if data.trainedModels is not None:
-                for i, model in enumerate(data.trainedModels, start=1):
-                    self._addLossProgressionPlotIfTorchVectorRegressionModel(model, f"loss-progression-{i}", resultCollector)
+            if data.trained_models is not None:
+                for i, model in enumerate(data.trained_models, start=1):
+                    self._add_loss_progression_plot_if_torch_vector_regression_model(model, f"loss-progression-{i}", result_collector)
 
     @staticmethod
-    def _addLossProgressionPlotIfTorchVectorRegressionModel(model, plotName, resultCollector):
+    def _add_loss_progression_plot_if_torch_vector_regression_model(model, plot_name, result_collector):
         if isinstance(model, TorchVectorRegressionModel):
-            resultCollector.addFigure(plotName, model.model.trainingInfo.plotAll())
+            result_collector.add_figure(plot_name, model.model.trainingInfo.plot_all())
