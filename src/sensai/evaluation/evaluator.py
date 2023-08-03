@@ -367,9 +367,10 @@ class VectorClassificationModelEvaluatorParams(VectorModelEvaluatorParams):
         :param fractional_split_shuffle: [if dataSplitter is None, test data must be obtained via split] whether to randomly (based on
             randomSeed) shuffle the dataset before splitting it
         :param additional_metrics: additional metrics to apply
-        :param compute_probabilities: whether to compute class probabilities
+        :param compute_probabilities: whether to compute class probabilities. Enabling this will enable many downstream computations
+            and visualisations (e.g. precision-recall plots) but requires the model to support probability computation in general.
         :param binary_positive_label: the positive class label for binary classification; if GUESS, try to detect from labels;
-            if None, no detection (non-binary classification)
+            if None, no detection (assume non-binary classification)
         """
         super().__init__(data_splitter,
             fractional_split_test_fraction=fractional_split_test_fraction,
