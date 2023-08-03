@@ -467,3 +467,48 @@ def pretty_string_repr(s: Any, initial_indentation_level=0, indentation_string="
             take(1)
 
     return result
+
+
+class TagBuilder:
+    """
+    Assists in building strings made up of components that are joined via a glue string
+    """
+    def __init__(self, prefix="", glue="_"):
+        """
+        :param prefix: an initial component to always include at the beginning
+        :param glue: the glue string which joins components
+        """
+        self.glue = glue
+        self.components = []
+        if prefix != "":
+            self.components.append(prefix)
+
+    def with_conditional(self, cond: bool, component: str):
+        """
+        Conditionally adds the given component
+
+        :param cond: the condition
+        :param component: the component to add if the condition holds
+        :return: the builder
+        """
+        if cond:
+            self.components.append(component)
+        return self
+
+    def with_alternative(self, cond: bool, true_component: str, false_component: str):
+        """
+        Adds a component depending on a condition
+
+        :param cond: the condition
+        :param true_component: the component to add if the condition holds
+        :param false_component: the component to add if the condition does not hold
+        :return: the builder
+        """
+        self.components.append(true_component if cond else false_component)
+        return self
+
+    def build(self):
+        """
+        :return: the string (with all components joined)
+        """
+        return self.glue.join(self.components)

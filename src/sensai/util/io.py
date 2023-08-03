@@ -76,10 +76,10 @@ class ResultWriter:
             f.write(df.to_string())
         return p
 
-    def write_data_frame_csv_file(self, filename_suffix, df: pd.DataFrame):
+    def write_data_frame_csv_file(self, filename_suffix, df: pd.DataFrame, index=True, header=True):
         p = self.path(filename_suffix, extension_to_add="csv")
         self.log.info(f"Saving data frame CSV file {p}")
-        df.to_csv(p)
+        df.to_csv(p, index=index, header=header)
         return p
 
     def write_figure(self, filename_suffix, fig, close_figure=False):

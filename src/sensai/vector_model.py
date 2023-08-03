@@ -100,7 +100,7 @@ class VectorModel(VectorModelFittableBase, PickleLoadSaveMixin, ToStringMixin, A
     Note that the vectors in question are not necessarily vectors in the mathematical sense, as the information in each cell is not
     required to be numeric or uniform but can be arbitrarily complex.
     """
-    TOSTRING_INCLUDE_PREPROCESSORS = False
+    TOSTRING_INCLUDE_PREPROCESSORS = True
     _TRANSIENT_MEMBERS = ["_trainingContext"]
     _RENAMED_MEMBERS = {
         "checkInputColumns": "_checkInputColumns",

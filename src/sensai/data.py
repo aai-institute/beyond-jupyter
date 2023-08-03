@@ -120,7 +120,7 @@ class DataSplitterFractional(DataSplitter):
         self.shuffle = shuffle
         self.randomSeed = random_seed
 
-    def split(self, data: TInputOutputData) -> Tuple[TInputOutputData, TInputOutputData]:
+    def split_with_indices(self, data) -> Tuple[Tuple[Sequence[int], Sequence[int]], Tuple[TInputOutputData, TInputOutputData]]:
         num_data_points = len(data)
         split_index = int(num_data_points * self.fractionalSizeOfFirstSet)
         if self.shuffle:
@@ -132,6 +132,10 @@ class DataSplitterFractional(DataSplitter):
         indices_b = indices[split_index:]
         a = data.filter_indices(list(indices_a))
         b = data.filter_indices(list(indices_b))
+        return (indices_a, indices_b), (a, b)
+
+    def split(self, data: TInputOutputData) -> Tuple[TInputOutputData, TInputOutputData]:
+        _, (a, b) = self.split_with_indices(data)
         return a, b
 
 

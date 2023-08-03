@@ -266,18 +266,28 @@ class TorchModel(ABC, ToStringMixin):
             y, stddev = model.inferMCDropout(x, mc_dropout_samples, p=mc_dropout_probability)
             return extract(y), extract(stddev)
 
-    def apply_scaled(self, x: Union[torch.Tensor, np.ndarray, TorchDataSet, Sequence[torch.Tensor]], **kwargs) \
+    def apply_scaled(self, x: Union[torch.Tensor, np.ndarray, TorchDataSet, Sequence[torch.Tensor]],
+            as_numpy: bool = True,
+            create_batch: bool = False,
+            mc_dropout_samples: Optional[int] = None,
+            mc_dropout_probability: Optional[float] = None) \
             -> Union[torch.Tensor, np.ndarray]:
         """
         applies the model to the given input tensor and returns the scaled result (i.e. in the original scale)
 
         :param x: the input tensor(s) or data set
-        :param kwargs: parameters to pass on to apply
+        :param as_numpy: flag indicating whether to convert the result to a numpy.array (if False, return tensor)
+        :param create_batch: whether to add an additional tensor dimension for a batch containing just one data point
+        :param mc_dropout_samples: if not None, apply MC-Dropout-based inference with the respective number of samples; if None, apply
+            regular inference
+        :param mc_dropout_probability: the probability with which to apply dropouts in MC-Dropout-based inference; if None, use model's
+            default
 
         :return: a scaled output tensor or, if MC-Dropout is applied, a pair (y, sd) of scaled tensors, where
             y the mean output tensor and sd is a tensor of the same dimension containing standard deviations
         """
-        return self.apply(x, scale_output=True, scale_input=True, **kwargs)
+        return self.apply(x, scale_output=True, scale_input=True, as_numpy=as_numpy, create_batch=create_batch,
+            mc_dropout_samples=mc_dropout_samples, mc_dropout_probability=mc_dropout_probability)
 
     def scaled_output(self, output: torch.Tensor) -> torch.Tensor:
         return self.outputScaler.denormalise(output)
@@ -563,10 +573,10 @@ class TorchVectorRegressionModel(VectorRegressionModel):
         data_set = TorchDataSetFromDataFrames(inputs, None, self.model.cuda, input_tensoriser=self.inputTensoriser)
         if self.outputTensorToArrayConverter is None:
             for input_batch in data_set.iter_batches(batch_size, input_only=True):
-                results.append(self.model.apply_scaled(input_batch, asNumpy=True))
+                results.append(self.model.apply_scaled(input_batch, as_numpy=True))
         else:
             for input_batch in data_set.iter_batches(batch_size, input_only=True):
-                output_batch = self.model.apply_scaled(input_batch, asNumpy=False)
+                output_batch = self.model.apply_scaled(input_batch, as_numpy=False)
                 result = self.outputTensorToArrayConverter.convert(output_batch, input_batch)
                 results.append(result)
         return np.concatenate(results)

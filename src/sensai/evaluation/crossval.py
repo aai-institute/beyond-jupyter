@@ -13,7 +13,7 @@ from .evaluator import VectorRegressionModelEvaluationData, VectorClassification
     VectorModelEvaluationData, VectorClassificationModelEvaluator, VectorRegressionModelEvaluator, \
     MetricsDictProvider, VectorModelEvaluator, VectorClassificationModelEvaluatorParams, \
     VectorRegressionModelEvaluatorParams, MetricsDictProviderFromFunction
-from ..data import InputOutputData
+from ..data import InputOutputData, DataSplitterFractional
 from ..util.typing import PandasNamedTuple
 from ..vector_model import VectorClassificationModel, VectorRegressionModel, VectorModel
 
@@ -98,6 +98,23 @@ class CrossValidationSplitterDefault(CrossValidationSplitter):
         return result
 
 
+class CrossValidationSplitterNested(CrossValidationSplitter):
+    """
+    A data splitter for nested cross-validation (which is useful, in particular, for time series prediction problems)
+    """
+    def __init__(self, test_fraction: float):
+        self.test_fraction = test_fraction
+
+    def create_folds(self, data: InputOutputData, num_folds: int) -> List[Tuple[Sequence[int], Sequence[int]]]:
+        fractional_splitter = DataSplitterFractional(1-self.test_fraction, shuffle=False)
+        result = []
+        for i in range(num_folds):
+            indices, (a, b) = fractional_splitter.split_with_indices(data)
+            result.append(indices)
+            data = a
+        return result
+
+
 class VectorModelCrossValidatorParams:
     def __init__(self,
             folds: int = 5,
@@ -108,8 +125,8 @@ class VectorModelCrossValidatorParams:
             default_splitter_shuffle=True):
         """
         :param folds: the number of folds
-        :param splitter: the splitter to use in order to generate the folds; if None, use default split (using parameters randomSeed
-            and shuffle above)
+        :param splitter: the splitter to use in order to generate the folds; if None, use default split (using parameters for random seed
+            and shuffling below)
         :param return_trained_models: whether to create a copy of the model for each fold and return each of the models
             (requires that models can be deep-copied); if False, the model that is passed to evalModel is fitted several times
         :param evaluator_params: the model evaluator parameters
@@ -129,7 +146,6 @@ class VectorModelCrossValidator(MetricsDictProvider, Generic[TCrossValData], ABC
         """
         :param data: the data set
         :param params: parameters
-        :param kwArgsOldParams: keyword arguments for old-style specification of parameters (for backward compatibility)
         """
         self.params = params
         self.modelEvaluators = []

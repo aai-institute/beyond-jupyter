@@ -22,13 +22,14 @@ from .crossval import VectorModelCrossValidationData, VectorRegressionModelCross
 from .eval_stats import RegressionEvalStatsCollection, ClassificationEvalStatsCollection, RegressionEvalStatsPlotErrorDistribution, \
     RegressionEvalStatsPlotHeatmapGroundTruthPredictions, RegressionEvalStatsPlotScatterGroundTruthPredictions, \
     ClassificationEvalStatsPlotConfusionMatrix, ClassificationEvalStatsPlotPrecisionRecall, RegressionEvalStatsPlot, \
-    ClassificationEvalStatsPlotProbabilityThresholdPrecisionRecall, ClassificationEvalStatsPlotProbabilityThresholdCounts
+    ClassificationEvalStatsPlotProbabilityThresholdPrecisionRecall, ClassificationEvalStatsPlotProbabilityThresholdCounts, \
+    Metric
 from .eval_stats.eval_stats_base import EvalStats, EvalStatsCollection, EvalStatsPlot
 from .eval_stats.eval_stats_classification import ClassificationEvalStats
 from .eval_stats.eval_stats_regression import RegressionEvalStats
 from .evaluator import VectorModelEvaluator, VectorModelEvaluationData, VectorRegressionModelEvaluator, \
     VectorRegressionModelEvaluationData, VectorClassificationModelEvaluator, VectorClassificationModelEvaluationData, \
-    VectorRegressionModelEvaluatorParams, VectorClassificationModelEvaluatorParams, VectorModelEvaluatorParams
+    VectorRegressionModelEvaluatorParams, VectorClassificationModelEvaluatorParams
 from ..data import InputOutputData
 from ..feature_importance import AggregatedFeatureImportance, FeatureImportanceProvider, plot_feature_importance, FeatureImportance
 from ..tracking import TrackedExperiment
@@ -61,19 +62,19 @@ def _is_regression(model: Optional[VectorModel], is_regression: Optional[bool]) 
 
 
 def create_vector_model_evaluator(data: InputOutputData, model: VectorModel = None,
-        is_regression: bool = None, params: Union[VectorModelEvaluatorParams, Dict[str, Any]] = None, **kwargs) \
+        is_regression: bool = None, params: Union[VectorRegressionModelEvaluatorParams, VectorClassificationModelEvaluatorParams] = None) \
             -> Union[VectorRegressionModelEvaluator, VectorClassificationModelEvaluator]:
-    if params is not None and len(kwargs) > 0:
-        raise ValueError("Provide either params or keyword arguments")
+    is_regression = _is_regression(model, is_regression)
     if params is None:
-        params = kwargs
-    regression = _is_regression(model, is_regression)
-    if regression:
-        params = VectorRegressionModelEvaluatorParams.from_dict_or_instance(params)
+        if is_regression:
+            params = VectorRegressionModelEvaluatorParams(fractional_split_test_fraction=0.2)
+        else:
+            params = VectorClassificationModelEvaluatorParams(fractional_split_test_fraction=0.2)
+        log.debug(f"No evaluator parameters specified, using default: {params}")
+    if is_regression:
+        return VectorRegressionModelEvaluator(data, params=params)
     else:
-        params = VectorClassificationModelEvaluatorParams.from_dict_or_instance(params)
-    cons = VectorRegressionModelEvaluator if regression else VectorClassificationModelEvaluator
-    return cons(data, params=params)
+        return VectorClassificationModelEvaluator(data, params=params)
 
 
 def create_vector_model_cross_validator(data: InputOutputData,
@@ -88,7 +89,7 @@ def create_vector_model_cross_validator(data: InputOutputData,
 
 
 def create_evaluation_util(data: InputOutputData, model: VectorModel = None, is_regression: bool = None,
-        evaluator_params: Optional[Dict[str, Any]] = None,
+        evaluator_params: Optional[Union[VectorRegressionModelEvaluatorParams, VectorClassificationModelEvaluatorParams]] = None,
         cross_validator_params: Optional[Dict[str, Any]] = None) \
             -> Union["ClassificationEvaluationUtil", "RegressionEvaluationUtil"]:
     if _is_regression(model, is_regression):
@@ -130,9 +131,11 @@ def eval_model_via_evaluator(model: TModel, io_data: InputOutputData, test_fract
         fig.show()
 
     if model.is_regression_model():
-        evaluator_params = dict(testFraction=test_fraction, randomSeed=random_seed)
+        evaluator_params = VectorRegressionModelEvaluatorParams(fractional_split_test_fraction=test_fraction,
+            fractional_split_random_seed=random_seed)
     else:
-        evaluator_params = dict(testFraction=test_fraction, computeProbabilities=compute_probabilities, randomSeed=random_seed)
+        evaluator_params = VectorClassificationModelEvaluatorParams(fractional_split_test_fraction=test_fraction,
+            compute_probabilities=compute_probabilities, fractional_split_random_seed=random_seed)
     ev = create_evaluation_util(io_data, model=model, evaluator_params=evaluator_params)
     return ev.perform_simple_evaluation(model, show_plots=True, log_results=True)
 
@@ -140,48 +143,48 @@ def eval_model_via_evaluator(model: TModel, io_data: InputOutputData, test_fract
 class EvaluationResultCollector:
     def __init__(self, show_plots: bool = True, result_writer: Optional[ResultWriter] = None,
             tracking_context: TrackingContext = None):
-        self.showPlots = show_plots
-        self.resultWriter = result_writer
-        self.trackingContext = tracking_context
+        self.show_plots = show_plots
+        self.result_writer = result_writer
+        self.tracking_context = tracking_context
 
     def add_figure(self, name: str, fig: matplotlib.figure.Figure):
-        if self.resultWriter is not None:
-            self.resultWriter.write_figure(name, fig, close_figure=not self.showPlots)
-        if self.trackingContext is not None:
-            self.trackingContext.track_figure(name, fig)
+        if self.result_writer is not None:
+            self.result_writer.write_figure(name, fig, close_figure=not self.show_plots)
+        if self.tracking_context is not None:
+            self.tracking_context.track_figure(name, fig)
 
     def add_data_frame_csv_file(self, name: str, df: pd.DataFrame):
-        if self.resultWriter is not None:
-            self.resultWriter.write_data_frame_csv_file(name, df)
+        if self.result_writer is not None:
+            self.result_writer.write_data_frame_csv_file(name, df)
 
     def child(self, added_filename_prefix):
-        result_writer = self.resultWriter
+        result_writer = self.result_writer
         if result_writer:
             result_writer = result_writer.child_with_added_prefix(added_filename_prefix)
-        return self.__class__(show_plots=self.showPlots, result_writer=result_writer)
+        return self.__class__(show_plots=self.show_plots, result_writer=result_writer)
 
 
 class EvalStatsPlotCollector(Generic[TEvalStats, TEvalStatsPlot]):
     def __init__(self):
         self.plots: Dict[str, EvalStatsPlot] = {}
-        self.disabledPlots: Set[str] = set()
+        self.disabled_plots: Set[str] = set()
 
     def add_plot(self, name: str, plot: EvalStatsPlot):
         self.plots[name] = plot
 
     def get_enabled_plots(self) -> List[str]:
-        return [p for p in self.plots if p not in self.disabledPlots]
+        return [p for p in self.plots if p not in self.disabled_plots]
 
     def disable_plots(self, *names: str):
-        self.disabledPlots.update(names)
+        self.disabled_plots.update(names)
 
     def create_plots(self, eval_stats: EvalStats, subtitle: str, result_collector: EvaluationResultCollector):
         known_plots = set(self.plots.keys())
-        unknown_disabled_plots = self.disabledPlots.difference(known_plots)
+        unknown_disabled_plots = self.disabled_plots.difference(known_plots)
         if len(unknown_disabled_plots) > 0:
             log.warning(f"Plots were disabled which are not registered: {unknown_disabled_plots}; known plots: {known_plots}")
         for name, plot in self.plots.items():
-            if name not in self.disabledPlots:
+            if name not in self.disabled_plots:
                 fig = plot.create_figure(eval_stats, subtitle)
                 if fig is not None:
                     result_collector.add_figure(name, fig)
@@ -222,14 +225,12 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
         :param evaluator_params: parameters with which to instantiate evaluators
         :param cross_validator_params: parameters with which to instantiate cross-validators
         """
-        if evaluator_params is None:
-            evaluator_params = dict(testFraction=0.2)
         if cross_validator_params is None:
             cross_validator_params = VectorModelCrossValidatorParams(folds=5)
-        self.evaluatorParams = evaluator_params
-        self.crossValidatorParams = cross_validator_params
-        self.inputOutputData = io_data
-        self.evalStatsPlotCollector = eval_stats_plot_collector
+        self.evaluator_params = evaluator_params
+        self.cross_validator_params = cross_validator_params
+        self.io_data = io_data
+        self.eval_stats_plot_collector = eval_stats_plot_collector
 
     def create_evaluator(self, model: TModel = None, is_regression: bool = None) -> TEvaluator:
         """
@@ -240,7 +241,7 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
         :param is_regression: whether to create a regression model evaluator. Either this or model have to be specified
         :return: an evaluator
         """
-        return create_vector_model_evaluator(self.inputOutputData, model=model, is_regression=is_regression, params=self.evaluatorParams)
+        return create_vector_model_evaluator(self.io_data, model=model, is_regression=is_regression, params=self.evaluator_params)
 
     def create_cross_validator(self, model: TModel = None, is_regression: bool = None) -> TCrossValidator:
         """
@@ -251,8 +252,8 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
         :param is_regression: whether to create a regression model cross-validator. Either this or model have to be specified
         :return: an evaluator
         """
-        return create_vector_model_cross_validator(self.inputOutputData, model=model, is_regression=is_regression,
-            params=self.crossValidatorParams)
+        return create_vector_model_cross_validator(self.io_data, model=model, is_regression=is_regression,
+            params=self.cross_validator_params)
 
     def perform_simple_evaluation(self, model: TModel,
             create_plots=True, show_plots=False,
@@ -392,7 +393,7 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
                     cross_validator = self.create_cross_validator(model)
                 cross_val_data = self.perform_cross_validation(model, result_writer=result_writer if write_individual_results else None,
                     cross_validator=cross_validator, tracked_experiment=tracked_experiment)
-                model_result = ModelComparisonData.Result(crossValData=cross_val_data)
+                model_result = ModelComparisonData.Result(cross_validation_data=cross_val_data)
                 result_by_model_name[model_name] = model_result
                 eval_stats_collection = cross_val_data.get_eval_stats_collection()
                 stats_dict = eval_stats_collection.agg_metrics_dict()
@@ -401,7 +402,7 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
                     evaluator = self.create_evaluator(model)
                 eval_data = self.perform_simple_evaluation(model, result_writer=result_writer if write_individual_results else None,
                     fit_model=fit_models, evaluator=evaluator, tracked_experiment=tracked_experiment)
-                model_result = ModelComparisonData.Result(evalData=eval_data)
+                model_result = ModelComparisonData.Result(eval_data=eval_data)
                 result_by_model_name[model_name] = model_result
                 eval_stats = eval_data.get_eval_stats()
                 stats_dict = eval_stats.metrics_dict()
@@ -418,7 +419,7 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
             try:
                 rows = []
                 for model_name, result in result_by_model_name.items():
-                    stats_dict = result.crossValData.get_eval_stats_collection().get_global_stats().metrics_dict()
+                    stats_dict = result.cross_validation_data.get_eval_stats_collection().get_global_stats().metrics_dict()
                     stats_dict["model_name"] = model_name
                     rows.append(stats_dict)
                 cross_val_combined_results_df = pd.DataFrame(rows).set_index("model_name")
@@ -524,7 +525,7 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
         :param result_collector: the collector to which all plots are to be passed
         :param subtitle: the subtitle to use for generated plots (if any)
         """
-        self.evalStatsPlotCollector.create_plots(eval_stats, subtitle, result_collector)
+        self.eval_stats_plot_collector.create_plots(eval_stats, subtitle, result_collector)
 
 
 class RegressionEvaluationUtil(EvaluationUtil[VectorRegressionModel, VectorRegressionModelEvaluator, VectorRegressionModelEvaluationData,
@@ -558,41 +559,30 @@ class ClassificationEvaluationUtil(EvaluationUtil[VectorClassificationModel, Vec
 
 class MultiDataEvaluationUtil:
     def __init__(self, io_data_dict: Dict[str, InputOutputData], key_name: str = "dataset",
-            meta_data_dict: Optional[Dict[str, Dict[str, Any]]] = None):
+            meta_data_dict: Optional[Dict[str, Dict[str, Any]]] = None,
+            evaluator_params: Optional[Union[VectorRegressionModelEvaluatorParams, VectorClassificationModelEvaluatorParams, Dict[str, Any]]] = None,
+            cross_validator_params: Optional[Union[VectorModelCrossValidatorParams, Dict[str, Any]]] = None):
         """
         :param io_data_dict: a dictionary mapping from names to the data sets with which to evaluate models
         :param key_name: a name for the key value used in inputOutputDataDict, which will be used as a column name in result data frames
         :param meta_data_dict: a dictionary which maps from a name (same keys as in inputOutputDataDict) to a dictionary, which maps
             from a column name to a value and which is to be used to extend the result data frames containing per-dataset results
+        :param evaluator_params: parameters to use for the instantiation of evaluators (relevant if useCrossValidation==False)
+        :param cross_validator_params: parameters to use for the instantiation of cross-validators (relevant if useCrossValidation==True)
         """
-        self.inputOutputDataDict = io_data_dict
-        self.keyName = key_name
+        self.io_data_dict = io_data_dict
+        self.key_name = key_name
+        self.evaluator_params = evaluator_params
+        self.cross_validator_params = cross_validator_params
         if meta_data_dict is not None:
-            self.metaDF = pd.DataFrame(meta_data_dict.values(), index=meta_data_dict.keys())
+            self.meta_df = pd.DataFrame(meta_data_dict.values(), index=meta_data_dict.keys())
         else:
-            self.metaDF = None
-
-    def compare_models_cross_validation(self,
-            model_factories: Sequence[Callable[[], Union[VectorRegressionModel, VectorClassificationModel]]],
-            result_writer: Optional[ResultWriter] = None,
-            write_per_dataset_results=True,
-            cross_validator_params: Optional[Dict[str, Any]] = None,
-            column_name_for_model_ranking: str = None,
-            rank_max=True) -> "MultiDataModelComparisonData":
-        """
-        Deprecated. Use compareModels instead.
-        """
-        return self.compare_models(model_factories, use_cross_validation=True, result_writer=result_writer,
-            write_per_dataset_results=write_per_dataset_results,
-            cross_validator_params=cross_validator_params,
-            column_name_for_model_ranking=column_name_for_model_ranking, rank_max=rank_max)
+            self.meta_df = None
 
     def compare_models(self,
             model_factories: Sequence[Callable[[], Union[VectorRegressionModel, VectorClassificationModel]]],
             use_cross_validation=False,
             result_writer: Optional[ResultWriter] = None,
-            evaluator_params: Optional[Union[VectorRegressionModelEvaluatorParams, VectorClassificationModelEvaluatorParams, Dict[str, Any]]] = None,
-            cross_validator_params: Optional[Union[VectorModelCrossValidatorParams, Dict[str, Any]]] = None,
             write_per_dataset_results=False,
             write_csvs=False,
             column_name_for_model_ranking: str = None,
@@ -602,8 +592,8 @@ class MultiDataEvaluationUtil:
             create_combined_eval_stats_plots=False,
             distribution_plots_cdf = True,
             distribution_plots_cdf_complementary = False,
-            visitors: Optional[Iterable["ModelComparisonVisitor"]] = None) -> Union["RegressionMultiDataModelComparisonData",
-                "ClassificationMultiDataModelComparisonData"]:
+            visitors: Optional[Iterable["ModelComparisonVisitor"]] = None) \
+            -> Union["RegressionMultiDataModelComparisonData", "ClassificationMultiDataModelComparisonData"]:
         """
         :param model_factories: a sequence of factory functions for the creation of models to evaluate; every factory must result
             in a model with a fixed model name (otherwise results cannot be correctly aggregated)
@@ -611,8 +601,6 @@ class MultiDataEvaluationUtil:
         :param result_writer: a writer with which to store results; if None, results are not stored
         :param write_per_dataset_results: whether to use resultWriter (if not None) in order to generate detailed results for each
             dataset in a subdirectory named according to the name of the dataset
-        :param evaluator_params: parameters to use for the instantiation of evaluators (relevant if useCrossValidation==False)
-        :param cross_validator_params: parameters to use for the instantiation of cross-validators (relevant if useCrossValidation==True)
         :param column_name_for_model_ranking: column name to use for ranking models
         :param rank_max: if true, use max for ranking, else min
         :param add_combined_eval_stats: whether to also report, for each model, evaluation metrics on the combined set data points from
@@ -636,8 +624,8 @@ class MultiDataEvaluationUtil:
         model_names = None
         model_name_to_string_repr = None
 
-        for i, (key, inputOutputData) in enumerate(self.inputOutputDataDict.items(), start=1):
-            log.info(f"Evaluating models for data set #{i}/{len(self.inputOutputDataDict)}: {self.keyName}={key}")
+        for i, (key, inputOutputData) in enumerate(self.io_data_dict.items(), start=1):
+            log.info(f"Evaluating models for data set #{i}/{len(self.io_data_dict)}: {self.key_name}={key}")
             models = [f() for f in model_factories]
 
             current_model_names = [model.get_name() for model in models]
@@ -656,11 +644,11 @@ class MultiDataEvaluationUtil:
                 else:
                     raise ValueError("The models have to be either all regression models or all classification, not a mixture")
 
-            ev = create_evaluation_util(inputOutputData, is_regression=is_regression, evaluator_params=evaluator_params,
-                cross_validator_params=cross_validator_params)
+            ev = create_evaluation_util(inputOutputData, is_regression=is_regression, evaluator_params=self.evaluator_params,
+                cross_validator_params=self.cross_validator_params)
 
             if plot_collector is None:
-                plot_collector = ev.evalStatsPlotCollector
+                plot_collector = ev.eval_stats_plot_collector
 
             # compute data frame with results for current data set
             if write_per_dataset_results and result_writer is not None:
@@ -669,19 +657,19 @@ class MultiDataEvaluationUtil:
                 child_result_writer = None
             comparison_data = ev.compare_models(models, use_cross_validation=use_cross_validation, result_writer=child_result_writer,
                 visitors=visitors, write_visitor_results=False)
-            df = comparison_data.resultsDF
+            df = comparison_data.results_df
 
             # augment data frame
-            df[self.keyName] = key
+            df[self.key_name] = key
             df["model_name"] = df.index
             df = df.reset_index(drop=True)
 
             # collect eval stats objects by model name
-            for modelName, result in comparison_data.resultByModelName.items():
+            for modelName, result in comparison_data.result_by_model_name.items():
                 if use_cross_validation:
-                    eval_stats = result.crossValData.get_eval_stats_collection().get_global_stats()
+                    eval_stats = result.cross_validation_data.get_eval_stats_collection().get_global_stats()
                 else:
-                    eval_stats = result.evalData.get_eval_stats()
+                    eval_stats = result.eval_data.get_eval_stats()
                 eval_stats_by_model_name[modelName].append(eval_stats)
                 results_by_model_name[modelName].append(result)
 
@@ -690,21 +678,21 @@ class MultiDataEvaluationUtil:
             if model_name_to_string_repr is None:
                 model_name_to_string_repr = {model.get_name(): model.pprints() for model in models}
 
-        if self.metaDF is not None:
-            all_results_df = all_results_df.join(self.metaDF, on=self.keyName, how="left")
+        if self.meta_df is not None:
+            all_results_df = all_results_df.join(self.meta_df, on=self.key_name, how="left")
 
         str_all_results = f"All results:\n{all_results_df.to_string()}"
         log.info(str_all_results)
 
         # create mean result by model, removing any metrics/columns that produced NaN values
         # (because the mean would be computed without them, skipna parameter unsupported)
-        all_results_grouped = all_results_df.dropna(axis=1).groupby("model_name")
+        all_results_grouped = all_results_df.drop(columns=self.key_name).dropna(axis=1).groupby("model_name")
         mean_results_df: pd.DataFrame = all_results_grouped.mean()
         for colName in [column_name_for_model_ranking, f"mean[{column_name_for_model_ranking}]"]:
             if colName in mean_results_df:
                 mean_results_df.sort_values(column_name_for_model_ranking, inplace=True, ascending=not rank_max)
                 break
-        str_mean_results = f"Mean results (averaged across {len(self.inputOutputDataDict)} data sets):\n{mean_results_df.to_string()}"
+        str_mean_results = f"Mean results (averaged across {len(self.io_data_dict)} data sets):\n{mean_results_df.to_string()}"
         log.info(str_mean_results)
 
         def iter_combined_eval_stats_from_all_data_sets():
@@ -739,6 +727,7 @@ class MultiDataEvaluationUtil:
             combined_stats_df.set_index("model_name", drop=True, inplace=True)
             combined_stats_df = combined_stats_df.loc[mean_results_df.index]  # apply same sort order (index is model_name)
             str_combined_eval_stats = f"Results on combined test data from all data sets:\n{combined_stats_df.to_string()}\n\n"
+            log.info(str_combined_eval_stats)
 
         if result_writer is not None:
             comparison_content = str_mean_results + "\n\n" + str_further_aggs + "\n\n" + str_combined_eval_stats + str_all_results
@@ -763,13 +752,13 @@ class MultiDataEvaluationUtil:
                 visitor.collect_results(result_collector)
 
         # create result
-        dataset_names = list(self.inputOutputDataDict.keys())
+        dataset_names = list(self.io_data_dict.keys())
         if is_regression:
             mdmc_data = RegressionMultiDataModelComparisonData(all_results_df, mean_results_df, further_aggs_df, eval_stats_by_model_name,
-                results_by_model_name, dataset_names)
+                results_by_model_name, dataset_names, model_name_to_string_repr)
         else:
             mdmc_data = ClassificationMultiDataModelComparisonData(all_results_df, mean_results_df, further_aggs_df,
-                eval_stats_by_model_name, results_by_model_name, dataset_names)
+                eval_stats_by_model_name, results_by_model_name, dataset_names, model_name_to_string_repr)
 
         # plot distributions
         if create_metric_distribution_plots and result_writer is not None:
@@ -782,25 +771,31 @@ class MultiDataEvaluationUtil:
 class ModelComparisonData:
     @dataclass
     class Result:
-        evalData: Union[VectorClassificationModelEvaluationData, VectorRegressionModelEvaluationData] = None
-        crossValData: Union[VectorClassificationModelCrossValidationData, VectorRegressionModelCrossValidationData] = None
+        eval_data: Union[VectorClassificationModelEvaluationData, VectorRegressionModelEvaluationData] = None
+        cross_validation_data: Union[VectorClassificationModelCrossValidationData, VectorRegressionModelCrossValidationData] = None
+
+        def iter_evaluation_data(self) -> Iterator[Union[VectorClassificationModelEvaluationData, VectorRegressionModelEvaluationData]]:
+            if self.eval_data is not None:
+                yield self.eval_data
+            if self.cross_validation_data is not None:
+                yield from self.cross_validation_data.eval_data_list
 
     def __init__(self, results_df: pd.DataFrame, results_by_model_name: Dict[str, Result], evaluator: Optional[VectorModelEvaluator] = None,
             cross_validator: Optional[VectorModelCrossValidator] = None):
-        self.resultsDF = results_df
-        self.resultByModelName = results_by_model_name
+        self.results_df = results_df
+        self.result_by_model_name = results_by_model_name
         self.evaluator = evaluator
-        self.crossValidator = cross_validator
+        self.cross_validator = cross_validator
 
     def get_best_model_name(self, metric_name: str) -> str:
-        idx = np.argmax(self.resultsDF[metric_name])
-        return self.resultsDF.index[idx]
+        idx = np.argmax(self.results_df[metric_name])
+        return self.results_df.index[idx]
 
     def get_best_model(self, metric_name: str) -> Union[VectorClassificationModel, VectorRegressionModel, VectorModelBase]:
-        result = self.resultByModelName[self.get_best_model_name(metric_name)]
-        if result.evalData is None:
+        result = self.result_by_model_name[self.get_best_model_name(metric_name)]
+        if result.eval_data is None:
             raise ValueError("The best model is not well-defined when using cross-validation")
-        return result.evalData.model
+        return result.eval_data.model
 
 
 class ModelComparisonVisitor(ABC):
@@ -837,15 +832,15 @@ class ModelComparisonVisitorAggregatedFeatureImportance(ModelComparisonVisitor):
 
     def visit(self, model_name: str, result: ModelComparisonData.Result):
         if model_name == self.model_name:
-            if result.crossValData is not None:
-                models = result.crossValData.trained_models
+            if result.cross_validation_data is not None:
+                models = result.cross_validation_data.trained_models
                 if models is not None:
                     for model in models:
                         self._collect(model)
                 else:
                     raise ValueError("Models were not returned in cross-validation results")
-            elif result.evalData is not None:
-                self._collect(result.evalData.model)
+            elif result.eval_data is not None:
+                self._collect(result.eval_data.model)
 
     def _collect(self, model: Union[FeatureImportanceProvider, VectorModelBase]):
         if not isinstance(model, FeatureImportanceProvider):
@@ -874,16 +869,21 @@ class MultiDataModelComparisonData(Generic[TEvalStats, TEvalStatsCollection], AB
             agg_results_df: pd.DataFrame,
             eval_stats_by_model_name: Dict[str, List[TEvalStats]],
             results_by_model_name: Dict[str, List[ModelComparisonData.Result]],
-            dataset_names: List[str]):
+            dataset_names: List[str],
+            model_name_to_string_repr: Dict[str, str]):
         self.all_results_df = all_results_df
         self.mean_results_df = mean_results_df
         self.agg_results_df = agg_results_df
         self.eval_stats_by_model_name = eval_stats_by_model_name
         self.results_by_model_name = results_by_model_name
         self.dataset_names = dataset_names
+        self.model_name_to_string_repr = model_name_to_string_repr
 
     def get_model_names(self) -> List[str]:
         return list(self.eval_stats_by_model_name.keys())
+
+    def get_model_description(self, model_name: str) -> str:
+        return self.model_name_to_string_repr[model_name]
 
     def get_eval_stats_list(self, model_name: str) -> List[TEvalStats]:
         return self.eval_stats_by_model_name[model_name]
@@ -912,8 +912,8 @@ class MultiDataModelComparisonData(Generic[TEvalStats, TEvalStatsCollection], AB
                 fig = eval_stats_collection.plot_distribution(metricName, subtitle=modelName, cdf=cdf, cdf_complementary=cdf_complementary)
                 result_writer.write_figure(f"{modelName}_dist-{metricName}", fig)
                 # scatter plot with paired metrics
-                metric = eval_stats_collection.get_metric_by_name(metricName)
-                for paired_metric in metric.getPairedMetrics():
+                metric: Metric = eval_stats_collection.get_metric_by_name(metricName)
+                for paired_metric in metric.get_paired_metrics():
                     if eval_stats_collection.has_metric(paired_metric):
                         fig = eval_stats_collection.plot_scatter(metric.name, paired_metric.name)
                         result_writer.write_figure(f"{modelName}_scatter-{metric.name}-{paired_metric.name}", fig)
