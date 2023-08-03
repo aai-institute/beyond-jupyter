@@ -36,7 +36,7 @@ class ClassificationMetric(Metric["ClassificationEvalStats"], ABC):
             else self.__class__.requires_probabilities
 
     def compute_value_for_eval_stats(self, eval_stats: "ClassificationEvalStats"):
-        return self.compute_value(eval_stats.y_true, eval_stats.y_predicted, eval_stats.y_predictedClassProbabilities)
+        return self.compute_value(eval_stats.y_true, eval_stats.y_predicted, eval_stats.y_predicted_class_probabilities)
 
     def compute_value(self, y_true, y_predicted, y_predicted_class_probabilities=None):
         if self.requires_probabilities and y_predicted_class_probabilities is None:
@@ -348,9 +348,9 @@ class ClassificationEvalStats(PredictionEvalStats["ClassificationMetric"]):
             if None, treat the problem as non-binary, regardless of the labels being used.
         """
         self.labels = labels
-        self.y_predictedClassProbabilities = y_predicted_class_probabilities
-        self._probabilitiesAvailable = y_predicted_class_probabilities is not None
-        if self._probabilitiesAvailable:
+        self.y_predicted_class_probabilities = y_predicted_class_probabilities
+        self.is_probabilities_available = y_predicted_class_probabilities is not None
+        if self.is_probabilities_available:
             col_set = set(y_predicted_class_probabilities.columns)
             if col_set != set(labels):
                 raise ValueError(f"Columns in class probabilities data frame ({y_predicted_class_probabilities.columns}) do not "
@@ -377,22 +377,22 @@ class ClassificationEvalStats(PredictionEvalStats["ClassificationMetric"]):
         if num_labels == 2 and binary_positive_label is None:
             log.warning(f"Binary classification (labels={labels}) without specification of positive class label; "
                         f"binary classification metrics will not be considered")
-        self.binaryPositiveLabel = binary_positive_label
-        self.isBinary = binary_positive_label is not None
+        self.binary_positive_label = binary_positive_label
+        self.is_binary = binary_positive_label is not None
 
         if metrics is None:
             metrics = [ClassificationMetricAccuracy(), ClassificationMetricBalancedAccuracy(),
                 ClassificationMetricGeometricMeanOfTrueClassProbability()]
-            if self.isBinary:
+            if self.is_binary:
                 metrics.extend([
-                    BinaryClassificationMetricPrecision(self.binaryPositiveLabel),
-                    BinaryClassificationMetricRecall(self.binaryPositiveLabel),
-                    BinaryClassificationMetricF1Score(self.binaryPositiveLabel)])
+                    BinaryClassificationMetricPrecision(self.binary_positive_label),
+                    BinaryClassificationMetricRecall(self.binary_positive_label),
+                    BinaryClassificationMetricF1Score(self.binary_positive_label)])
 
         metrics = list(metrics)
         if additional_metrics is not None:
             for m in additional_metrics:
-                if not self._probabilitiesAvailable and m.requires_probabilities:
+                if not self.is_probabilities_available and m.requires_probabilities:
                     raise ValueError(f"Additional metric {m} not supported, as class probabilities were not provided")
 
         super().__init__(y_predicted, y_true, metrics, additional_metrics=additional_metrics)
@@ -417,7 +417,7 @@ class ClassificationEvalStats(PredictionEvalStats["ClassificationMetric"]):
     def metrics_dict(self) -> Dict[str, float]:
         d = {}
         for metric in self.metrics:
-            if not metric.requires_probabilities or self._probabilitiesAvailable:
+            if not metric.requires_probabilities or self.is_probabilities_available:
                 d[metric.name] = self.compute_metric_value(metric)
         return d
 
@@ -431,13 +431,13 @@ class ClassificationEvalStats(PredictionEvalStats["ClassificationMetric"]):
 
     def plot_precision_recall_curve(self, title_add: str = None):
         from sklearn.metrics import PrecisionRecallDisplay  # only supported by newer versions of sklearn
-        if not self._probabilitiesAvailable:
+        if not self.is_probabilities_available:
             raise Exception("Precision-recall curve requires probabilities")
-        if not self.isBinary:
+        if not self.is_binary:
             raise Exception("Precision-recall curve is not applicable to non-binary classification")
-        probabilities = self.y_predictedClassProbabilities[self.binaryPositiveLabel]
+        probabilities = self.y_predicted_class_probabilities[self.binary_positive_label]
         precision, recall, thresholds = precision_recall_curve(y_true=self.y_true, probas_pred=probabilities,
-            pos_label=self.binaryPositiveLabel)
+            pos_label=self.binary_positive_label)
         disp = PrecisionRecallDisplay(precision, recall)
         disp.plot()
         ax: plt.Axes = disp.ax_
@@ -468,14 +468,14 @@ class ClassificationEvalStatsCollection(EvalStatsCollection[ClassificationEvalSt
             y_true = np.concatenate([evalStats.y_true for evalStats in self.statsList])
             y_predicted = np.concatenate([evalStats.y_predicted for evalStats in self.statsList])
             es0 = self.statsList[0]
-            if es0.y_predictedClassProbabilities is not None:
-                y_probs = pd.concat([evalStats.y_predictedClassProbabilities for evalStats in self.statsList])
+            if es0.y_predicted_class_probabilities is not None:
+                y_probs = pd.concat([evalStats.y_predicted_class_probabilities for evalStats in self.statsList])
                 labels = list(y_probs.columns)
             else:
                 y_probs = None
                 labels = es0.labels
             self.globalStats = ClassificationEvalStats(y_predicted=y_predicted, y_true=y_true, y_predicted_class_probabilities=y_probs,
-                labels=labels, binary_positive_label=es0.binaryPositiveLabel, metrics=es0.metrics)
+                labels=labels, binary_positive_label=es0.binary_positive_label, metrics=es0.metrics)
         return self.globalStats
 
 
@@ -522,12 +522,12 @@ class BinaryClassificationCounts:
 
     @classmethod
     def from_eval_stats(cls, eval_stats: ClassificationEvalStats, threshold=0.5) -> "BinaryClassificationCounts":
-        if not eval_stats.isBinary:
+        if not eval_stats.is_binary:
             raise ValueError("Probability threshold variation data can only be computed for binary classification problems")
-        if eval_stats.y_predictedClassProbabilities is None:
+        if eval_stats.y_predicted_class_probabilities is None:
             raise ValueError("No probability data")
-        pos_class_label = eval_stats.binaryPositiveLabel
-        probs = eval_stats.y_predictedClassProbabilities[pos_class_label]
+        pos_class_label = eval_stats.binary_positive_label
+        probs = eval_stats.y_predicted_class_probabilities[pos_class_label]
         is_positive_gt = [gtLabel == pos_class_label for gtLabel in eval_stats.y_true]
         return cls.from_probability_threshold(probabilities=probs, threshold=threshold, is_positive_ground_truth=is_positive_gt)
 
@@ -605,20 +605,20 @@ class ClassificationEvalStatsPlotConfusionMatrix(ClassificationEvalStatsPlot):
 
 class ClassificationEvalStatsPlotPrecisionRecall(ClassificationEvalStatsPlot):
     def create_figure(self, eval_stats: ClassificationEvalStats, subtitle: str) -> Optional[plt.Figure]:
-        if not eval_stats.isBinary:
+        if not eval_stats.is_binary or not eval_stats.is_probabilities_available:
             return None
         return eval_stats.plot_precision_recall_curve(title_add=subtitle)
 
 
 class ClassificationEvalStatsPlotProbabilityThresholdPrecisionRecall(ClassificationEvalStatsPlot):
     def create_figure(self, eval_stats: ClassificationEvalStats, subtitle: str) -> Optional[plt.Figure]:
-        if not eval_stats.isBinary:
+        if not eval_stats.is_binary or not eval_stats.is_probabilities_available:
             return None
         return eval_stats.get_binary_classification_probability_threshold_variation_data().plot_precision_recall(subtitle=subtitle)
 
 
 class ClassificationEvalStatsPlotProbabilityThresholdCounts(ClassificationEvalStatsPlot):
     def create_figure(self, eval_stats: ClassificationEvalStats, subtitle: str) -> Optional[plt.Figure]:
-        if not eval_stats.isBinary:
+        if not eval_stats.is_binary or not eval_stats.is_probabilities_available:
             return None
         return eval_stats.get_binary_classification_probability_threshold_variation_data().plot_counts(subtitle=subtitle)
