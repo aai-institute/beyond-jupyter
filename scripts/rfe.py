@@ -27,8 +27,8 @@ def run_rfe(dataset: DataSet, model_name="xgb-meanpop-opt"):
     result = rfe.run(model, ev.iodata, RegressionMetricRRSE.name, minimise=True)
     result_writer.write_pickle("result", result)
 
-    for i, step in enumerate(result.getSortedSteps(), start=1):
-        log.info(f"Top features #{i}: [loss={step.metricValue}] {step.features}")
+    for i, step in enumerate(result.get_sorted_steps(), start=1):
+        log.info(f"Top features #{i}: [loss={step.metric_value}] {step.features}")
 
 
 if __name__ == '__main__':
