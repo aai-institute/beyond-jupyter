@@ -1,0 +1,57 @@
+C:\Users\DominikJain\miniconda3\envs\pop\python.exe C:\Users\DominikJain\Dev\spotify-popularity-sensai\refactoring-journey\step01-python-script\run_model_evaluation.py
+Logistic Regression Model Accuracy (in %): 94.7082673128903
+[[284506      6]
+ [ 15891      9]]
+              precision    recall  f1-score   support
+
+         low       0.95      1.00      0.97    284512
+     popular       0.60      0.00      0.00     15900
+
+    accuracy                           0.95    300412
+   macro avg       0.77      0.50      0.49    300412
+weighted avg       0.93      0.95      0.92    300412
+
+[[270730  13782]
+ [ 13181   2719]]
+              precision    recall  f1-score   support
+
+         low       0.95      0.95      0.95    284512
+     popular       0.16      0.17      0.17     15900
+
+    accuracy                           0.91    300412
+   macro avg       0.56      0.56      0.56    300412
+weighted avg       0.91      0.91      0.91    300412
+
+KNN Model Accuracy (in %): 91.0246594676644
+[[284320    192]
+ [ 15618    282]]
+              precision    recall  f1-score   support
+
+         low       0.95      1.00      0.97    284512
+     popular       0.59      0.02      0.03     15900
+
+    accuracy                           0.95    300412
+   macro avg       0.77      0.51      0.50    300412
+weighted avg       0.93      0.95      0.92    300412
+
+Random Forest Model Accuracy (in %): 94.7372275408439
+[[284512      0]
+ [ 15900      0]]
+C:\Users\DominikJain\miniconda3\envs\pop\lib\site-packages\sklearn\metrics\_classification.py:1469: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, msg_start, len(result))
+C:\Users\DominikJain\miniconda3\envs\pop\lib\site-packages\sklearn\metrics\_classification.py:1469: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, msg_start, len(result))
+              precision    recall  f1-score   support
+
+         low       0.95      1.00      0.97    284512
+     popular       0.00      0.00      0.00     15900
+
+    accuracy                           0.95    300412
+   macro avg       0.47      0.50      0.49    300412
+weighted avg       0.90      0.95      0.92    300412
+
+C:\Users\DominikJain\miniconda3\envs\pop\lib\site-packages\sklearn\metrics\_classification.py:1469: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, msg_start, len(result))
+Decsision Tree Model Accuracy (in %): 94.70726868434018
+
+Process finished with exit code 0
