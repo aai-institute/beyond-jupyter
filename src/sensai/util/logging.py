@@ -4,7 +4,7 @@ import sys
 import time
 from datetime import datetime
 from logging import *
-from typing import List
+from typing import List, Callable, Any
 
 import pandas as pd
 
@@ -34,6 +34,28 @@ def configure(format=LOG_DEFAULT_FORMAT, level=lg.DEBUG):
     getLogger("urllib3").setLevel(lg.INFO)
     getLogger("msal").setLevel(lg.INFO)
     pd.set_option('display.max_colwidth', 255)
+
+
+# noinspection PyShadowingBuiltins
+def run_main(main_fn: Callable[[], Any], format=LOG_DEFAULT_FORMAT, level=lg.DEBUG):
+    """
+    Configures logging with the given parameters, ensuring that any exceptions that occur during
+    the execution of the given function are logged.
+    Logs two additional messages, one before the execution of the function, and one upon its completion.
+
+    :param main_fn: the function to be executed
+    :param format: the log message format
+    :param level: the minimum log level
+    :return: the result of `main_fn`
+    """
+    configure(format=format, level=level)
+    log.info("Starting")
+    try:
+        result = main_fn()
+        log.info("Done")
+        return result
+    except Exception as e:
+        log.error("Exception during script execution", exc_info=e)
 
 
 def datetime_tag() -> str:
