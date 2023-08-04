@@ -6,3 +6,5 @@ __pycache__
 /temp
 /.idea
 /results
+/temp*.py
+/mlruns
