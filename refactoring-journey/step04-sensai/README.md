@@ -58,15 +58,16 @@ what we want without wasting time on the procedural details.
 
 We have done away with the `print` statements, which were not sufficient to trace
 what was going on anyway. 
-`print` statements have no place in production code (and most other code), 
+`print` statements have no place in production code (and most other code, really), 
 because they cannot easily be controlled.
 When using a logging framework, we have full control over the degree of logging (i.e. we 
 can define which packages/modules are allowed to log at which levels) and can flexibly
-define where the logs end up.
+define where the logs end up (even in multiple places).
 
 sensAI will log every important step by default, so we won't actually have to write 
 many log statements ourselves.
 We opted to add but a single log statement to the `Dataset` class.
+We want to log all of the DataSet's parameter
 
 To enable logging, we could simply register a log handler via Python's `logging`
 package, but we have opted to use `sensai.util.logging` as an extended replacement 

@@ -1,9 +1,9 @@
 In this step, we make another critical step towards more flexibility.
 We shall strongly associate the data processing pipeline with the models in order
-to enable different models to use entirely different pipelines.
+to enable different models to use entirely different pipelines in future experiments.
 Importantly, different models might
-  * use a different set of features
-  * use different representations of these features.
+  * use a different set of features or
+  * use different representations of the same features.
 
 So far, all models use exactly the same features and use
 the same StandardScaler-induced representations of these features.
@@ -20,3 +20,6 @@ We have named the factory functions in a way that indicates that they are the or
 models (with suffix `_orig`), preparing for the future case where we will have
 several additional models.
 
+# Principles Addressed in this Step
+
+* Find the right abstractions

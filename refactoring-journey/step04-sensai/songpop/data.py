@@ -4,6 +4,7 @@ from typing import Optional
 import pandas as pd
 
 from sensai import InputOutputData
+from sensai.util.string import ToStringMixin
 from . import config
 
 
@@ -42,7 +43,7 @@ CLASS_POPULAR = "popular"
 CLASS_UNPOPULAR = "unpopular"
 
 
-class Dataset:
+class Dataset(ToStringMixin):
     def __init__(self, num_samples: Optional[int] = None, drop_zero_popularity: bool = False, threshold_popular: int = 50,
             random_seed: int = 42):
         """
@@ -63,7 +64,7 @@ class Dataset:
         :return: the full data frame for this dataset (including the class column)
         """
         csv_path = config.csv_data_path()
-        log.info(f"Loading data from {csv_path}")
+        log.info(f"Loading {self} from {csv_path}")
         df = pd.read_csv(csv_path)
         if self.num_samples is not None:
             df = df.sample(self.num_samples, random_state=self.random_seed)
