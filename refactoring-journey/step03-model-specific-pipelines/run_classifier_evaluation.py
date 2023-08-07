@@ -83,26 +83,28 @@ class ModelFactory:
         COL_DURATION_MS]
 
     @classmethod
-    def _create_pipeline_orig_model(cls, model) -> Pipeline:
+    def create_logistic_regression_orig(cls):
         return Pipeline([
             ("project_scale", ColumnTransformer([("scaler", StandardScaler(), cls.COLS_USED_BY_ORIGINAL_MODELS)])),
-            ("model", model)])
-
-    @classmethod
-    def create_logistic_regression_orig(cls):
-        return cls._create_pipeline_orig_model(linear_model.LogisticRegression(solver='lbfgs', max_iter=1000))
+            ("model", linear_model.LogisticRegression(solver='lbfgs', max_iter=1000))])
 
     @classmethod
     def create_knn_orig(cls):
-        return cls._create_pipeline_orig_model(KNeighborsClassifier(n_neighbors=1))
+        return Pipeline([
+            ("project_scale", ColumnTransformer([("scaler", StandardScaler(), cls.COLS_USED_BY_ORIGINAL_MODELS)])),
+            ("model", KNeighborsClassifier(n_neighbors=1))])
 
     @classmethod
     def create_random_forest_orig(cls):
-        return cls._create_pipeline_orig_model(RandomForestClassifier(n_estimators=100))
+        return Pipeline([
+            ("project_scale", ColumnTransformer([("scaler", StandardScaler(), cls.COLS_USED_BY_ORIGINAL_MODELS)])),
+            ("model", RandomForestClassifier(n_estimators=100))])
 
     @classmethod
     def create_decision_tree_orig(cls):
-        return cls._create_pipeline_orig_model(DecisionTreeClassifier(random_state=42, max_depth=2))
+        return Pipeline([
+            ("project_scale", ColumnTransformer([("scaler", StandardScaler(), cls.COLS_USED_BY_ORIGINAL_MODELS)])),
+            ("model", DecisionTreeClassifier(random_state=42, max_depth=2))])
 
 
 if __name__ == '__main__':
