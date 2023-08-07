@@ -1,3 +1,4 @@
+import re
 from typing import Dict, Any
 
 import mlflow
@@ -15,8 +16,14 @@ class MLFlowTrackingContext(TrackingContext):
             run = mlflow.start_run(run_name=name, description=description)
         self.run = run
 
+    @staticmethod
+    def _metric_name(name: str):
+        result = re.sub(r"\[(.*?)\]", r"/\1", name)  # replace "foo[bar]" with "foo/bar
+        result = re.sub(r"[^a-zA-Z0-9-_. /]+", "_", result)  # replace sequences of unsupported chars with underscore
+        return result
+
     def _track_metrics(self, metrics: Dict[str, float]):
-        mlflow.log_metrics(metrics)
+        mlflow.log_metrics({self._metric_name(name): value for name, value in metrics.items()})
 
     def track_figure(self, name: str, fig: plt.Figure):
         mlflow.log_figure(fig, name + ".png")
