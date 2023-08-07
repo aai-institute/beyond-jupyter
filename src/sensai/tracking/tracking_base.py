@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, Generic, TypeVar
+from typing import Dict, Any, Optional, Generic, TypeVar, List
 
 from matplotlib import pyplot as plt
 
@@ -70,11 +70,13 @@ class TrackingContext(ABC):
         pass
 
     def end(self):
-        self._end()
+        # first end the context in the experiment (which may add final stuff)
         if self._isRunning:
             if self._experiment is not None:
                 self._experiment.end_context(self)
             self._isRunning = False
+        # then end the context for good
+        self._end()
 
 
 class DummyTrackingContext(TrackingContext):
@@ -110,7 +112,7 @@ class TrackedExperiment(Generic[TContext], ABC):
         # TODO additional_logging_values_dict probably needs to be removed
         self.instancePrefix = context_prefix
         self.additionalLoggingValuesDict = additional_logging_values_dict
-        self._contexts = []
+        self._contexts: List[TContext] = []
 
     @deprecated("Use a tracking context instead")
     def track_values(self, values_dict: Dict[str, Any], add_values_dict: Dict[str, Any] = None):
@@ -158,6 +160,11 @@ class TrackedExperiment(Generic[TContext], ABC):
         if instance != running_instance:
             raise ValueError(f"Passed instance ({instance}) is not the currently running instance ({running_instance})")
         self._contexts.pop()
+
+    def __del__(self):
+        # make sure all contexts that are still running are eventually closed
+        for c in reversed(self._contexts):
+            c.end()
 
 
 class TrackingMixin(ABC):

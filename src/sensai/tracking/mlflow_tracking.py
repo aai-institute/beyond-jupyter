@@ -5,6 +5,7 @@ import mlflow
 from matplotlib import pyplot as plt
 
 from .tracking_base import TrackedExperiment, TrackingContext
+from ..util import logging
 
 
 class MLFlowTrackingContext(TrackingContext):
@@ -37,7 +38,7 @@ class MLFlowTrackingContext(TrackingContext):
 
 class MLFlowExperiment(TrackedExperiment[MLFlowTrackingContext]):
     def __init__(self, experiment_name: str, tracking_uri: str, additional_logging_values_dict=None,
-            context_prefix: str = ""):
+            context_prefix: str = "", add_log_to_all_contexts=False):
         """
         :param experiment_name: the name of the experiment, which should be the same for all models of the same kind (i.e. all models evaluated
             under the same conditions)
@@ -45,11 +46,16 @@ class MLFlowExperiment(TrackedExperiment[MLFlowTrackingContext]):
         :param additional_logging_values_dict:
         :param context_prefix: a prefix to add to all contexts that are created within the experiment. This can be used to add
             an identifier of a certain execution/run, such that the actual context name passed to `begin_context` can be concise (e.g. just model name).
+        :param add_log_to_all_contexts: whether to enable in-memory logging and add the resulting log file to all tracking contexts that
+            are generated for this experiment upon context exit (or process termination if it is not cleanly closed)
         """
         mlflow.set_tracking_uri(tracking_uri)
         mlflow.set_experiment(experiment_name=experiment_name)
         super().__init__(context_prefix=context_prefix, additional_logging_values_dict=additional_logging_values_dict)
         self._run_name_to_id = {}
+        self.add_log_to_all_contexts = add_log_to_all_contexts
+        if self.add_log_to_all_contexts:
+            logging.add_memory_logger()
 
     def _track_values(self, values_dict: Dict[str, Any]):
         with mlflow.start_run():
@@ -57,6 +63,13 @@ class MLFlowExperiment(TrackedExperiment[MLFlowTrackingContext]):
 
     def _create_tracking_context(self, name: str, description: str) -> MLFlowTrackingContext:
         run_id = self._run_name_to_id.get(name)
+        print(f"create {name}")
         context = MLFlowTrackingContext(name, self, run_id=run_id, description=description)
         self._run_name_to_id[name] = context.run.info.run_id
         return context
+
+    def end_context(self, instance: MLFlowTrackingContext):
+        print(f"end {instance}")
+        if self.add_log_to_all_contexts:
+            instance.track_text("log", logging.get_memory_log())
+        super().end_context(instance)
