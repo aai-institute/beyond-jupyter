@@ -40,6 +40,7 @@ class FeatureGeneratorRegistry:
     def register_factory(self, name: Hashable, factory: Callable[[], FeatureGenerator]):
         """
         Registers a feature generator factory which can subsequently be referenced by models via their name/hashable key
+
         :param name: the name/key (which can, in particular, be a string or an Enum item). Especially for larger projects
             the use of an Enum is recommended (for optimal IDE support)
         :param factory: the factory

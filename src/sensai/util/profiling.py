@@ -11,6 +11,7 @@ def profiled(func: Optional[Callable] = None, *, sampling_interval_seconds: Opti
         print_to_console=True, log_to_file=False, file_name: Optional[str] = None):
     """
     Function decorator for profiling the annotated/given function with the pyinstrument profiler
+
     :param func: the function to be profiled
     :param sampling_interval_seconds: sampling every <sampling_interval_seconds> seconds, if None use default parameter of pyinstrument
         profiler

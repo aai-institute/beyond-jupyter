@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 class ClearMLTrackingContext(TrackingContext):
-    def __init__(self, name, experiment, task):
+    def __init__(self, name, experiment, task: Task):
         super().__init__(name, experiment)
         self.task = task
 
@@ -20,7 +20,11 @@ class ClearMLTrackingContext(TrackingContext):
         self.task.connect(metrics)
 
     def track_figure(self, name: str, fig: plt.Figure):
-        fig.show()
+        fig.show()  # any shown figure is automatically tracked
+
+    def track_text(self, name: str, content: str):
+        # TODO upload_artifact might be more appropriate, but it seems to require saving to a file first. What's the best way to do this?
+        self.task.get_logger().report_text(content, print_console=False)
 
     def _end(self):
         pass

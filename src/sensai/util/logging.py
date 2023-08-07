@@ -3,14 +3,16 @@ import logging as lg
 import sys
 import time
 from datetime import datetime
+from io import StringIO
 from logging import *
-from typing import List, Callable, Any
+from typing import List, Callable, Any, Optional
 
 import pandas as pd
 
 log = getLogger(__name__)
 
 LOG_DEFAULT_FORMAT = '%(levelname)-5s %(asctime)-15s %(name)s:%(funcName)s - %(message)s'
+_logFormat = LOG_DEFAULT_FORMAT
 
 
 def remove_log_handlers():
@@ -28,6 +30,15 @@ def is_log_handler_active(handler):
 
 # noinspection PyShadowingBuiltins
 def configure(format=LOG_DEFAULT_FORMAT, level=lg.DEBUG):
+    """
+    Configures logging to stdout with the given format and log level,
+    also configuring the default log levels of some overly verbose libraries as well as some pandas output options.
+
+    :param format: the log format
+    :param level: the minimum log level
+    """
+    global _logFormat
+    _logFormat = format
     remove_log_handlers()
     basicConfig(level=level, format=format, stream=sys.stdout)
     getLogger("matplotlib").setLevel(lg.INFO)
@@ -67,6 +78,7 @@ def datetime_tag() -> str:
 
 _fileLoggerPaths: List[str] = []
 _isAtExitReportFileLoggerRegistered = False
+_memoryLogStream: Optional[StringIO] = None
 
 
 def _at_exit_report_file_logger():
@@ -78,12 +90,29 @@ def add_file_logger(path):
     global _isAtExitReportFileLoggerRegistered
     log.info(f"Logging to {path} ...")
     handler = FileHandler(path)
-    handler.setFormatter(Formatter(LOG_DEFAULT_FORMAT))
+    handler.setFormatter(Formatter(_logFormat))
     Logger.root.addHandler(handler)
     _fileLoggerPaths.append(path)
     if not _isAtExitReportFileLoggerRegistered:
         atexit.register(_at_exit_report_file_logger)
         _isAtExitReportFileLoggerRegistered = True
+
+
+def add_memory_logger() -> None:
+    """
+    Enables in-memory logging, i.e. all log statements are written to a memory buffer and can later be read via function `get_memory_log()`
+    """
+    global _memoryLogStream
+    if _memoryLogStream is not None:
+        return
+    _memoryLogStream = StringIO()
+    handler = StreamHandler(_memoryLogStream)
+    handler.setFormatter(Formatter(_logFormat))
+    Logger.root.addHandler(handler)
+
+
+def get_memory_log():
+    return _memoryLogStream.getvalue()
 
 
 class StopWatch:

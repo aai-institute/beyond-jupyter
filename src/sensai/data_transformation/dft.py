@@ -816,7 +816,7 @@ class DFTRoundFloats(RuleBasedDataFrameTransformer):
 
 class DFTSkLearnTransformer(InvertibleDataFrameTransformer):
     """
-    Applies a transformer from sklearn.preprocessing to (a subset of the columns of) a data frame.
+    Applies a transformer from sklearn.preprocessing to (a subset of) the columns of a data frame.
     If multiple columns are transformed, they are transformed independently (i.e. each column uses a separately trained transformation).
     """
     def __init__(self,

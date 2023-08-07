@@ -352,7 +352,7 @@ class SlicedPicklePersistentList(PersistentList):
         # glob.glob permits the usage of unix-style pathnames matching. (below we find all ..._slice*.pickle files)
         list_of_file_names = glob.glob(self._pickle_path("*"))
         # Sort the slices to ensure it is in the same order as they was produced (regex replaces everything not a number with empty string).
-        list_of_file_names.sort(key=lambda f: int(re.sub('\D', '', f)))
+        list_of_file_names.sort(key=lambda f: int(re.sub(r'\D', '', f)))
         return list_of_file_names
 
     def _load_pickle(self, pickle_path: str) -> List[Any]:

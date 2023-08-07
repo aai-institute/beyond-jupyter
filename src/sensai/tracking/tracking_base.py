@@ -33,12 +33,29 @@ class TrackingContext(ABC):
         pass
 
     def track_metrics(self, metrics: Dict[str, float], predicted_var_name: Optional[str] = None):
+        """
+        :param metrics: the metrics to be logged
+        :param predicted_var_name: the name of the predicted variable for the case where there is more than one. If it is provided,
+            the variable name will be prepended to every metric name.
+        """
         if predicted_var_name is not None:
             metrics = {f"{predicted_var_name}_{k}": v for k, v in metrics.items()}
         self._track_metrics(metrics)
 
     @abstractmethod
     def track_figure(self, name: str, fig: plt.Figure):
+        """
+        :param name: the name of the figure (not a filename, should not include file extension)
+        :param fig: the figure
+        """
+        pass
+
+    @abstractmethod
+    def track_text(self, name: str, content: str):
+        """
+        :param name: the name of the text (not a filename, should not include file extension)
+        :param content: the content (arbitrarily long text, e.g. a log)
+        """
         pass
 
     def __enter__(self):
@@ -61,6 +78,10 @@ class TrackingContext(ABC):
 
 
 class DummyTrackingContext(TrackingContext):
+    """
+    A dummy tracking context which performs no actual tracking.
+    It is useful to avoid having to write conditional tracking code for the case where there isn't a tracked experiment.
+    """
     def __init__(self, name):
         super().__init__(name, None)
 
@@ -68,6 +89,9 @@ class DummyTrackingContext(TrackingContext):
         pass
 
     def track_figure(self, name: str, fig: plt.Figure):
+        pass
+
+    def track_text(self, name: str, content: str):
         pass
 
     def _end(self):
@@ -106,11 +130,27 @@ class TrackedExperiment(Generic[TContext], ABC):
         pass
 
     def begin_context(self, name: str, description: str = "") -> TContext:
+        """
+        Begins a context in which actual information will be tracked.
+        The returned object is a context manager, which can be used in a with-statement.
+
+        :param name: the name of the context (e.g. model name)
+        :param description: a description (e.g. full model parameters/specification)
+        :return: the context, which can subsequently be used to track information
+        """
         instance = self._create_tracking_context(self.instancePrefix + name, description)
         self._contexts.append(instance)
         return instance
 
     def begin_context_for_model(self, model: VectorModelBase):
+        """
+        Begins a tracking context for the case where we want to track information about a model (wrapper around `begin_context` for convenience).
+        The model name is used as the context name, and the model's string representation is used as the description.
+        The returned object is a context manager, which can be used in a with-statement.
+
+        :param model: the model
+        :return: the context, which can subsequently be used to track information
+        """
         return self.begin_context(model.get_name(), str(model))
 
     def end_context(self, instance: TContext):

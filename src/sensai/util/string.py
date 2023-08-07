@@ -160,14 +160,14 @@ class ToStringMixin:
     the class hierarchy.
 
     .. document private functions
-    .. automethod:: _toStringClassName
-    .. automethod:: _toStringObjectInfo
-    .. automethod:: _toStringExcludes
-    .. automethod:: _toStringExcludeExceptions
-    .. automethod:: _toStringIncludes
-    .. automethod:: _toStringIncludesForced
-    .. automethod:: _toStringAdditionalEntries
-    .. automethod:: _toStringExcludePrivate
+    .. automethod:: _tostring_class_name
+    .. automethod:: _tostring_object_info
+    .. automethod:: _tostring_excludes
+    .. automethod:: _tostring_exclude_exceptions
+    .. automethod:: _tostring_includes
+    .. automethod:: _tostring_includes_forced
+    .. automethod:: _tostring_additional_entries
+    .. automethod:: _tostring_exclude_private
     """
     _TOSTRING_INCLUDE_ALL = "__all__"
 
