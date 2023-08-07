@@ -100,7 +100,8 @@ def add_file_logger(path):
 
 def add_memory_logger() -> None:
     """
-    Enables in-memory logging, i.e. all log statements are written to a memory buffer and can later be read via function `get_memory_log()`
+    Enables in-memory logging (if it is not already enabled), i.e. all log statements are written to a memory buffer and can later be
+    read via function `get_memory_log()`
     """
     global _memoryLogStream
     if _memoryLogStream is not None:
