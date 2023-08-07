@@ -1,3 +1,5 @@
+# Step 3: Model-Specific Pipelines
+
 In this step, we make another critical step towards more flexibility.
 We shall strongly associate the data processing pipeline with the models in order
 to enable different models to use entirely different pipelines in future experiments.
@@ -8,7 +10,7 @@ Importantly, different models might
 So far, all models use exactly the same features and use
 the same StandardScaler-induced representations of these features.
 Clearly, this is a compromise, as some of the models could, potentially,
-make good use of categorical features such as genre of the song; 
+make good use of categorical features such as the genre of the song; 
 and we have already pointed out that the use of StandardScaler is not 
 necessarily optimal for all the features it is currently being applied to.
 By making the input pipeline a part of the model, we gain the flexibility of
@@ -20,6 +22,6 @@ We have named the factory functions in a way that indicates that they are the or
 models (with suffix `_orig`), preparing for the future case where we will have
 several additional models.
 
-# Principles Addressed in this Step
+## Principles Addressed in this Step
 
 * Find the right abstractions

@@ -16,10 +16,11 @@ the two central modelling aspects of defining:
 
   * **What is the data used by the model?**
     
-    The relevant abstraction is `FeatureGenerator`. A `FeatureGenerator` defines
-    which features are being used by a model and can furthermore hold meta-data
-    on these features which can be leveraged later on.
-    The class names of all feature generator implementations use the prefix
+    The relevant abstraction is `FeatureGenerator`. 
+    Via `FeatureGenerator` instances, a model can define which set of features is to be used. 
+    Moreover, these instances can hold meta-data on the respective features,
+    which can be leveraged later on (in the next step).
+    In sensAI, the class names of all feature generator implementations use the prefix
     `FeatureGenerator`, such that they can conveniently be found via your IDE's 
     auto-completion function.
 
@@ -30,11 +31,11 @@ the two central modelling aspects of defining:
     requiring categorical features to be encoded, while others might work better
     with the original representation.   
     Furthermore, some models might work better with numerical features normalised or 
-    at least scaled.
+    scaled in a certain way while it makes no difference to others.  
     We can address these requirements by adding model-specific transformations.
  
     The relevant abstraction is `DataFrameTransformer`, and all non-abstract 
-    implementations use the class name prefix `DFT`.
+    implementations use the class name prefix `DFT` in sensAI.
 
 The models we have thus far all use the same basic feature generator 
 (`FeatureGeneratorTakeColumns`), which simply projects the data frame,
@@ -59,16 +60,16 @@ what we want without wasting time on the procedural details.
 We have done away with the `print` statements, which were not sufficient to trace
 what was going on anyway. 
 `print` statements have no place in production code (and most other code, really), 
-because they cannot easily be controlled.
-When using a logging framework, we have full control over the degree of logging (i.e. we 
-can define which packages/modules are allowed to log at which levels) and can flexibly
+because they are rather inflexible.
+By contrast, when using a logging framework, we have full control over the degree of logging (i.e. we 
+can define which packages/modules are allowed to log at which levels) and we can flexibly
 define where the logs end up (even in multiple places).
 
 sensAI will log every important step by default, so we won't actually have to write 
 many log statements ourselves.
-We opted to add but a single log statement to the `Dataset` class.
-We want to log all the relevant parameters, and we have used sensAI's `ToStringMixin`
-to facilitate this.
+We opted to add but a single log statement to the `Dataset` class:
+We want to log all the relevant parameters that determine the data, and we have 
+used sensAI's `ToStringMixin` to facilitate this.
 
 To enable logging, we could simply register a log handler via Python's `logging`
 package, but we have opted to use `sensai.util.logging` as an extended replacement 
@@ -80,6 +81,8 @@ during the execution of our `main` function will be logged.
 
 sensAI's wrappers around scikit-learn classes will use a fixed random seed by default
 to ensure reproducible results.
+(Notice that in the original notebook implementation, the random forest model did not 
+use a fixed random seed.)
 
 # Principles Addressed in this Step
 

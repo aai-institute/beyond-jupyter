@@ -1,3 +1,5 @@
+# Step 2: Dataset Representation
+
 In this step, we introduce a representation for the data set:
  * **We explicitly represent the parameters that determine the data** in the attributes  
    of a newly introduced class `Dataset`, making
@@ -22,7 +24,7 @@ In this step, we introduce a representation for the data set:
  * **We shall prefer to keep the data
    untouched and make models decide what to do with it**. 
    We don't need to drop or modify any data columns from the get-go. Models can just 
-   choose to use only a subset of the data. Different models shall be
+   choose to use only a subset of the data. Different models shall
    be able to do different things entirely.
  * **We avoid the use of constant literals in our code and use named constants instead.**
      * Referring to data columns via string literals is prone to errors; typos happen.

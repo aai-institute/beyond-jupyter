@@ -20,7 +20,7 @@ def main():
         ModelFactory.create_random_forest(),
         ModelFactory.create_decision_tree_orig(),
         ModelFactory.create_xgb(),
-        ModelFactory.create_xgb("-meanPopFreq", [FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+        ModelFactory.create_xgb("-meanArtistFreqPopular", [FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
     ]
 
     # evaluate models

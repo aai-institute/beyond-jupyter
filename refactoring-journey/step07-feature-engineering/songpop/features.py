@@ -1,10 +1,11 @@
 from enum import Enum
 
 import numpy as np
+
 from sensai import VectorRegressionModel
-from .data import *
 from sensai.data_transformation import DFTNormalisation, SkLearnTransformerFactoryFactory
 from sensai.featuregen import FeatureGeneratorRegistry, FeatureGeneratorTakeColumns, FeatureGenerator
+from .data import *
 
 
 class FeatureName(Enum):
@@ -25,7 +26,7 @@ class FeatureGeneratorMeanArtistPopularity(FeatureGenerator):
 
     def _fit(self, x: pd.DataFrame, y: pd.DataFrame = None, ctx=None):
         df: pd.DataFrame = pd.concat([x, y], axis=1)[[COL_ARTIST_NAME, self.col_target]]
-        df[self.col_target] = df[self.col_target].apply(lambda x: 1 if x == CLASS_POPULAR else 0)
+        df[self.col_target] = df[self.col_target].apply(lambda cls: 1 if cls == CLASS_POPULAR else 0)
         gb = df.groupby(COL_ARTIST_NAME)
         s = gb.sum()[self.col_target]
         s.name = "sum"
