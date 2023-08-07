@@ -67,7 +67,8 @@ define where the logs end up (even in multiple places).
 sensAI will log every important step by default, so we won't actually have to write 
 many log statements ourselves.
 We opted to add but a single log statement to the `Dataset` class.
-We want to log all of the DataSet's parameter
+We want to log all the relevant parameters, and we have used sensAI's `ToStringMixin`
+to facilitate this.
 
 To enable logging, we could simply register a log handler via Python's `logging`
 package, but we have opted to use `sensai.util.logging` as an extended replacement 
