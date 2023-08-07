@@ -290,6 +290,9 @@ class AbstractSkLearnVectorClassificationModel(VectorClassificationModel, ABC):
         output_values = np.ravel(outputs.values)
         if self.useLabelEncoding:
             output_values = self._encode_labels(output_values)
+        self._fit_sklearn_classifier(inputs, output_values, kwargs)
+
+    def _fit_sklearn_classifier(self, inputs: pd.DataFrame, output_values: np.ndarray, kwargs: Dict[str, Any]):
         self.model.fit(inputs, output_values, **kwargs)
 
     def _transform_input(self, inputs: pd.DataFrame, fit=False) -> pd.DataFrame:
@@ -305,9 +308,12 @@ class AbstractSkLearnVectorClassificationModel(VectorClassificationModel, ABC):
         vfn = np.vectorize(lambda x: d[x])
         return vfn(y)
 
+    def _predict_sklearn(self, input_values):
+        return self.model.predict(input_values)
+
     def _predict(self, x: pd.DataFrame):
         input_values = self._transform_input(x)
-        y = self.model.predict(input_values)
+        y = self._predict_sklearn(input_values)
         if self.useLabelEncoding:
             y = self._decode_labels(y)
         return pd.DataFrame(y, columns=self._predictedVariableNames)

@@ -1,6 +1,7 @@
 import logging
 from typing import Union, Optional
 
+import numpy as np
 import sklearn.ensemble
 import sklearn.naive_bayes
 import sklearn.neural_network
@@ -68,3 +69,10 @@ class SkLearnLogisticRegressionVectorClassificationModel(AbstractSkLearnVectorCl
 class SkLearnKNeighborsVectorClassificationModel(AbstractSkLearnVectorClassificationModel):
     def __init__(self, **model_args):
         super().__init__(sklearn.neighbors.KNeighborsClassifier, **model_args)
+
+    def _predict_sklearn(self, input_values):
+        # Apply a transformation to fix a bug in sklearn 1.3.0 (and perhaps earlier versions):
+        # https://github.com/scikit-learn/scikit-learn/issues/26768
+        inputs = np.ascontiguousarray(input_values)
+
+        return super()._predict_sklearn(inputs)
