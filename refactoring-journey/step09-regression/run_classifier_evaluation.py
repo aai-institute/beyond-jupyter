@@ -7,7 +7,7 @@ from songpop.features import FeatureName
 from sensai.evaluation import ClassificationEvaluationUtil, VectorClassificationModelEvaluatorParams
 from sensai.util import logging
 from songpop.data import Dataset
-from songpop.model_factory import ModelFactory
+from songpop.model_factory import ClassificationModelFactory
 
 
 def main():
@@ -26,16 +26,18 @@ def main():
 
     # define models to be evaluated
     models = [
-        ModelFactory.create_logistic_regression_orig(),
-        ModelFactory.create_logistic_regression(),
-        ModelFactory.create_knn_orig(),
-        ModelFactory.create_knn(),
-        ModelFactory.create_random_forest_orig(),
-        ModelFactory.create_random_forest(),
-        ModelFactory.create_decision_tree_orig(),
-        ModelFactory.create_xgb(),
-        ModelFactory.create_xgb("-meanArtistFreqPopular", [FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+        ClassificationModelFactory.create_logistic_regression_orig(),
+        ClassificationModelFactory.create_logistic_regression(),
+        ClassificationModelFactory.create_knn_orig(),
+        ClassificationModelFactory.create_knn(),
+        ClassificationModelFactory.create_random_forest_orig(),
+        ClassificationModelFactory.create_random_forest(),
+        ClassificationModelFactory.create_decision_tree_orig(),
+        ClassificationModelFactory.create_xgb(),
+        ClassificationModelFactory.create_xgb("-meanArtistFreqPopular", [FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+        ClassificationModelFactory.create_classifier_from_regressor(dataset)
     ]
+    models = [m for m in models if m is not None]
 
     # evaluate models
     evaluator_params = VectorClassificationModelEvaluatorParams(fractional_split_test_fraction=0.3,
