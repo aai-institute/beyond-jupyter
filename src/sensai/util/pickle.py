@@ -11,7 +11,10 @@ from .io import is_s3_path, S3Object
 log = logging.getLogger(__name__)
 
 
-def load_pickle(path, backend="pickle"):
+def load_pickle(path: Union[str, Path], backend="pickle"):
+    if isinstance(path, Path):
+        path = str(path)
+
     def read_file(f):
         if backend == "pickle":
             try:
