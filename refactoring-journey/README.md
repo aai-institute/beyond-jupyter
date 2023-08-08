@@ -24,21 +24,25 @@ This package is organised as follows:
 
 These are the steps of the journey:
 
-1. [Monolithic Notebook](step00-monolithic-notebook/README.md)
+0. [Monolithic Notebook](step00-monolithic-notebook/README.md)
    
-   This is the initial state, in which   
+   This is the starting point, a Jupyter notebook which is largely unstructured.  
    
-2. [Python Script](step01-python-script/README.md)
+1. [Python Script](step01-python-script/README.md)
 
    This step extracts the code that is strictly concerned with the training and evaluation of models.
 
-3. [Dataset Representation](step03-dataset-representation/README.md)
+2. [Dataset Representation](step02-dataset-representation/README.md)
 
    This step introduces an explicit representation for the dataset, making transformations explicit as well as optional.
 
-4. [Model-Specific Pipelines](step04-model-specific-pipelines/README.md)
+3. [Model-Specific Pipelines](step03-model-specific-pipelines/README.md)
 
    This step refactors the pipeline to move all transforming operations into the models, enabling different models to use entirely different pipelines.
+
+4. [Refactoring](step04-refactoring/README.md)
+
+   This step improves the code structure by adding function-specific Python modules.
 
 5. [sensAI](step05-sensai/README.md)
 
