@@ -9,7 +9,8 @@ import sqlite3
 import threading
 import time
 from abc import abstractmethod, ABC
-from typing import Any, Callable, Iterator, List, Optional, TypeVar, Generic
+from pathlib import Path
+from typing import Any, Callable, Iterator, List, Optional, TypeVar, Generic, Union
 
 from .hash import pickle_hash
 from .pickle import load_pickle, dump_pickle, setstate
@@ -723,7 +724,7 @@ class LoadSaveInterface(ABC):
 
 
 class PickleLoadSaveMixin(LoadSaveInterface):
-    def save(self, path: str, backend="pickle"):
+    def save(self, path: Union[str, Path], backend="pickle"):
         """
         Saves the instance as pickle
 
@@ -733,7 +734,7 @@ class PickleLoadSaveMixin(LoadSaveInterface):
         dump_pickle(self, path, backend=backend)
 
     @classmethod
-    def load(cls, path, backend="pickle"):
+    def load(cls, path: Union[str, Path], backend="pickle"):
         """
         Loads a class instance from pickle
 
