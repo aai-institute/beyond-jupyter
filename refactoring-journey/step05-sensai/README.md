@@ -46,7 +46,7 @@ But we will soon switch things up.
 Notice that the model definitions are concise definitions of what we want, getting
 us closer to declarative semantics in our code.
 
-We have named all models to facilitate reporting.
+We have named all models to support the reporting of model-specific results.
 
 ## Model Evaluation
 
