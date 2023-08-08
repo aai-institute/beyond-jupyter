@@ -73,7 +73,7 @@ class Dataset(ToStringMixin):
         """
         csv_path = config.csv_data_path()
         log.info(f"Loading {self} from {csv_path}")
-        df = pd.read_csv(csv_path)
+        df = pd.read_csv(csv_path).dropna()
         if self.num_samples is not None:
             df = df.sample(self.num_samples, random_state=self.random_seed)
         determine_class = lambda x: self.class_positive if x >= self.threshold_popular else self.class_negative

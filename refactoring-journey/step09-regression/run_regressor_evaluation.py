@@ -32,9 +32,9 @@ def main():
 
     # define models to be evaluated
     models = [
-        RegressionModelFactory.create_linear(),
-        RegressionModelFactory.create_rf(),
-        RegressionModelFactory.create_xgb(),
+        #RegressionModelFactory.create_linear(),
+        #RegressionModelFactory.create_rf(),
+        #RegressionModelFactory.create_xgb(),
         RegressionModelFactory.create_xgb("-meanPop", add_features=[FeatureName.MEAN_ARTIST_POPULARITY]),
     ]
 

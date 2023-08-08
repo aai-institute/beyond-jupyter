@@ -80,7 +80,7 @@ class Dataset(ToStringMixin):
         """
         csv_path = config.csv_data_path()
         log.info(f"Loading {self} from {csv_path}")
-        df = pd.read_csv(csv_path)
+        df = pd.read_csv(csv_path).dropna()
         if self.num_samples is not None:
             df = df.sample(self.num_samples, random_state=self.random_seed)
         if self.is_classification:

@@ -110,7 +110,7 @@ class ClassificationModelFactory:
             .with_name(f"XGBoost{name_suffix}")
 
     @classmethod
-    def create_classifier_from_regressor(cls, dataset):
+    def create_classifier_from_best_regressor(cls, dataset):
         path = best_regression_model_storage_path(dataset)
         if not path.exists():
             return None

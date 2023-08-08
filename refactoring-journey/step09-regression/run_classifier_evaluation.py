@@ -11,7 +11,7 @@ from songpop.model_factory import ClassificationModelFactory
 
 
 def main():
-    dataset = Dataset(10000)
+    dataset = Dataset()
 
     # set up (dual) tracking
     experiment_name = f"popularity-classification_{dataset.tag()}"
@@ -30,12 +30,12 @@ def main():
         ClassificationModelFactory.create_logistic_regression(),
         ClassificationModelFactory.create_knn_orig(),
         ClassificationModelFactory.create_knn(),
-        ClassificationModelFactory.create_random_forest_orig(),
-        ClassificationModelFactory.create_random_forest(),
+        #ClassificationModelFactory.create_random_forest_orig(),
+        #ClassificationModelFactory.create_random_forest(),
         ClassificationModelFactory.create_decision_tree_orig(),
         ClassificationModelFactory.create_xgb(),
         ClassificationModelFactory.create_xgb("-meanArtistFreqPopular", [FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
-        ClassificationModelFactory.create_classifier_from_regressor(dataset)
+        ClassificationModelFactory.create_classifier_from_best_regressor(dataset)
     ]
     models = [m for m in models if m is not None]
 
