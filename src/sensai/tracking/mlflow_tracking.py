@@ -5,6 +5,7 @@ import mlflow
 from matplotlib import pyplot as plt
 
 from .tracking_base import TrackedExperiment, TrackingContext
+from .. import VectorModelBase
 from ..util import logging
 
 
@@ -31,6 +32,9 @@ class MLFlowTrackingContext(TrackingContext):
 
     def track_text(self, name: str, content: str):
         mlflow.log_text(content, name + ".txt")
+
+    def track_tag(self, tag_name: str, tag_value: str):
+        mlflow.set_tag(tag_name, tag_value)
 
     def _end(self):
         mlflow.end_run()
@@ -66,6 +70,11 @@ class MLFlowExperiment(TrackedExperiment[MLFlowTrackingContext]):
         print(f"create {name}")
         context = MLFlowTrackingContext(name, self, run_id=run_id, description=description)
         self._run_name_to_id[name] = context.run.info.run_id
+        return context
+
+    def begin_context_for_model(self, model: VectorModelBase):
+        context = super().begin_context_for_model(model)
+        context.track_tag("model_class", model.__class__.__name__)
         return context
 
     def end_context(self, instance: MLFlowTrackingContext):

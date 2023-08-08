@@ -31,7 +31,7 @@ TVectorModel = typing.TypeVar("TVectorModel", bound="VectorModel")
 TVectorRegressionModel = typing.TypeVar("TVectorRegressionModel", bound="VectorRegressionModel")
 
 
-class VectorModelBase(ABC):
+class VectorModelBase(ABC, ToStringMixin):
     """
     Base class for vector models, which defines the fundamental prediction interface.
     A vector model takes data frames as input, where each row represents a vector of information.
@@ -93,7 +93,7 @@ class TrainingContext:
         self.original_output = original_output
 
 
-class VectorModel(VectorModelFittableBase, PickleLoadSaveMixin, ToStringMixin, ABC):
+class VectorModel(VectorModelFittableBase, PickleLoadSaveMixin, ABC):
     """
     Represents a model which uses data frames as inputs and outputs whose rows define individual data points.
     Every data frame row represents a vector of information (one-dimensional array), hence the name of the model.

@@ -153,7 +153,7 @@ class TrackedExperiment(Generic[TContext], ABC):
         :param model: the model
         :return: the context, which can subsequently be used to track information
         """
-        return self.begin_context(model.get_name(), str(model))
+        return self.begin_context(model.get_name(), model.pprints())
 
     def end_context(self, instance: TContext):
         running_instance = self._contexts[-1]
