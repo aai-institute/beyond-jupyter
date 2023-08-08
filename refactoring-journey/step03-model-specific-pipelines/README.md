@@ -16,11 +16,20 @@ necessarily optimal for all the features it is currently being applied to.
 By making the input pipeline a part of the model, we gain the flexibility of
 trying out new models that don't stick to the current limitations down the line.
 
-We introduce a model factory that is able to create instances of the four different models
+Importantly, by moving the pipeline components to the models, we have fixed a
+subtle issue in the original code: The data scaler is learnt on the full data
+set, which, strictly speaking, constitutes a data leak.
+This may not be much of a problem in this case, as the training data is likely to be
+sufficiently representative for the learning result to be virtually identical,
+but it is advisable to completely exclude the training set from any training
+processes in order for results to be meaningful in general.
+
+Technically, we introduce a model factory that is able to create instances of the four different models
 we currently consider. 
-We have named the factory functions in a way that indicates that they are the original
+We have named the factory functions in a way that indicates that pertain to the original
 models (with suffix `_orig`), preparing for the future case where we will have
 several additional models.
+
 
 ## Principles Addressed in this Step
 
