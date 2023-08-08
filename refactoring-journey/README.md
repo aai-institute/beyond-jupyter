@@ -23,12 +23,12 @@ For your exploring of the journey, you can create a conda environment from [envi
 contains all needed dependencies.
 
 ## Data Loading
-You can use the script [load_data.py](load_data.py) to automatically load the raw data csv-file to the subfolder
+You can use the script [load_data.py](../scripts/load_data.py) to automatically load the raw data csv-file to the subfolder
 'data' on the top-level of the repository. Be aware, that you have to generate a Kaggle API key for this, see the following 
 [instructions](https://www.kaggle.com/docs/api).
 
 If you want to download the [dataset](https://www.kaggle.com/datasets/notshrirang/spotify-million-song-dataset) manually,
-place the csv-file as `spotify_data.csv` in the subfolder 'data'.
+place the CSV file `spotify_data.csv` in the `data` folder (in the root of this repository).
 
 ![data_folder](data_folder.png)
 

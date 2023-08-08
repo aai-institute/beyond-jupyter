@@ -26,7 +26,7 @@ Note that the feature generators we registered treat some of the features differ
     we now treat them as categorical. Especially for the musical key of a song,
     this is much more sensible.
   * The original implementation dropped the feature `genre` completely, because it had no
-    numeric representation. We include it as another categorical feature.
+    numerical representation. We include it as another categorical feature.
 
 The reason for using `Enum` items rather than, for example, strings as keys in the registry is to enable
 auto-completions as well as fail-safe refactoring in our IDE.
