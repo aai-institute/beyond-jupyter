@@ -4,6 +4,7 @@ Kaggle (https://www.kaggle.com/datasets/notshrirang/spotify-million-song-dataset
 and unzips it to the subfolder 'data' on the top level.
 The script leverages the Kaggle SDK for authenticating with the Kaggle API and downloading the dataset.
 Make sure that the 'kaggle.json' file with the Kaggle API credentials is properly set up in the system.
+You can follow the instructions at https://www.kaggle.com/docs/api.
 
 The main function `load_via_kaggle` performs the authentication and download steps.
 
