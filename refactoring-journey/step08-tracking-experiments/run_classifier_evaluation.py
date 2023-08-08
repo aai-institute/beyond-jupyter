@@ -11,15 +11,16 @@ from songpop.model_factory import ModelFactory
 
 
 def main():
+    dataset = Dataset(10000)
+
     # set up tracking
-    experiment_name = "popularity-classification"
+    experiment_name = f"popularity-classification_{dataset.tag()}"
     run_id = datetime_tag()
     tracked_experiment = MLFlowExperiment(experiment_name, tracking_uri="", context_prefix=run_id + "_",
         add_log_to_all_contexts=True)
     result_writer = ResultWriter(os.path.join("results", experiment_name, run_id))
 
-    # define & load dataset
-    dataset = Dataset(10000)
+    # load dataset
     io_data = dataset.load_io_data()
 
     # define models to be evaluated

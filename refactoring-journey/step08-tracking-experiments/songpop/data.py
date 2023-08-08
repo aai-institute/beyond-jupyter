@@ -4,7 +4,7 @@ from typing import Optional
 import pandas as pd
 
 from sensai import InputOutputData
-from sensai.util.string import ToStringMixin
+from sensai.util.string import ToStringMixin, TagBuilder
 from . import config
 
 
@@ -58,6 +58,14 @@ class Dataset(ToStringMixin):
         self.random_seed = random_seed
         self.class_positive = CLASS_POPULAR
         self.class_negative = CLASS_UNPOPULAR
+
+    def tag(self):
+        return TagBuilder(glue="-") \
+            .with_alternative(self.num_samples is None, "full", f"numSamples{self.num_samples}") \
+            .with_conditional(self.drop_zero_popularity, "drop") \
+            .with_conditional(self.threshold_popular != 50, f"threshold{self.threshold_popular}") \
+            .with_conditional(self.random_seed != 42, f"seed{self.random_seed}") \
+            .build()
 
     def load_data_frame(self) -> pd.DataFrame:
         """
