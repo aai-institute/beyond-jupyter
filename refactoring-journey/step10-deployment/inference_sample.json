@@ -1,0 +1,20 @@
+{
+    "artist_name": "Jason Mraz",
+    "track_name": "I Won't Give Up",
+    "track_id": "53QF56cjZA9RTuuMZDrSA6",
+    "year": 2012,
+    "genre": "acoustic",
+    "danceability": 0.483,
+    "energy": 0.303,
+    "key": 4,
+    "loudness": -10.058,
+    "mode": 1,
+    "speechiness": 0.0429,
+    "acousticness": 0.694,
+    "instrumentalness": 0.0,
+    "liveness": 0.115,
+    "valence": 0.139,
+    "tempo": 133.406,
+    "duration_ms": 240166,
+    "time_signature": 3
+}

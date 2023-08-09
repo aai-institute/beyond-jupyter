@@ -1,8 +1,11 @@
-name: pop
+name: pop-prod
 channels:
   - conda-forge
 dependencies:
   - python=3.10
+  - uvicorn=0.23.2
+  - fastapi=0.101.0
+  - pydantic=2.1.1
   - pip
   - pip:
       - pandas
@@ -11,10 +14,4 @@ dependencies:
       - scikit-learn
       - seaborn
       - typing_extensions
-      - jupyter
       - xgboost
-      - hyperopt
-      - mlflow
-      - GitPython
-      - requests
-      - docker

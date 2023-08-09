@@ -5,7 +5,7 @@ as a Jupyter notebook can be successively refactored to gain flexibility and
 adopt software design principles as well as workflow improvements in order
 to facilitate experimentation.
 
-The use case considers a dataset from kaggle containing meta-data on approximately one million songs.
+The use case considers a [dataset](https://www.kaggle.com/datasets/notshrirang/spotify-million-song-dataset) from kaggle containing meta-data on approximately one million songs.
 The goal is to use the data in order to learn a model for the prediction of popularity given other attributes such as the tempo, the release year, the key, the musical mode, etc.
 
 ## Package Organisation
@@ -19,6 +19,18 @@ This package is organised as follows:
    
         git difftool step04-refactoring step05-sensai
 
+For your exploring of the journey, you can create a conda environment from [environment.yml](../environment.yml), which
+contains all needed dependencies.
+
+## Data Loading
+You can use the script [load_data.py](../scripts/load_data.py) to automatically load the raw data csv-file to the subfolder
+'data' on the top-level of the repository. Be aware, that you have to generate a Kaggle API key for this, see the following 
+[instructions](https://www.kaggle.com/docs/api).
+
+If you want to download the [dataset](https://www.kaggle.com/datasets/notshrirang/spotify-million-song-dataset) manually,
+place the CSV file `spotify_data.csv` in the `data` folder (in the root of this repository).
+
+![data_folder](data_folder.png)
 
 ## Steps in the Journey
 
