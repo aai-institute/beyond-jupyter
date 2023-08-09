@@ -1,3 +1,27 @@
+"""
+This script automates the process of building, running, and interacting with a Docker container,
+which includes to run inference for the spotify popularity estimator model. It includes functionalities for:
+
+1. Building a Docker image from a specified path and Dockerfile, along with optional build arguments.
+2. Running a Docker container from the built image, binding a host port to the container's port 80.
+3. Waiting for the container to become ready by repeatedly sending GET requests to a specified URL.
+4. Sending GET or POST requests to specified endpoints within the container, and logging the results.
+
+The main execution block of the script demonstrates building and running the container and sending GET and POST
+requests to retrieve information about the modeland make a prediction based on a sample data file.
+
+Functions:
+    - docker_build(path: str, docker_file: str, tag: str, build_args: Dict = None) -> Image: Build a Docker image.
+    - docker_run(image: Image, host_port: int = 80) -> Container: Run a Docker container.
+    - wait_for_container_ready(url: str, max_retries: int = 10, base_delay: float = 0.5): Wait for the container to be ready.
+    - send_request(url: str, method: str = 'GET', data: Dict = None): Send a GET or POST request.
+
+Requirements:
+    - docker (Python package)
+    - requests (Python package)
+
+"""
+
 from typing import Dict
 import requests
 import json
@@ -68,7 +92,7 @@ def send_request(url: str, method: str = 'GET', data: Dict = None):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    docker_tag = "best-model-app"
+    docker_tag = "spotify-popularity-estimator"
     model_port = 80
     base_url = f"http://localhost:{model_port}/"
     predict_url = base_url + "predict/"
