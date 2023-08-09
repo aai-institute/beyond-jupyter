@@ -5,7 +5,21 @@ sensAI has integrated support for mlflow via the `MLFlowTrackedExperiment`
 implementation.
 It furthermore supports direct logging to the file system via its `ResultWriter` 
 class.
-We have (redundantly) added both options to our main script.
+We have (redundantly) added both options to our [main script](run_classifier_evaluation.py) as follows:
+
+```python
+    # set up (dual) tracking
+    experiment_name = f"popularity-classification_{dataset.tag()}"
+    run_id = datetime_tag()
+    tracked_experiment = MLFlowExperiment(experiment_name, tracking_uri="", context_prefix=run_id + "_",
+        add_log_to_all_contexts=True)
+    result_writer = ResultWriter(os.path.join("results", experiment_name, run_id))
+    logging.add_file_logger(result_writer.path("log.txt"))
+
+    ...
+
+    ev.compare_models(models, tracked_experiment=tracked_experiment, result_writer=result_writer)
+```
 
 To ensure that the dependency of results on the data set is appropriately 
 considered, we attach to the experiment name a compact tag that contains
@@ -29,16 +43,19 @@ At the mlflow level, we differentiate two concepts:
 Running the main script will now
   * save model descriptions, metrics, images (showing confusion matrices) 
     and logs to the folder specified in the `ResultWriter`.
-  * save the same meta-data, metrics and images to the local mlflow instance.
-    We can start a server to conveniently inspect these results in a web 
+
+    ![](res/results-folder.png)
+
+  * save the same meta-data, metrics, logs and images to the local mlflow data store (serverless, since we did not specify a URI).
+    We can start a server to conveniently inspect the results in a web 
     interface by running `mlflow ui`. Here's a screenshot:
     
-    ![](C:\Users\DominikJain\Dev\spotify-popularity-sensai\refactoring-journey\step08-tracking-experiments\res\mlflow.png)
+    ![](res/mlflow.png)
 
 By tracking results specific to a concrete experimental setup across an arbitrary
 number of executions of our script, we never lose track of the performance 
 we achieved in the past.
-We are now free to experiment with different parametrisations of our existing
+**We are now free to experiment** with different parametrisations of our existing
 models (as well as entirely new models) - simply by changing the list of models
 we consider in the main script.
 At all times, we can conveniently inspect the results and sorted them by performance. 

@@ -9,7 +9,7 @@ concrete transformations to apply.
 
 ## Feature Registry
 
-We introduce a new module `features`, which uses an enumeration `FeatureName`
+We introduce a new module [`features`](songpop/features.py), which uses an enumeration `FeatureName`
 to denote all features/sets of features that we want to reference as a unit.
 We then use the enumeration's items as keys in a `FeatureGeneratorRegistry`:
 For each feature unit, we register a feature generator that defines some important
@@ -20,6 +20,23 @@ properties:
   * Importantly, we also specify meta-data indicating
       * which subset of the features is categorical (if any)
       * how numerical features can be normalised.
+
+```python
+registry = FeatureGeneratorRegistry()
+registry.register_factory(FeatureName.MUSICAL_DEGREES, lambda: FeatureGeneratorTakeColumns(COLS_MUSICAL_DEGREES,
+    normalisation_rule_template=DFTNormalisation.RuleTemplate(skip=True)))
+registry.register_factory(FeatureName.MUSICAL_CATEGORIES, lambda: FeatureGeneratorTakeColumns(COLS_MUSICAL_CATEGORIES,
+    categorical_feature_names=COLS_MUSICAL_CATEGORIES))
+registry.register_factory(FeatureName.LOUDNESS, lambda: FeatureGeneratorTakeColumns(COL_LOUDNESS,
+    normalisation_rule_template=DFTNormalisation.RuleTemplate(
+        transformer_factory=SkLearnTransformerFactoryFactory.StandardScaler())))
+registry.register_factory(FeatureName.TEMPO, lambda: FeatureGeneratorTakeColumns(COL_TEMPO,
+    normalisation_rule_template=DFTNormalisation.RuleTemplate(
+        transformer_factory=SkLearnTransformerFactoryFactory.StandardScaler())))
+registry.register_factory(FeatureName.DURATION, lambda: FeatureGeneratorTakeColumns(COL_DURATION_MS,
+    normalisation_rule_template=DFTNormalisation.RuleTemplate(
+        transformer_factory=SkLearnTransformerFactoryFactory.StandardScaler())))
+```
 
 Note that the feature generators we registered treat some of the features differently:
   * Whereas the original implementation treats the features `mode` and `key` as numerical features,
@@ -33,16 +50,27 @@ auto-completions as well as fail-safe refactoring in our IDE.
 
 ## Adapted Model Factories 
 
-The newly introduced model implementations make use of the registered features 
+The newly introduced model implementations in module [model_factory](songpop/model_factory.py) make use of the registered features 
 by using a `FeatureCollector` that references the features via their registered names.
 Adding the feature collector to a model results in the concatenation of all
 collected features being made available to the model as input.
 
 We furthermore define feature transformations based on the feature collector.
 Because our feature generators represent the required meta-data, we can, notably,
-create use a one-hot encoder for all categorical features that are being used by calling a factory
+create a one-hot encoder for all categorical features that are being used by calling a factory
 on the `FeatureCollector` instance. Since all our current models need this,
 we have added one-hot encoders to all of our models.
+
+```python
+@classmethod
+def create_logistic_regression(cls):
+    fc = FeatureCollector(*cls.DEFAULT_FEATURES, registry=registry)
+    return SkLearnLogisticRegressionVectorClassificationModel(solver='lbfgs', max_iter=1000) \
+        .with_feature_collector(fc) \
+        .with_feature_transformers(fc.create_feature_transformer_one_hot_encoder(),
+            fc.create_feature_transformer_normalisation()) \
+        .with_name("LogisticRegression")
+```
 
 Since the logistic regression model works best with scaled/normalised data,
 we furthermore add the feature transformer that performs the normalisation as specified
@@ -57,11 +85,23 @@ that use larger scales.
 The resulting transformation should be an improvement; but ultimately, a thoroughly
 designed distance metric should probably consider subspaces of the feature space
 explicitly and compose the metric from submetrics using a more flexible KNN 
-implementation that supports this notion.
+implementation which supports this notion.
+
+```python
+@classmethod
+def create_knn(cls):
+    fc = FeatureCollector(*cls.DEFAULT_FEATURES, registry=registry)
+    return SkLearnKNeighborsVectorClassificationModel(n_neighbors=1) \
+        .with_feature_collector(fc) \
+        .with_feature_transformers(fc.create_feature_transformer_one_hot_encoder(),
+            fc.create_feature_transformer_normalisation(),
+            DFTSkLearnTransformer(MaxAbsScaler())) \
+        .with_name("KNeighbors")
+```
 
 Notice that
-  * we can easily support the old models and the new ones alongside each other
-    (because we have moved the pipeline components that differ between them into the actual model specifications).
+  * we can easily support the old models and the new ones alongside each other (the `_orig` factory methods remain unchanged),
+    because we have moved the pipeline components that differ between them into the actual model specifications.
   * our model specifications are largely declarative in nature.
 
 # Principles Addressed in this Step

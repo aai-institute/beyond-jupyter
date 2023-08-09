@@ -35,18 +35,31 @@ the two central modelling aspects of defining:
     We can address these requirements by adding model-specific transformations.
  
     The relevant abstraction is `DataFrameTransformer`, and all non-abstract 
-    implementations use the class name prefix `DFT` in sensAI.
+    implementations use the class name prefix `"DFT"` in sensAI.
 
-The models we have thus far all use the same basic feature generator 
+Thus far, the models we defined all use the same basic feature generator 
 (`FeatureGeneratorTakeColumns`), which simply projects the data frame,
 and furthermore use the same transformer to yield the originally desired
 representation (`DFTSkLearnTransformer` with a `StandardScaler`).
 But we will soon switch things up.
 
+```python
+class ModelFactory:
+    COLS_USED_BY_ORIGINAL_MODELS = [COL_YEAR, *COLS_MUSICAL_DEGREES, COL_KEY, COL_MODE, COL_TEMPO, COL_TIME_SIGNATURE, COL_LOUDNESS,
+        COL_DURATION_MS]
+
+    @classmethod
+    def create_logistic_regression_orig(cls):
+        return SkLearnLogisticRegressionVectorClassificationModel(solver='lbfgs', max_iter=1000) \
+            .with_feature_generator(FeatureGeneratorTakeColumns(cls.COLS_USED_BY_ORIGINAL_MODELS)) \
+            .with_feature_transformers(DFTSkLearnTransformer(StandardScaler())) \
+            .with_name("LogisticRegression-orig")
+```
+
 Notice that the model definitions are concise definitions of what we want, getting
 us closer to declarative semantics in our code.
 
-We have named all models to support the reporting of model-specific results.
+Furthermore, we have now named all models to support the reporting of model-specific results.
 
 ## Model Evaluation
 
@@ -54,6 +67,14 @@ For the validation/evaluation of our models, we make use of a high-level utility
 In subsequent steps, we will use more of its functions. 
 For now, it just automates a few calls for us, allowing us to declaratively define
 what we want without wasting time on the procedural details.
+
+```python
+evaluator_params = VectorClassificationModelEvaluatorParams(fractional_split_test_fraction=0.3,
+    binary_positive_label=dataset.class_positive)
+ev = ClassificationEvaluationUtil(io_data, evaluator_params=evaluator_params)
+ev.compare_models(models)
+```
+
 
 ## Logging
 
@@ -76,6 +97,13 @@ package, but we have opted to use `sensai.util.logging` as an extended replaceme
 and applied its `run_main` function to simplify things:
 It sets up logging to `stdout` with reasonable defaults and ensures that any exceptions that may occur
 during the execution of our `main` function will be logged.
+
+```python
+if __name__ == '__main__':
+    logging.run_main(main)
+```
+
+Take a look at the [log output](output.txt) that is produced.
 
 ## Randomness
 

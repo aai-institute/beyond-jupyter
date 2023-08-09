@@ -11,4 +11,6 @@ The following changes are made:
   * We extend the dataset representation to support the regression case, modifying the target variable accordingly.
   * We implement a wrapper class `VectorClassificationModelFromVectorRegressionModel` that allows us to use a regression model to handle the classification problem. We (optionally) save the best regression model that we obtain during training and add the corresponding wrapped model to the list of evaluated classification models (if the respective file exists).
 
-As this is the final step of our journey, we now switch to using the full data set and run the scripts for both regression and classification in order to obtain some preliminary results.
+A new [runnable script for regression](run_regressor_evaluation.py) handles the new experiments.
+
+As this is the last step along our journey in which we will change the set of models, we now switch to using the full data set and run the scripts for both regression and classification in order to obtain some preliminary results.

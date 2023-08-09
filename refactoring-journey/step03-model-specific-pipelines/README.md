@@ -5,16 +5,28 @@ We shall strongly associate the data processing pipeline with the models in orde
 to enable different models to use entirely different pipelines in future experiments.
 Importantly, different models might
   * use a different set of features or
-  * use different representations of the same features.
+  * use different representations of the features.
 
 So far, all models use exactly the same features and use
-the same StandardScaler-induced representations of these features.
+the same `StandardScaler`-induced representations of these features.
 Clearly, this is a compromise, as some of the models could, potentially,
 make good use of categorical features such as the genre of the song; 
-and we have already pointed out that the use of StandardScaler is not 
+and we have already pointed out that the use of `StandardScaler` is not 
 necessarily optimal for all the features it is currently being applied to.
 By making the input pipeline a part of the model, we gain the flexibility of
 trying out new models that don't stick to the current limitations down the line.
+
+```python
+class ModelFactory:
+    COLS_USED_BY_ORIGINAL_MODELS = [COL_YEAR, *COLS_MUSICAL_DEGREES, COL_KEY, COL_MODE, COL_TEMPO, COL_TIME_SIGNATURE, COL_LOUDNESS,
+        COL_DURATION_MS]
+
+    @classmethod
+    def create_logistic_regression_orig(cls):
+        return Pipeline([
+            ("project_scale", ColumnTransformer([("scaler", StandardScaler(), cls.COLS_USED_BY_ORIGINAL_MODELS)])),
+            ("model", linear_model.LogisticRegression(solver='lbfgs', max_iter=1000))])
+```
 
 Importantly, by moving the pipeline components to the models, we have fixed a
 subtle issue in the original code: The data scaler is learnt on the full data
