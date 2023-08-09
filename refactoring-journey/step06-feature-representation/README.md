@@ -54,6 +54,10 @@ Since we have now introduced Boolean features that are represented numerically
 as elements {0, 1}, we add, after normalisation (which partly uses standarisation), 
 an additional `MaxAbsScaler` transformer to not give undue weight to the features 
 that use larger scales.
+The resulting transformation should be an improvement; but ultimately, a thoroughly
+designed distance metric should probably consider subspaces of the feature space
+explicitly and compose the metric from submetrics using a more flexible KNN 
+implementation that supports this notion.
 
 Notice that
   * we can easily support the old models and the new ones alongside each other
