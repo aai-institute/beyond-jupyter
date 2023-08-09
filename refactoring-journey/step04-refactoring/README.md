@@ -12,3 +12,7 @@ We create a package `songpop` with the following modules,
   * [`model_factory`](songpop/model_factory.py) (model implementations/specifications),
 
 such that the updated [main script](run_classifier_evaluation.py) is focussed chiefly on the experiment to execute.
+
+## Principles Addressed in this Step
+
+* Develop reusable components

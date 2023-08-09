@@ -104,7 +104,7 @@ Notice that
     because we have moved the pipeline components that differ between them into the actual model specifications.
   * our model specifications are largely declarative in nature.
 
-# Principles Addressed in this Step
+## Principles Addressed in this Step
 
 * Know your features
 * Find the right abstractions

@@ -42,3 +42,7 @@ We can add our newly introduced feature via the parameter `add_features`.
 
 As far as the other models are concerned, we could apply a feature transformation involving
 imputation if we  wanted to support the new feature.
+
+## Principles Addressed in this Step
+
+* Expose parametrisation

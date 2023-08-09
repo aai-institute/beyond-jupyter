@@ -61,3 +61,7 @@ we consider in the main script.
 At all times, we can conveniently inspect the results and sorted them by performance. 
 If need be, we can easily inspect all the hyperparameters and look at the detailed
 logs of the individual runs.
+
+## Principles Addressed in this Step
+
+* Track experiments

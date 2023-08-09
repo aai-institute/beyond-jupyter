@@ -112,7 +112,7 @@ to ensure reproducible results.
 (Notice that in the original notebook implementation, the random forest model did not 
 use a fixed random seed.)
 
-# Principles Addressed in this Step
+## Principles Addressed in this Step
 
 * Log extensively
 * Prefer declarative semantics
