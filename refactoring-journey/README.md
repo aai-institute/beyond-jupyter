@@ -78,7 +78,11 @@ These are the steps of the journey:
 
    This step considers the perhaps more natural formulation of the prediction problem as a regression problem.
 
-10. [Deployment](step10-deployment/README.md)
+10. [Cross-Validation](step10-cross-validation/README.md)
+
+   This step adds the option to use cross-validation.
+
+11. [Deployment](step11-deployment/README.md)
 
    This step adds a web service for inference, which is packaged in a docker container.
 

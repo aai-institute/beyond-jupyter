@@ -1,16 +1,23 @@
-# Step 9: Regression
+# Step 10: Cross-Validation.
 
-The popularity prediction problem is perhaps more naturally phrased as a 
-regression problem where we directly predict the numeric popularity value.
-In this step, we thus investigate this alternative formulation of the prediction
-problem.
+In this step, we extend the runnable scripts to optionally apply cross-validation
+and thus evaluate our models on multiple splits rather than a single split.
+The evaluation utility class directly supports this and the changes are 
+minimal as a result.
 
-The following changes are made:
-  * We introduce a second model factory `RegressionModelFactory`, renaming the existing one to `ClassificationModelFactory`. In this new factory, we implement some of the same types of models.
-  * We modify `FeatureGeneratorMeanArtistPopularity` to also support the regression case, adding a constructor parameter to differentiate the two cases and registering an additional regression-specific feature `FeatureName.MEAN_ARTIST_POPULARITY`.
-  * We extend the dataset representation to support the regression case, modifying the target variable accordingly.
-  * We implement a wrapper class `VectorClassificationModelFromVectorRegressionModel` that allows us to use a regression model to handle the classification problem. We (optionally) save the best regression model that we obtain during training and add the corresponding wrapped model to the list of evaluated classification models (if the respective file exists).
+```python
+evaluator_params = VectorClassificationModelEvaluatorParams(fractional_split_test_fraction=0.3,
+    binary_positive_label=dataset.class_positive)
+cross_validator_params = VectorModelCrossValidatorParams(folds=3)
+ev = ClassificationEvaluationUtil(io_data, evaluator_params=evaluator_params, cross_validator_params=cross_validator_params)
+ev.compare_models(models, tracked_experiment=tracked_experiment, result_writer=result_writer, use_cross_validation=use_cross_validation)
+```
 
-A new [runnable script for regression](run_regressor_evaluation.py) handles the new experiments.
+We do, however, need to take into consideration that applying cross-validation
+amounts to a different experiment definition and adjust the definition of the
+experiment name accordingly.
 
-As this is the last step along our journey in which we will change the set of models, we now switch to using the full data set and run the scripts for both regression and classification in order to obtain some preliminary results.
+```python
+experiment_name = TagBuilder("popularity-classification", dataset.tag()) \
+    .with_conditional(use_cross_validation, "CV").build()
+```

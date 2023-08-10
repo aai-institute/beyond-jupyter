@@ -38,11 +38,15 @@ def main():
         RegressionModelFactory.create_xgb("-meanPop", add_features=[FeatureName.MEAN_ARTIST_POPULARITY]),
     ]
 
-    # evaluate models
+    # declare parameters to be used for evaluation, i.e. how to split the data (fraction and random seed)
     evaluator_params = VectorRegressionModelEvaluatorParams(fractional_split_test_fraction=0.3)
+
+    # use a high-level utility class for evaluating the models based on these parameters, injecting the
+    # objects defined above for the tracking of results
     ev = RegressionEvaluationUtil(io_data, evaluator_params=evaluator_params)
     result = ev.compare_models(models, tracked_experiment=tracked_experiment, result_writer=result_writer)
 
+    # save best model
     if save_best_model:
         best_model = result.get_best_model(RegressionMetricR2.name)
         path = best_regression_model_storage_path(dataset)

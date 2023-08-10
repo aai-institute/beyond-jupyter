@@ -1,12 +1,13 @@
 import os
 
 from sensai.evaluation import VectorRegressionModelEvaluatorParams, \
-    RegressionEvaluationUtil
+    RegressionEvaluationUtil, VectorModelCrossValidatorParams
 from sensai.evaluation.eval_stats import RegressionMetricR2
 from sensai.tracking.mlflow_tracking import MLFlowExperiment
 from sensai.util import logging
 from sensai.util.io import ResultWriter
 from sensai.util.logging import datetime_tag
+from sensai.util.string import TagBuilder
 from songpop.data import Dataset
 from songpop.features import FeatureName
 from songpop.model_factory import RegressionModelFactory, best_regression_model_storage_path
@@ -16,11 +17,14 @@ log = logging.getLogger(__name__)
 
 
 def main():
+    # configuration
     dataset = Dataset(None, is_classification=False)
+    use_cross_validation = True
     save_best_model = True
 
     # set up (dual) tracking
-    experiment_name = f"popularity-regression_{dataset.tag()}"
+    experiment_name = TagBuilder("popularity-regression", dataset.tag()) \
+        .with_conditional(use_cross_validation, "CV").build()
     run_id = datetime_tag()
     tracked_experiment = MLFlowExperiment(experiment_name, tracking_uri="", context_prefix=run_id + "_",
         add_log_to_all_contexts=True)
@@ -32,18 +36,20 @@ def main():
 
     # define models to be evaluated
     models = [
-        #RegressionModelFactory.create_linear(),
+        RegressionModelFactory.create_linear(),
         #RegressionModelFactory.create_rf(),
-        #RegressionModelFactory.create_xgb(),
+        RegressionModelFactory.create_xgb(),
         RegressionModelFactory.create_xgb("-meanPop", add_features=[FeatureName.MEAN_ARTIST_POPULARITY]),
     ]
 
     # evaluate models
     evaluator_params = VectorRegressionModelEvaluatorParams(fractional_split_test_fraction=0.3)
-    ev = RegressionEvaluationUtil(io_data, evaluator_params=evaluator_params)
-    result = ev.compare_models(models, tracked_experiment=tracked_experiment, result_writer=result_writer)
+    cross_validator_params = VectorModelCrossValidatorParams(folds=3)
+    ev = RegressionEvaluationUtil(io_data, evaluator_params=evaluator_params, cross_validator_params=cross_validator_params)
+    result = ev.compare_models(models, tracked_experiment=tracked_experiment, result_writer=result_writer,
+        use_cross_validation=use_cross_validation)
 
-    if save_best_model:
+    if save_best_model and not use_cross_validation:
         best_model = result.get_best_model(RegressionMetricR2.name)
         path = best_regression_model_storage_path(dataset)
         log.info(f"Saving best model '{best_model.get_name()}' in {path}")

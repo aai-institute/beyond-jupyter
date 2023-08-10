@@ -42,12 +42,10 @@ def main():
         fractional_split_random_seed=42,
         binary_positive_label=dataset.class_positive)
 
-    # use a high-level utility class for evaluating the models, i.e. fitting on the training data and evaluating
-    # on the test data provided via the splitting declared above
+    # use a high-level utility class for evaluating the models based on these parameters, injecting the
+    # objects defined above for the tracking of results
     ev = ClassificationEvaluationUtil(io_data, evaluator_params=evaluator_params)
-
-    # inject high-level utility objects to track the evaluation of the models
-    ev.compare_models(models, tracked_experiment=tracked_experiment, result_writer=result_writer)
+    ev.compare_models(models, fit_models=True, tracked_experiment=tracked_experiment, result_writer=result_writer)
 
 
 if __name__ == '__main__':

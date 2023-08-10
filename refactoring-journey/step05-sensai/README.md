@@ -92,11 +92,10 @@ After:
 ```python
 # declare parameters to be used for evaluation, i.e. how to split the data (fraction and random seed)
 evaluator_params = VectorClassificationModelEvaluatorParams(fractional_split_test_fraction=0.3,
-                                                            fractional_split_random_seed=42,
-                                                            binary_positive_label=dataset.class_positive)
+    fractional_split_random_seed=42,
+    binary_positive_label=dataset.class_positive)
 
-# use a high-level utility class for evaluating the models, i.e. fitting on the training data and evaluating
-# on the test data provided via the splitting declared above
+# use a high-level utility class for evaluating the models based on these parameters
 ev = ClassificationEvaluationUtil(io_data, evaluator_params=evaluator_params)
 ev.compare_models(models, fit_models=True)
 ```

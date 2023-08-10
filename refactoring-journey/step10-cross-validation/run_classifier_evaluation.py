@@ -44,12 +44,18 @@ def main():
         models.append(ClassificationModelFactory.create_classifier_from_best_regressor(dataset))
     models = [m for m in models if m is not None]
 
-    # evaluate models
+
+    # declare parameters to be used for evaluation, i.e. how to split the data (fraction and random seed)
     evaluator_params = VectorClassificationModelEvaluatorParams(fractional_split_test_fraction=0.3,
+        fractional_split_random_seed=42,
         binary_positive_label=dataset.class_positive)
     cross_validator_params = VectorModelCrossValidatorParams(folds=3)
+
+    # use a high-level utility class for evaluating the models based on these parameters, injecting the
+    # objects defined above for the tracking of results
     ev = ClassificationEvaluationUtil(io_data, evaluator_params=evaluator_params, cross_validator_params=cross_validator_params)
-    ev.compare_models(models, tracked_experiment=tracked_experiment, result_writer=result_writer, use_cross_validation=use_cross_validation)
+    ev.compare_models(models, tracked_experiment=tracked_experiment, result_writer=result_writer,
+        use_cross_validation=use_cross_validation)
 
 
 if __name__ == '__main__':
