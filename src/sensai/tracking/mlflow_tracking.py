@@ -20,12 +20,13 @@ class MLFlowTrackingContext(TrackingContext):
 
     @staticmethod
     def _metric_name(name: str):
-        result = re.sub(r"\[(.*?)\]", r"/\1", name)  # replace "foo[bar]" with "foo/bar
+        result = re.sub(r"\[(.*?)\]", r"_\1", name)  # replace "foo[bar]" with "foo_bar"
         result = re.sub(r"[^a-zA-Z0-9-_. /]+", "_", result)  # replace sequences of unsupported chars with underscore
         return result
 
     def _track_metrics(self, metrics: Dict[str, float]):
-        mlflow.log_metrics({self._metric_name(name): value for name, value in metrics.items()})
+        metrics = {self._metric_name(name): value for name, value in metrics.items()}
+        mlflow.log_metrics(metrics)
 
     def track_figure(self, name: str, fig: plt.Figure):
         mlflow.log_figure(fig, name + ".png")
@@ -74,7 +75,7 @@ class MLFlowExperiment(TrackedExperiment[MLFlowTrackingContext]):
 
     def begin_context_for_model(self, model: VectorModelBase):
         context = super().begin_context_for_model(model)
-        context.track_tag("model_class", model.__class__.__name__)
+        context.track_tag("ModelClass", model.__class__.__name__)
         return context
 
     def end_context(self, instance: MLFlowTrackingContext):
