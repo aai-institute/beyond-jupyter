@@ -42,7 +42,7 @@ Here are a few limitations, all of which we shall address in our refactoring jou
   * Data filtering/preprocessing is inextricably linked with model-specific input transformation, 
     yet it may be highly desirably to change the input representation (and even the set of inputs entirely) for different models.
   * There is no separation between the features being used and their model-specific representations.
-    Global data preprocessing is inextricably linked with model input preparation. -> step06
+    Global data preprocessing is inextricably linked with model input preparation.
       * We can easily use only one set of features for all models.
       * The feature representation is the same across all models (and therefore is the least common denominator); model-specific capabilities cannot be exploited.
         Specifically, in our example, categorical features are either not being used or being
@@ -61,7 +61,6 @@ Here are a few limitations, all of which we shall address in our refactoring jou
 * The resulting models are not self-contained artifacts that could be deployed for inference.
   Even if, in the inference case, we had the exact same features available, there is no object in our
   current implementation that would transform these inputs to the desired predictions.
-  -> step03, step10
 
 * The notebook programming style encourages mistakes, as the workflow often involves reusing
   past results and the re-execution of individual cells. 
