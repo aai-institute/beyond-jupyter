@@ -473,15 +473,16 @@ class TagBuilder:
     """
     Assists in building strings made up of components that are joined via a glue string
     """
-    def __init__(self, prefix="", glue="_"):
+    def __init__(self, *initial_components: str, glue="_"):
         """
-        :param prefix: an initial component to always include at the beginning
+        :param initial_components: initial components to always include at the beginning
         :param glue: the glue string which joins components
         """
         self.glue = glue
-        self.components = []
-        if prefix != "":
-            self.components.append(prefix)
+        self.components = list(initial_components)
+
+    def with_component(self, component: str):
+        self.components.append(component)
 
     def with_conditional(self, cond: bool, component: str):
         """
