@@ -272,8 +272,6 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
         if tracked_experiment is not None:
             evaluator.set_tracked_experiment(tracked_experiment)
         log.info(f"Evaluating {model} via {evaluator}")
-        if fit_model:
-            evaluator.fit_model(model)
 
         def gather_results(result_data: VectorModelEvaluationData, res_writer, subtitle_prefix=""):
             str_eval_results = ""
@@ -293,10 +291,10 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
                     self.create_plots(result_data, show_plots=show_plots, result_writer=res_writer,
                         subtitle_prefix=subtitle_prefix, tracking_context=trackingContext)
 
-        eval_result_data = evaluator.eval_model(model)
+        eval_result_data = evaluator.eval_model(model, fit=True)
         gather_results(eval_result_data, result_writer)
         if additional_evaluation_on_training_data:
-            eval_result_data_train = evaluator.eval_model(model, on_training_data=True)
+            eval_result_data_train = evaluator.eval_model(model, on_training_data=True, track=False)
             additional_result_writer = result_writer.child_with_added_prefix("onTrain-") if result_writer is not None else None
             gather_results(eval_result_data_train, additional_result_writer, subtitle_prefix="[onTrain] ")
         return eval_result_data

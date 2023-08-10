@@ -14,6 +14,7 @@ from .evaluator import VectorRegressionModelEvaluationData, VectorClassification
     MetricsDictProvider, VectorModelEvaluator, VectorClassificationModelEvaluatorParams, \
     VectorRegressionModelEvaluatorParams, MetricsDictProviderFromFunction
 from ..data import InputOutputData, DataSplitterFractional
+from ..tracking.tracking_base import TrackingContext
 from ..util.typing import PandasNamedTuple
 from ..vector_model import VectorClassificationModel, VectorRegressionModel, VectorModel
 
@@ -56,6 +57,13 @@ class VectorModelCrossValidationData(ABC, Generic[TModel, TEvalData, TEvalStats,
             eval_stats = evalData.get_eval_stats(predicted_var_name)
             for i, namedTuple in enumerate(evalData.input_data.itertuples()):
                 yield namedTuple, eval_stats.y_predicted[i], eval_stats.y_true[i]
+
+    def track_metrics(self, tracking_context: TrackingContext):
+        is_multivar = len(self.predicted_var_names) > 1
+        for predicted_var_name in self.predicted_var_names:
+            eval_stats_collection = self.get_eval_stats_collection(predicted_var_name=predicted_var_name)
+            metrics_dict = eval_stats_collection.agg_metrics_dict()
+            tracking_context.track_metrics(metrics_dict, predicted_var_name=predicted_var_name if is_multivar else None)
 
 
 TCrossValData = TypeVar("TCrossValData", bound=VectorModelCrossValidationData)
@@ -148,7 +156,7 @@ class VectorModelCrossValidator(MetricsDictProvider, Generic[TCrossValData], ABC
         :param params: parameters
         """
         self.params = params
-        self.modelEvaluators = []
+        self.modelEvaluators: List[VectorModelEvaluator] = []
         for trainIndices, testIndices in self.params.splitter.create_folds(data, self.params.folds):
             self.modelEvaluators.append(self._create_model_evaluator(data.filter_indices(trainIndices), data.filter_indices(testIndices)))
 
@@ -168,26 +176,36 @@ class VectorModelCrossValidator(MetricsDictProvider, Generic[TCrossValData], ABC
     def _create_result_data(self, trained_models, eval_data_list, test_indices_list, predicted_var_names) -> TCrossValData:
         pass
 
-    def eval_model(self, model: VectorModel):
+    def eval_model(self, model: VectorModel, track: bool = True):
+        """
+        :param model: the model to evaluate
+        :param track: whether tracking shall be enabled for the case where a tracked experiment is set on this object
+        :return: cross-validation results
+        """
         trained_models = [] if self.params.returnTrainedModels else None
         eval_data_list = []
         test_indices_list = []
         predicted_var_names = None
-        for i, evaluator in enumerate(self.modelEvaluators, start=1):
-            log.info(f"Training and evaluating model with fold {i}/{len(self.modelEvaluators)} ...")
-            model_to_fit: VectorModel = copy.deepcopy(model) if self.params.returnTrainedModels else model
-            evaluator.fit_model(model_to_fit)
-            eval_data = evaluator.eval_model(model_to_fit)
-            if predicted_var_names is None:
-                predicted_var_names = eval_data.predicted_var_names
-            if self.params.returnTrainedModels:
-                trained_models.append(model_to_fit)
-            for predictedVarName in predicted_var_names:
-                log.info(f"Evaluation result for {predictedVarName}, fold {i}/{len(self.modelEvaluators)}: "
-                         f"{eval_data.get_eval_stats(predicted_var_name=predictedVarName)}")
-            eval_data_list.append(eval_data)
-            test_indices_list.append(evaluator.test_data.outputs.index)
-        return self._create_result_data(trained_models, eval_data_list, test_indices_list, predicted_var_names)
+        with self.begin_optional_tracking_context_for_model(model, track=track) as tracking_context:
+            for i, evaluator in enumerate(self.modelEvaluators, start=1):
+                evaluator: VectorModelEvaluator
+                log.info(f"Training and evaluating model with fold {i}/{len(self.modelEvaluators)} ...")
+                model_to_fit: VectorModel = copy.deepcopy(model) if self.params.returnTrainedModels else model
+                evaluator.fit_model(model_to_fit)
+                eval_data = evaluator.eval_model(model_to_fit)
+                if predicted_var_names is None:
+                    predicted_var_names = eval_data.predicted_var_names
+                if self.params.returnTrainedModels:
+                    trained_models.append(model_to_fit)
+                for predictedVarName in predicted_var_names:
+                    log.info(f"Evaluation result for {predictedVarName}, fold {i}/{len(self.modelEvaluators)}: "
+                             f"{eval_data.get_eval_stats(predicted_var_name=predictedVarName)}")
+                eval_data_list.append(eval_data)
+                test_indices_list.append(evaluator.test_data.outputs.index)
+            crossval_data = self._create_result_data(trained_models, eval_data_list, test_indices_list, predicted_var_names)
+            if tracking_context.is_enabled():
+                crossval_data.track_metrics(tracking_context)
+        return crossval_data
 
     def _compute_metrics(self, model: VectorModel, **kwargs):
         return self._compute_metrics_for_var_name(model, None)

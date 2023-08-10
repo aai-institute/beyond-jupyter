@@ -195,18 +195,23 @@ class VectorModelEvaluator(MetricsDictProvider, Generic[TEvalData], ABC):
         """
         super().set_tracked_experiment(tracked_experiment)
 
-    def eval_model(self, model: VectorModelBase, on_training_data=False, track=True) -> TEvalData:
+    def eval_model(self, model: Union[VectorModelBase, VectorModelFittableBase], on_training_data=False, track=True,
+            fit=False) -> TEvalData:
         """
         Evaluates the given model
 
         :param model: the model to evaluate
         :param on_training_data: if True, evaluate on this evaluator's training data rather than the held-out test data
         :param track: whether to track the evaluation metrics for the case where a tracked experiment was set on this object
+        :param fit: whether to fit the model before evaluating it (via this object's `fit_model` method); if enabled, the model
+            must support fitting
         :return: the evaluation result
         """
         data = self.training_data if on_training_data else self.test_data
-        result: VectorModelEvaluationData = self._eval_model(model, data)
-        with TrackingContext.from_optional_experiment(self.tracked_experiment if track else None, model=model) as trackingContext:
+        with self.begin_optional_tracking_context_for_model(model, track=track) as trackingContext:
+            if fit:
+                self.fit_model(model)
+            result: VectorModelEvaluationData = self._eval_model(model, data)
             is_multiple_pred_vars = len(result.predicted_var_names) > 1
             for pred_var_name in result.predicted_var_names:
                 metrics = result.get_eval_stats(pred_var_name).metrics_dict()
