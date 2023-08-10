@@ -102,7 +102,14 @@ def create_knn(cls):
 Notice that
   * we can easily support the old models and the new ones alongside each other (the `_orig` factory methods remain unchanged),
     because we have moved the pipeline components that differ between them into the actual model specifications.
+
+    This critically enables us re-evaluate old models, e.g. on a different data set.
+
   * our model specifications are largely declarative in nature.
+    
+    In particular, we can simply declare the set of features that a model is to use and, depending in the model, the selected set of features will automatically be transformed in a way that suits the model, i.e. categorical features will be one-hot encoded if necessary 
+    and numerical features will be appropriately normalised.
+
 
 ## Principles Addressed in this Step
 

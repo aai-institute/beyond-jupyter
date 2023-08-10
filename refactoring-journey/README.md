@@ -58,7 +58,7 @@ These are the steps of the journey:
 
 5. [sensAI](step05-sensai/README.md)
 
-   This step introduces the library sensAI, which will enable more flexible model specifications down the line.
+   This step introduces the high-level library sensAI, which will enable more flexible, declarative model specifications down the line.
    It furthermore facilitates logging and helps with other minor details.
 
 6. [Feature Representation](step06-feature-representation/README.md)
@@ -77,3 +77,8 @@ These are the steps of the journey:
 9. [Regression](step09-regression/README.md)
 
    This step considers the perhaps more natural formulation of the prediction problem as a regression problem.
+
+10. [Deployment](step10-deployment/README.md)
+
+   This step adds a web service for inference, which is packaged in a docker container.
+
