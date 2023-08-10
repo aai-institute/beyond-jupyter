@@ -31,6 +31,14 @@ class ModelFactory:
 Importantly, by moving the pipeline components to the models, we have fixed a
 subtle issue in the original code: The data scaler is learnt on the full data
 set, which, strictly speaking, constitutes a data leak.
+````python
+# Fitting of StandardScaler before splitting the data into train and test may result in a data leak
+scaler = StandardScaler()
+model_X = scaler.fit(X)
+X_scaled = model_X.transform(X)
+
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, random_state=42, test_size=0.3, shuffle=True)
+````
 This may not be much of a problem in this case, as the training data is likely to be
 sufficiently representative for the learning result to be virtually identical,
 but it is advisable to completely exclude the training set from any training

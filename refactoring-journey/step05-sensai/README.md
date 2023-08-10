@@ -1,7 +1,7 @@
-# Step 4: Introducing sensAI
+# Step 5: Introducing sensAI
 
 In this step, we will switch from using scikit-learn as our main framework to 
-sensAI, the Python library for sensible AI.
+[sensAI](https://github.com/jambit/sensAI), the Python library for sensible AI.
 sensAI is a high-level framework which provides convenient abstractions that
 support a variety of machine learning libraries (scikit-learn and PyTorch being
 perhaps the most relevant ones).
@@ -68,11 +68,37 @@ In subsequent steps, we will use more of its functions.
 For now, it just automates a few calls for us, allowing us to declaratively define
 what we want without wasting time on the procedural details.
 
+Before:
 ```python
+# define models to be evaluated
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42, test_size=0.3, shuffle=True)
+models = [
+    ModelFactory.create_logistic_regression_orig(),
+    ModelFactory.create_knn_orig(),
+    ModelFactory.create_random_forest_orig(),
+    ModelFactory.create_decision_tree_orig(),
+]
+
+# evaluate the models in a procedural way
+for model in models:
+    print(f"Evaluating model:\n{model}")
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    print(confusion_matrix(y_test, y_pred))
+    print(classification_report(y_test, y_pred))
+```
+After:
+
+```python
+# declare parameters to be used for evaluation, i.e. how to split the data (fraction and random seed)
 evaluator_params = VectorClassificationModelEvaluatorParams(fractional_split_test_fraction=0.3,
-    binary_positive_label=dataset.class_positive)
+                                                            fractional_split_random_seed=42,
+                                                            binary_positive_label=dataset.class_positive)
+
+# use a high-level utility class for evaluating the models, i.e. fitting on the training data and evaluating
+# on the test data provided via the splitting declared above
 ev = ClassificationEvaluationUtil(io_data, evaluator_params=evaluator_params)
-ev.compare_models(models)
+ev.compare_models(models, fit_models=True)
 ```
 
 

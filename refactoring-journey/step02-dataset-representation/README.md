@@ -54,28 +54,57 @@ In this step, we introduce a representation for the data set:
         return df.drop(columns=COL_GEN_POPULARITY_CLASS), df[COL_GEN_POPULARITY_CLASS]
    ```
 
- * **We shall prefer to keep the data
-   untouched and make models decide what to do with it**. 
-   We don't need to drop or modify any data columns from the get-go. Models can just 
-   choose to use only a subset of the data. Different models shall
-   be able to do different things entirely.
- * **We avoid the use of constant literals in our code and use named constants instead.**
-     * Referring to data columns via string literals is prone to errors; typos happen.
-     * With strings, we would get no assistance from our IDE when we're in doubt as to how a column is named. 
-       By adding constants to our code with a well-defined identifier scheme (all identifiers start with `COL_`), we
-       get optimal assistance from our IDE: By typing `COL_` and asking for an auto-completion,
-       we get a list of possible options. 
-     * If the column names should ever change, we have a single place in which we would need to 
-       update them (though this won't be an issue in this toy project, of course).
-     * In addition to the original columns, we introduce constants for the columns we add (such as 
-       the class column, with dedicated prefix `COL_GEN`) and introduce semantic groups (with the dedicated prefix `COLS_`) that could
-       come in handy later on. 
+* **We shall prefer to keep the data
+  untouched and make models decide what to do with it**. 
+  We don't need to drop or modify any data columns from the get-go. Models can just 
+  choose to use only a subset of the data. Different models shall
+  be able to do different things entirely.
+* **We avoid the use of constant literals in our code and use named constants instead.**
+    * Referring to data columns via string literals is prone to errors; typos happen.
+    * With strings, we would get no assistance from our IDE when we're in doubt as to how a column is named. 
+      By adding constants to our code with a well-defined identifier scheme (all identifiers start with `COL_`), we
+      get optimal assistance from our IDE: By typing `COL_` and asking for an auto-completion,
+      we get a list of possible options. 
+    * If the column names should ever change, we have a single place in which we would need to 
+      update them (though this won't be an issue in this toy project, of course).
+    * In addition to the original columns, we introduce constants for the columns we add (such as 
+      the class column, with dedicated prefix `COL_GEN`) and introduce semantic groups (with the dedicated prefix `COLS_`) that could
+      come in handy later on.
+      ```python
+      # categorical features
+      COL_GENRE = "genre"
+      COL_KEY = "key"
+      COL_MODE = "mode"  # binary
+      COLS_MUSICAL_CATEGORIES = [COL_GENRE, COL_KEY, COL_MODE]
+      ```
  * We simplified the generation of the class column using the `apply` function.
+   * Before:
+     ```python
+     popularity_verdict['verdict'] = ''
+     for i, row in popularity_verdict.iterrows():
+     score = 'low'
+     if row.popularity >= 50:
+     score = 'popular'
+     popularity_verdict.at[i, 'verdict'] = score
+     ```
+   * After:
+     ```python
+     df[COL_GEN_POPULARITY_CLASS] = df[COL_POPULARITY].apply(lambda x: CLASS_POPULAR if x >= self.threshold_popular else CLASS_UNPOPULAR)
+     ```
  * We have made explicit the set of features that is actually being used by the models (in variable `cols_used_by_models`).
    Previously, it was simply the set of numerical columns that remained after some drops and projections.
    And we can already see that applying `StandardScaler` to columns that are actually categorical (such as the key and the mode),
    is, at the very least, questionable. We shall do something about this in a subsequent step.
-
+   * Before:
+     ```python
+     pop_ver_att = popularity_verdict[['year', 'danceability', 'energy', 'key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo', 'time_signature', 'duration_mins']]
+     X = pop_ver_att.select_dtypes(include='number')
+     ```
+   * After:
+     ```python
+     cols_used_by_models = [COL_YEAR, *COLS_MUSICAL_DEGREES, COL_KEY, COL_MODE, COL_TEMPO, COL_TIME_SIGNATURE, COL_LOUDNESS, COL_DURATION_MS]
+     X = X[cols_used_by_models]
+     ```
 # Principles Addressed in this Step
 
 * Find the right abstractions

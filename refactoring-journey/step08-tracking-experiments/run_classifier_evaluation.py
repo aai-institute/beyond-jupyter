@@ -37,10 +37,16 @@ def main():
         ModelFactory.create_xgb("-meanArtistFreqPopular", [FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
     ]
 
-    # evaluate models
+    # declare parameters to be used for evaluation, i.e. how to split the data (fraction and random seed)
     evaluator_params = VectorClassificationModelEvaluatorParams(fractional_split_test_fraction=0.3,
+        fractional_split_random_seed=42,
         binary_positive_label=dataset.class_positive)
+
+    # use a high-level utility class for evaluating the models, i.e. fitting on the training data and evaluating
+    # on the test data provided via the splitting declared above
     ev = ClassificationEvaluationUtil(io_data, evaluator_params=evaluator_params)
+
+    # inject high-level utility objects to track the evaluation of the models
     ev.compare_models(models, tracked_experiment=tracked_experiment, result_writer=result_writer)
 
 
