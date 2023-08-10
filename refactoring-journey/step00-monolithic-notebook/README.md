@@ -73,6 +73,6 @@ Here are a few limitations, all of which we shall address in our refactoring jou
   variable depends on the execution order of the cells in the notebook. 
   This can lead to behaviour as shown here (notice the output indices in the variant on the right),
 
-  ![different_state](different_states.png)
+  ![different_state](res/different_states.png)
 
   where a re-computation of the accuracy score of the random forest model after having evaluating the decision tree leads to an incorrect output in terms of what is actually printed.
