@@ -13,8 +13,8 @@ We create a package `songpop` with the following modules,
 
 such that the updated [main script](run_classifier_evaluation.py) is focussed chiefly on the experiment to execute.
 
-Notably, this change facilitates the use more general functionality in
-additional experiments or even deployments.
+Notably, this change facilitates the use of more general functionality in
+additional experiments or even entirely different contexts (e.g. deployments).
 
 ## Principles Addressed in this Step
 

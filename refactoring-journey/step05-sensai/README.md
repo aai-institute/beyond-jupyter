@@ -128,7 +128,8 @@ if __name__ == '__main__':
     logging.run_main(main)
 ```
 
-Take a look at the [log output](output.txt) that is produced.
+Take a look at the [log output](output.txt) that is produced and compare it to 
+the [output we had initially](../step02-dataset-representation/output.txt).
 
 ## Randomness
 

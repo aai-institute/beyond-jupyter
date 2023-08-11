@@ -56,53 +56,53 @@ Place the CSV file `spotify_data.csv` in the `data` folder (in the root of this 
 
 These are the steps of the journey:
 
-0. [Monolithic Notebook](step00-monolithic-notebook/README.md)
+ 0. [Monolithic Notebook](step00-monolithic-notebook/README.md)
    
-   This is the starting point, a Jupyter notebook which is largely unstructured.  
+    This is the starting point, a Jupyter notebook which is largely unstructured.  
    
-1. [Python Script](step01-python-script/README.md)
+ 1. [Python Script](step01-python-script/README.md)
 
-   This step extracts the code that is strictly concerned with the training and evaluation of models.
+    This step extracts the code that is strictly concerned with the training and evaluation of models.
 
-2. [Dataset Representation](step02-dataset-representation/README.md)
+ 2. [Dataset Representation](step02-dataset-representation/README.md)
 
-   This step introduces an explicit representation for the dataset, making transformations explicit as well as optional.
+    This step introduces an explicit representation for the dataset, making transformations explicit as well as optional.
 
-3. [Model-Specific Pipelines](step03-model-specific-pipelines/README.md)
+ 3. [Model-Specific Pipelines](step03-model-specific-pipelines/README.md)
 
-   This step refactors the pipeline to move all transforming operations into the models, enabling different models to use entirely different pipelines.
+    This step refactors the pipeline to move all transforming operations into the models, enabling different models to use entirely different pipelines.
 
-4. [Refactoring](step04-refactoring/README.md)
+ 4. [Refactoring](step04-refactoring/README.md)
 
-   This step improves the code structure by adding function-specific Python modules.
+    This step improves the code structure by adding function-specific Python modules.
 
-5. [sensAI](step05-sensai/README.md)
+ 5. [sensAI](step05-sensai/README.md)
 
-   This step introduces the high-level library sensAI, which will enable more flexible, declarative model specifications down the line.
-   It furthermore facilitates logging and helps with other minor details.
+    This step introduces the high-level library sensAI, which will enable more flexible, declarative model specifications down the line.
+    It furthermore facilitates logging, model evaluation and helps with other minor details.
 
-6. [Feature Representation](step06-feature-representation/README.md)
+ 6. [Feature Representation](step06-feature-representation/README.md)
 
-   This step separates representations of features and their properties from the models that use them, allowing
-   model input pipelines to be flexibly composed.
+    This step separates representations of features and their properties from the models that use them, allowing
+    model input pipelines to be flexibly composed.
 
-7. [Feature Engineering](step07-feature-engineering/README.md)
+ 7. [Feature Engineering](step07-feature-engineering/README.md)
 
-   This step adds an engineered feature to the mix.
+    This step adds an engineered feature to the mix.
 
-8. [Tracking Experiments](step08-tracking-experiments/README.md)
+ 8. [Tracking Experiments](step08-tracking-experiments/README.md)
 
-   This step adds tracking functionality via sensAI's mlflow integration and by logging directly to the file system.
+    This step adds tracking functionality via sensAI's mlflow integration and by logging directly to the file system.
 
-9. [Regression](step09-regression/README.md)
+ 9. [Regression](step09-regression/README.md)
 
-   This step considers the perhaps more natural formulation of the prediction problem as a regression problem.
+    This step considers the perhaps more natural formulation of the prediction problem as a regression problem.
 
 10. [Cross-Validation](step10-cross-validation/README.md)
 
-   This step adds the option to use cross-validation.
+    This step adds the option to use cross-validation.
 
 11. [Deployment](step11-deployment/README.md)
 
-   This step adds a web service for inference, which is packaged in a docker container.
+    This step adds a web service for inference, which is packaged in a docker container.
 

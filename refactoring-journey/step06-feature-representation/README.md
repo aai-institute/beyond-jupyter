@@ -1,11 +1,16 @@
 # Step 6: Feature Representation 
 
-In this step, we shall create explicit representations for our features, enabling
+In this step, we shall **create explicit representations for our features**, enabling
 us to represent meta-information about features and to subequently leverage the respective
-information in order to perform model-specific transformations.
+meta-information in order to perform model-specific transformations.
 The idea is that we centrally register the relevant information about a feature or set of features
-once and then let our model implementations decide which ones to use and which
+*once* and then let our model implementations decide which ones to use and which
 concrete transformations to apply.
+
+This critically enables **declarative semantics**, allowing us to simply declare the 
+set of features we would like to use and all model-specific aspects will follow
+automatically. A model's input pipeline thus becomes composable.
+
 
 ## Feature Registry
 
@@ -107,7 +112,7 @@ Notice that
 
   * our model specifications are largely declarative in nature.
     
-    In particular, we can simply declare the set of features that a model is to use and, depending in the model, the selected set of features will automatically be transformed in a way that suits the model, i.e. categorical features will be one-hot encoded if necessary 
+    In particular, we can simply declare the set of features that a model is to use and, depending on the model, the selected set of features will automatically be transformed in a way that suits the model, i.e. categorical features will be one-hot encoded if necessary 
     and numerical features will be appropriately normalised.
 
 

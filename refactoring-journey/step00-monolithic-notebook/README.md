@@ -22,7 +22,7 @@ old and new implementations alike.
 Let's assume that we start with the [Jupyter notebook in this folder](spotify-song-popularity-prediction.ipynb).
 Here are a few limitations, all of which we shall address in our refactoring journey:
 
-* The current paradigm is not amenable to experimentation, as it does not facilitate the execution
+* **The current paradigm is not amenable to experimentation**, as it does not facilitate the execution
   of experiments where parts of the implementation vary in some shape or form.
 
   * If we experimented with different variations of the models by
@@ -34,8 +34,8 @@ Here are a few limitations, all of which we shall address in our refactoring jou
   In essence, we need a way of parametrising our code rather than changing it, and the way
   to achieve this is through abstractions.
 
-* The current implementation is inflexiblie both with respect to the data and with 
-  respect to the models.
+* **The current implementation is inflexiblie both with respect to the data and with 
+  respect to the models**.
 
   * There is no clearly defined data set (and no respective representation or abstraction).
     Therefore, experiments with variations of the data set cannot easily be supported.
@@ -48,7 +48,7 @@ Here are a few limitations, all of which we shall address in our refactoring jou
         Specifically, in our example, categorical features are either not being used or being
         represented in a rather questionable manner.
 
-* Results cannot conveniently be tracked for future reference. They are stored only in the cells'
+* **Results cannot conveniently be tracked** for future reference. They are stored only in the cells'
   outputs.
     * If we created variations of our experiments by changing existing parts of the notebook, 
       we would lose earlier results. 
@@ -58,7 +58,7 @@ Here are a few limitations, all of which we shall address in our refactoring jou
       the prediction or the data set, as there is no notion of an *experiment representation* with which we could associate results.
     * There is no good way of archiving our results. Git would not really be a good option; if we stored the notebook with the cell outputs, new executions would produce unnecessarily large diffs.
 
-* The resulting models are not self-contained artifacts that could be deployed for inference.
+* **The resulting models are not self-contained artifacts** that could be deployed for inference.
   Even if, in the inference case, we had the exact same features available, there is no object in our
   current implementation that would transform these inputs to the desired predictions.
 

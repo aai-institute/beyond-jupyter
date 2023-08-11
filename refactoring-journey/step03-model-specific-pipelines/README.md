@@ -1,7 +1,7 @@
 # Step 3: Model-Specific Pipelines
 
 In this step, we make another critical step towards more flexibility.
-We shall strongly associate the data processing pipeline with the models in order
+We shall **strongly associate the data processing pipeline with the models** in order
 to enable different models to use entirely different pipelines in future experiments.
 Importantly, different models might
   * use a different set of features or
