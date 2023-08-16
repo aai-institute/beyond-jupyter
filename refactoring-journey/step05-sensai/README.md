@@ -70,14 +70,8 @@ what we want without wasting time on the procedural details.
 
 Before:
 ```python
-# define models to be evaluated
+# split the data set
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42, test_size=0.3, shuffle=True)
-models = [
-    ModelFactory.create_logistic_regression_orig(),
-    ModelFactory.create_knn_orig(),
-    ModelFactory.create_random_forest_orig(),
-    ModelFactory.create_decision_tree_orig(),
-]
 
 # evaluate the models in a procedural way
 for model in models:
