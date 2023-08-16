@@ -41,11 +41,17 @@ Use conda to create an environment based on [environment.yml](../environment.yml
 
 This will create a conda environment named `pop`.
 
+#### Configure Your IDE's Runtime Environment
+
+Configure your IDE to use the `pop` environment created in the previous step.
+Furthermore, make sure to add the folder `../src` to your PYTHONPATH (in PyCharm, simply 
+mark the folder as a sources root).
+
 #### Downloading the Data
 
 You can use the script [load_data.py](../scripts/load_data.py) to automatically download the raw data CSV file to the subfolder
 `data` on the top level of the repository. 
-Note that a Kaggle API key is required for this (see [instructions](https://www.kaggle.com/docs/api).
+Note that a Kaggle API key is required for this (see [instructions](https://www.kaggle.com/docs/api)).
 
 Alternatively, you can [download the dataset manually from the Kaggle website](https://www.kaggle.com/datasets/notshrirang/spotify-million-song-dataset).
 Place the CSV file `spotify_data.csv` in the `data` folder (in the root of this repository).
