@@ -25,6 +25,12 @@ properties:
   * Importantly, we also specify meta-data indicating
       * which subset of the features is categorical (if any)
       * how numerical features can be normalised.
+    
+    It is important to note that the meta-data does not impact the feature generation
+    as such, i.e. the values we pass in `categorical_feature_names` or 
+    `normalisation_rule_template` do not affect the feature generation;
+    they merely serve to provide information that can later be leveraged by feature
+    transformers (see next subsection).
 
 ```python
 registry = FeatureGeneratorRegistry()
@@ -46,7 +52,7 @@ registry.register_factory(FeatureName.DURATION, lambda: FeatureGeneratorTakeColu
 Note that the feature generators we registered treat some of the features differently:
   * Whereas the original implementation treats the features `mode` and `key` as numerical features,
     we now treat them as categorical. Especially for the musical key of a song,
-    this is much more sensible.
+    this is much more sensible. 
   * The original implementation dropped the feature `genre` completely, because it had no
     numerical representation. We include it as another categorical feature.
 
@@ -114,6 +120,7 @@ Notice that
     
     In particular, we can simply declare the set of features that a model is to use and, depending on the model, the selected set of features will automatically be transformed in a way that suits the model, i.e. categorical features will be one-hot encoded if necessary 
     and numerical features will be appropriately normalised.
+    Without the feature representations introduced in this step, this would not be possible in such a concise manner.
 
 
 ## Principles Addressed in this Step
