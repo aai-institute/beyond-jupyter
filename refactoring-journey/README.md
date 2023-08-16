@@ -5,8 +5,38 @@ as a Jupyter notebook can be successively refactored to gain flexibility and
 adopt software design principles as well as workflow improvements in order
 to facilitate experimentation.
 
-The use case considers a [dataset](https://www.kaggle.com/datasets/notshrirang/spotify-million-song-dataset) from kaggle containing meta-data on approximately one million songs.
+The use case considers a dataset from kaggle containing meta-data on approximately one million songs (see download instructions below).
 The goal is to use the data in order to learn a model for the prediction of popularity given other attributes such as the tempo, the release year, the key, the musical mode, etc.
+
+## Preliminaries
+
+In order for the code of each step to be runnable, set up a Python virtual environment
+and download the Spotify song data.
+
+### Python Environment
+
+Use conda to create an environment based on [environment.yml](../environment.yml) in the root folder of this repository:
+
+    conda env create -f ../environment.yml
+
+This will create a conda environment named `pop`.
+
+### Configure Your IDE's Runtime Environment
+
+Configure your IDE to use the `pop` environment created in the previous step.
+Furthermore, make sure to add the folder `../src` to your PYTHONPATH (in PyCharm, simply
+mark the folder as a sources root).
+
+### Downloading the Data
+
+You can use the script [load_data.py](../scripts/load_data.py) to automatically download the raw data CSV file to the subfolder
+`data` on the top level of the repository.
+Note that a Kaggle API key is required for this (see [instructions](https://www.kaggle.com/docs/api)).
+
+Alternatively, you can [download the dataset manually from the Kaggle website](https://www.kaggle.com/datasets/amitanshjoshi/spotify-1million-tracks).
+Place the CSV file `spotify_data.csv` in the `data` folder (in the root of this repository).
+
+![data_folder](res/data_folder.png)
 
 ## How to use this package?
 
@@ -27,36 +57,6 @@ the state of each step in a separate tag, i.e. in said folder, you could run, fo
    
         git difftool step04-refactoring step05-sensai
 
-
-### Preliminaries
-
-In order for the code of each step to be runnable, set up a Python virtual environment
-and download the Spotify song data.
-
-#### Python Environment
-
-Use conda to create an environment based on [environment.yml](../environment.yml) in the root folder of this repository:
-
-    conda env create -f ../environment.yml
-
-This will create a conda environment named `pop`.
-
-#### Configure Your IDE's Runtime Environment
-
-Configure your IDE to use the `pop` environment created in the previous step.
-Furthermore, make sure to add the folder `../src` to your PYTHONPATH (in PyCharm, simply 
-mark the folder as a sources root).
-
-#### Downloading the Data
-
-You can use the script [load_data.py](../scripts/load_data.py) to automatically download the raw data CSV file to the subfolder
-`data` on the top level of the repository. 
-Note that a Kaggle API key is required for this (see [instructions](https://www.kaggle.com/docs/api)).
-
-Alternatively, you can [download the dataset manually from the Kaggle website](https://www.kaggle.com/datasets/notshrirang/spotify-million-song-dataset).
-Place the CSV file `spotify_data.csv` in the `data` folder (in the root of this repository).
-
-![data_folder](res/data_folder.png)
 
 ## Steps in the Journey
 
