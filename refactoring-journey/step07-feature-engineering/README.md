@@ -25,8 +25,7 @@ In either case, it is then possible for the feature to be undefined:
   * During training, an artist may have but a single song in the training set.
 
 We use XGBoost's gradient-boosted decision trees as a type of model that explicitly
-support incomplete data, adding two concrete models - one which includes the feature and
-one which does not.
+supports incomplete data. 
 
 ```python
     @classmethod
@@ -38,7 +37,17 @@ one which does not.
             .with_name(f"XGBoost{name_suffix}")
 ```
 
-We can add our newly introduced feature via the parameter `add_features`.
+We can add our newly introduced feature via the parameter `add_features` and 
+consider two concrete models - one which includes the feature and
+one which does not.
+
+```python
+    models = [
+        ...
+        ModelFactory.create_xgb(),
+        ModelFactory.create_xgb("-meanArtistFreqPopular", [FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+    ]
+```
 
 As far as the other models are concerned, we could apply a feature transformation involving
 imputation if we  wanted to support the new feature.
