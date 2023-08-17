@@ -62,6 +62,70 @@ At all times, we can conveniently inspect the results and sorted them by perform
 If need be, we can easily inspect all the hyperparameters and look at the detailed
 logs of the individual runs.
 
+## Leveraging Our New-Found Freedom to Experiment
+
+To illustrate the freedom we gained, let us experiment with some variations of 
+the XGBoost model.
+Specifically, 
+ * let us evaluate the impact of adjusting a parameter that controls overfitting.
+   In a variant of the model, we set the parameter `min_child_weight` to a higher
+   value, thus establishing a lower bound for the sample subsets that are allowed
+   to end up in any child - and, by extension, any leaf of the tree.
+ * let us conduct an experiment to quantify the importance of the mean artist 
+   popularity feature that we introduced in the previous step. How good is a 
+   model that uses only this feature?
+
+To achieve this, we adapt the XGBoost model factory function to support parametrisation,
+
+```python
+    @classmethod
+    def create_xgb(cls, name_suffix="", features: Sequence[FeatureName] = DEFAULT_FEATURES, add_features: Sequence[FeatureName] = (),
+            min_child_weight: Optional[float] = None, **kwargs):
+        fc = FeatureCollector(*features, *add_features, registry=registry)
+        return XGBGradientBoostedVectorClassificationModel(min_child_weight=min_child_weight, **kwargs) \
+            .with_feature_collector(fc) \
+            .with_feature_transformers(fc.create_feature_transformer_one_hot_encoder()) \
+            .with_name(f"XGBoost{name_suffix}")
+```
+
+such that we can easily vary the set of features and adjust the model parameters.
+As outlined above, we then include the following XGBoost models in the list of evaluated models:
+
+```python
+        ModelFactory.create_xgb(),
+        ModelFactory.create_xgb("-minChildWeight10", min_child_weight=10),
+        ModelFactory.create_xgb("-meanArtistFreqPopular", add_features=[FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+        ModelFactory.create_xgb("-meanArtistFreqPopularOnly", features=[FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+```
+
+In addition to the base model "XGBoost", which uses the previously defined default features and parameters,
+we now additionally define three variants thereof:
+ * `XGBoost-minChildWeight10` modifies the regularisation parameter min_child_weight
+ * `XGBoost-meanArtistFreqPopular` adds the mean artist popularity on top of the default features
+ * `XGBoost-meanArtistFreqPopularOnly` reduces the feature set to the single defined feature.
+
+Notice that we were able to very concisely define the model variants, without any code duplication.
+The models adapt dynamically to the properties we specify!
+
+These are the evaluation results we obtained:
+```
+INFO  2023-08-17 12:08:36,171 sensai.evaluation.eval_util:compare_models - Model comparison results:
+                                   accuracy  balancedAccuracy  precision[popular]  recall[popular]  F1[popular]
+model_name                                                                                                     
+XGBoost                            0.970000          0.572664            0.433333         0.151163     0.224138
+XGBoost-minChildWeight10           0.974000          0.574723            0.722222         0.151163     0.250000
+XGBoost-meanArtistFreqPopular      0.974000          0.642432            0.595238         0.290698     0.390625
+XGBoost-meanArtistFreqPopularOnly  0.970667          0.618147            0.477273         0.244186     0.323077
+```
+
+Therefore, we can conclude that 
+  * controlling overfitting is helpful. Setting `min_child_weight` to 10 has greatly increased the precision.
+    We might want to investigate this further and conduct a hyper-parameter optimisation in order to determine
+    the best way to control overfitting.
+  * the mean artist popularity feature is hugely important. Removing all other features did not affect the 
+    quality of the results substantially.
+    
+
 ## Principles Addressed in this Step
 
 * Track experiments

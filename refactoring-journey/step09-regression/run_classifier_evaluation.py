@@ -34,7 +34,9 @@ def main():
         #ClassificationModelFactory.create_random_forest(),
         ClassificationModelFactory.create_decision_tree_orig(),
         ClassificationModelFactory.create_xgb(),
-        ClassificationModelFactory.create_xgb("-meanArtistFreqPopular", [FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+        ClassificationModelFactory.create_xgb("-minChildWeight10", min_child_weight=10),
+        ClassificationModelFactory.create_xgb("-meanArtistFreqPopular", add_features=[FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+        ClassificationModelFactory.create_xgb("-meanArtistFreqPopularOnly", features=[FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
         ClassificationModelFactory.create_classifier_from_best_regressor(dataset)
     ]
     models = [m for m in models if m is not None]

@@ -14,8 +14,8 @@ from sensai.sklearn.sklearn_classification import SkLearnLogisticRegressionVecto
 class ModelFactory:
     COLS_USED_BY_ORIGINAL_MODELS = [COL_YEAR, *COLS_MUSICAL_DEGREES, COL_KEY, COL_MODE, COL_TEMPO, COL_TIME_SIGNATURE, COL_LOUDNESS,
         COL_DURATION_MS]
-    DEFAULT_FEATURES = [FeatureName.MUSICAL_DEGREES, FeatureName.MUSICAL_CATEGORIES, FeatureName.TEMPO, FeatureName.DURATION,
-        FeatureName.LOUDNESS]
+    DEFAULT_FEATURES = (FeatureName.MUSICAL_DEGREES, FeatureName.MUSICAL_CATEGORIES, FeatureName.TEMPO, FeatureName.DURATION,
+        FeatureName.LOUDNESS, FeatureName.YEAR)
 
     @classmethod
     def create_logistic_regression_orig(cls):
@@ -73,9 +73,10 @@ class ModelFactory:
             .with_name("KNeighbors")
 
     @classmethod
-    def create_xgb(cls, name_suffix="", add_features: Sequence[FeatureName] = (), **kwargs):
-        fc = FeatureCollector(*cls.DEFAULT_FEATURES, *add_features, registry=registry)
-        return XGBGradientBoostedVectorClassificationModel(**kwargs) \
+    def create_xgb(cls, name_suffix="", features: Sequence[FeatureName] = DEFAULT_FEATURES, add_features: Sequence[FeatureName] = (),
+            min_child_weight: Optional[float] = None, **kwargs):
+        fc = FeatureCollector(*features, *add_features, registry=registry)
+        return XGBGradientBoostedVectorClassificationModel(min_child_weight=min_child_weight, **kwargs) \
             .with_feature_collector(fc) \
             .with_feature_transformers(fc.create_feature_transformer_one_hot_encoder()) \
             .with_name(f"XGBoost{name_suffix}")

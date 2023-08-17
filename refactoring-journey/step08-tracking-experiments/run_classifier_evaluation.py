@@ -34,7 +34,9 @@ def main():
         ModelFactory.create_random_forest(),
         ModelFactory.create_decision_tree_orig(),
         ModelFactory.create_xgb(),
-        ModelFactory.create_xgb("-meanArtistFreqPopular", [FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+        ModelFactory.create_xgb("-minChildWeight10", min_child_weight=10),
+        ModelFactory.create_xgb("-meanArtistFreqPopular", add_features=[FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+        ModelFactory.create_xgb("-meanArtistFreqPopularOnly", features=[FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
     ]
 
     # declare parameters to be used for evaluation, i.e. how to split the data (fraction and random seed)

@@ -11,8 +11,8 @@ from sensai.sklearn.sklearn_classification import SkLearnLogisticRegressionVecto
 class ModelFactory:
     COLS_USED_BY_ORIGINAL_MODELS = [COL_YEAR, *COLS_MUSICAL_DEGREES, COL_KEY, COL_MODE, COL_TEMPO, COL_TIME_SIGNATURE, COL_LOUDNESS,
         COL_DURATION_MS]
-    DEFAULT_FEATURES = [FeatureName.MUSICAL_DEGREES, FeatureName.MUSICAL_CATEGORIES, FeatureName.TEMPO, FeatureName.DURATION,
-        FeatureName.LOUDNESS]
+    DEFAULT_FEATURES = (FeatureName.MUSICAL_DEGREES, FeatureName.MUSICAL_CATEGORIES, FeatureName.TEMPO, FeatureName.DURATION,
+        FeatureName.LOUDNESS, FeatureName.YEAR)
 
     @classmethod
     def create_logistic_regression_orig(cls):

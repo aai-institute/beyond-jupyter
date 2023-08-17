@@ -14,6 +14,7 @@ class FeatureName(Enum):
     LOUDNESS = "loudness"
     TEMPO = "tempo"
     DURATION = "duration"
+    YEAR = "year"
     MEAN_ARTIST_FREQ_POPULAR = "mean_artist_freq_popular"
     MEAN_ARTIST_POPULARITY = "mean_artist_popularity"
 
@@ -83,6 +84,9 @@ registry.register_factory(FeatureName.TEMPO, lambda: FeatureGeneratorTakeColumns
     normalisation_rule_template=DFTNormalisation.RuleTemplate(
         transformer_factory=SkLearnTransformerFactoryFactory.StandardScaler())))
 registry.register_factory(FeatureName.DURATION, lambda: FeatureGeneratorTakeColumns(COL_DURATION_MS,
+    normalisation_rule_template=DFTNormalisation.RuleTemplate(
+        transformer_factory=SkLearnTransformerFactoryFactory.StandardScaler())))
+registry.register_factory(FeatureName.YEAR, lambda: FeatureGeneratorTakeColumns(COL_YEAR,
     normalisation_rule_template=DFTNormalisation.RuleTemplate(
         transformer_factory=SkLearnTransformerFactoryFactory.StandardScaler())))
 registry.register_factory(FeatureName.MEAN_ARTIST_FREQ_POPULAR, lambda: FeatureGeneratorMeanArtistPopularity(True))
