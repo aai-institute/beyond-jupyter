@@ -26,7 +26,7 @@ properties:
       * which subset of the features is categorical (if any)
       * how numerical features can be normalised.
     
-    It is important to note that the meta-data does not impact the feature generation
+    Note that the meta-data does not impact the feature generation
     as such, i.e. the values we pass in `categorical_feature_names` or 
     `normalisation_rule_template` do not affect the feature generation;
     they merely serve to provide information that can later be leveraged by feature
@@ -48,6 +48,16 @@ registry.register_factory(FeatureName.DURATION, lambda: FeatureGeneratorTakeColu
     normalisation_rule_template=DFTNormalisation.RuleTemplate(
         transformer_factory=SkLearnTransformerFactoryFactory.StandardScaler())))
 ```
+
+Where applicable, we have declared which of the features are categorical via the keyword parameter
+`categorical_feature_names`.
+For the numerical features, we have specified how the features are to be normalised via 
+keyword parameter `normalisation_rule_template` (noting, once more, that
+the feature generator does not itself perform the normalisation, it merely stores the information):
+  * Because the musical degrees are already normalised to the range [0, 1], we have specified
+    that they can be skipped during normalisation (`skip=True`).
+  * For the other features, applying a `StandardScaler` is reasonable, and therefore we have 
+    specified a factory for the generation of the respective transformer.
 
 Note that the feature generators we registered treat some of the features differently:
   * Whereas the original implementation treats the features `mode` and `key` as numerical features,
@@ -90,7 +100,7 @@ during feature registration via a second factory method of our `FeatureCollector
 For the KNN model, we require the vector space in which our features reside
 to produce meaningful distance metrics. 
 Since we have now introduced Boolean features that are represented numerically
-as elements {0, 1}, we add, after normalisation (which partly uses standarisation), 
+as elements of {0, 1}, we add, after normalisation (which partly uses standarisation), 
 an additional `MaxAbsScaler` transformer to not give undue weight to the features 
 that use larger scales.
 The resulting transformation should be an improvement; but ultimately, a thoroughly
