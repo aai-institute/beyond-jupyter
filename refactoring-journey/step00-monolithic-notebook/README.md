@@ -19,7 +19,8 @@ Unfortunately, this way of working would severely limit our ability to experimen
 keeping track of past results and maintaining a setup that enables us to simultaneously support
 old and new implementations alike.
 
-Let's assume that we start with the [Jupyter notebook in this folder](spotify-song-popularity-prediction.ipynb).
+Let's assume that we start with the [Jupyter notebook in this folder](spotify-song-popularity-prediction.ipynb), which we have taken
+from Kaggle.
 Here are a few limitations, all of which we shall address in our refactoring journey:
 
 * **The current paradigm is not amenable to experimentation**, as it does not facilitate the execution

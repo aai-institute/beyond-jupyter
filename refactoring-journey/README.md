@@ -1,7 +1,7 @@
 # Predicting Spotify Song Popularity: A Refactoring Journey
 
 In this case study, we will show how a machine learning use case that is implemented
-as a Jupyter notebook can be successively refactored to gain flexibility and
+as a Jupyter notebook (which was [taken from Kaggle]()) can be successively refactored to gain flexibility and
 adopt software design principles as well as workflow improvements in order
 to facilitate experimentation.
 
