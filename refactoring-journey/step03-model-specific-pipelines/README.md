@@ -46,7 +46,7 @@ processes in order for results to be meaningful in general.
 
 Technically, we introduce a model factory that is able to create instances of the four different models
 we currently consider. 
-We have named the factory functions in a way that indicates that pertain to the original
+We have named the factory functions in a way that indicates that they pertain to the original
 models (with suffix `_orig`), preparing for the future case where we will have
 several additional models.
 
