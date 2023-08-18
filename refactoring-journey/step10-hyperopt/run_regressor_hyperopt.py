@@ -7,6 +7,7 @@ from hyperopt import hp
 
 from sensai.evaluation import VectorRegressionModelEvaluatorParams, RegressionEvaluationUtil
 from songpop.data import Dataset
+from songpop.features import FeatureName
 from songpop.model_factory import RegressionModelFactory
 from sensai.evaluation.eval_stats import RegressionMetricRRSE
 from sensai.util import logging
@@ -33,15 +34,15 @@ def run_hyperopt(dataset: Dataset, model: Literal["xgb"] = "xgb"):
             }
         ]
         space = {
-            'max_depth': hp.quniform("max_depth", 3, 18, 1),
+            'max_depth': hp.uniformint("max_depth", 3, 10),
             'gamma': hp.uniform('gamma', 0, 9),
             'reg_lambda': hp.uniform('reg_lambda', 0, 1),
             'colsample_bytree': hp.uniform('colsample_bytree', 0.25, 1),
-            'min_child_weight': hp.quniform('min_child_weight', 1, 12, 2),
+            'min_child_weight': hp.uniformint('min_child_weight', 1, 100),
         }
 
         def create_model(space):
-            return RegressionModelFactory.create_xgb(
+            return RegressionModelFactory.create_xgb(add_features=[FeatureName.MEAN_ARTIST_POPULARITY],
                 verbosity=0,
                 max_depth=int(space['max_depth']),
                 gamma=space['gamma'],
@@ -49,7 +50,7 @@ def run_hyperopt(dataset: Dataset, model: Literal["xgb"] = "xgb"):
                 min_child_weight=int(space['min_child_weight']),
                 colsample_bytree=space['colsample_bytree'])
 
-        hours = 18
+        hours = 2
         warnings.filterwarnings("ignore")
     else:
         raise ValueError(model)
