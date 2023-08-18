@@ -44,10 +44,10 @@ def run_hyperopt(dataset: Dataset, model: Literal["xgb"] = "xgb"):
         def create_model(search_space_element: Dict[str, Any]):
             return RegressionModelFactory.create_xgb(add_features=[FeatureName.MEAN_ARTIST_POPULARITY],
                 verbosity=0,
-                max_depth=int(search_space_element['max_depth']),
+                max_depth=search_space_element['max_depth'],
                 gamma=search_space_element['gamma'],
                 reg_lambda=search_space_element['reg_lambda'],
-                min_child_weight=int(search_space_element['min_child_weight']),
+                min_child_weight=search_space_element['min_child_weight'],
                 colsample_bytree=search_space_element['colsample_bytree'])
 
         hours = 2

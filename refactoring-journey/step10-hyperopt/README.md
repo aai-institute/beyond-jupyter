@@ -1,33 +1,40 @@
 # Step 9: Hyperparameter Optimisation
 
 While the model parameters adjust themselves based on the data and the learning algorithm, hyperparameters are set beforehand and remain static throughout the training.
-This might be the number of layers and neurons in a neural network or the maximal depth of a tree model.
-
-By adjusting these parameters, we can achieve superior performance, often resulting in models, which produce more accurate predictions. 
+Hyperparameters such the number of layers/neurons in a neural network or the maximum depth of a tree model can severely affect a model's generalisation performance.
 The intricate relationship between hyperparameters and model performance is not always straightforward. Therefore, systematic optimization can uncover effective combinations that might be overlooked in manual experimentation.
 
-As it is always a good idea to use existing libraries, if they fit our needs, 
-we will use the well established framework [hyperopt](https://github.com/hyperopt/hyperopt/tree/master) to tune the
-hyperparameters of our xgboost model. For this, we have to define a
-search space for our hyperparameters and an objective function, which should be minimised with hyperopt.
+In this step, we shall investigate the hyperparameter search for our XGBoost 
+regression model.
+As long as they fit our needs, it is always a good idea to use existing libraries,
+and we have opted to use the well-established framework [hyperopt](https://github.com/hyperopt/hyperopt/tree/master) to tune the hyperparameters of our model. 
+To apply it, we essentially need to define two things:
+  *  the search space for our hyperparameters,
+  *  an objective function that is to be minimised.
 
-The search space is simple defined as a dictionary, containing hyperopt objects describing the desired range of parameters.
-We concentrate on parameters, related to handling over-fitting issues, for a detailed explanation of the parameters, see
-the [xgboost documentation](https://xgboost.readthedocs.io/en/stable/parameter.html#parameters-for-tree-booster).
+In hyperopt, the search space is simply defined as a dictionary containing objects describing the desired range for each parameter.
+We concentrate on parameters that serve to control overfitting; for a detailed explanation of these parameters, see
+the [XGBoost documentation](https://xgboost.readthedocs.io/en/stable/parameter.html#parameters-for-tree-booster).
 
 ```python
 search_space = {
-            'max_depth': hp.quniform("max_depth", 3, 18, 1),
-            'gamma': hp.uniform('gamma', 0, 9),
-            'reg_lambda': hp.uniform('reg_lambda', 0, 1),
-            'colsample_bytree': hp.uniform('colsample_bytree', 0.25, 1),
-            'min_child_weight': hp.quniform('min_child_weight', 1, 12, 2),
-        }
+        'max_depth': hp.uniformint("max_depth", 3, 10),
+        'gamma': hp.uniform('gamma', 0, 9),
+        'reg_lambda': hp.uniform('reg_lambda', 0, 1),
+        'colsample_bytree': hp.uniform('colsample_bytree', 0.25, 1),
+        'min_child_weight': hp.uniformint('min_child_weight', 1, 100),
+    }
 ```
-To define the objective function, why have to use a factory method, which
-for a given element of the search space, constructs the according
-xgboost model. As we have already defined a model factory in the previous steps,
-this reduces to calling this factory with the correct entries of the search space element.
+
+The search algorithm will heuristically explore the search space.
+To guarantee that the parameter configuration we used previously is evaluated,
+we additionally specify a list of parameter configurations in `initial_space`, which
+will be considered at the beginning of the search.
+
+In order to evaluate a model for a given parameter configuration, we require a factory which will create an XGBoost model that is parametrised accordingly.
+As we have already defined a model factory in the previous steps,
+this reduces to calling this factory with the entries of the search space element,
+which will be provided as a dictionary.
 ```python
 def create_model(search_space_element: Dict[str, Any]):
             return RegressionModelFactory.create_xgb(
@@ -38,8 +45,10 @@ def create_model(search_space_element: Dict[str, Any]):
                 min_child_weight=int(search_space_element['min_child_weight']),
                 colsample_bytree=search_space_element['colsample_bytree'])
 ```
-We choose the *root relative squared error metric* (RRSE) as the value to be
-minimised. Accordingly, we can define our objective in the following way:
+
+Based on this factory, we can now define the actual objective function that
+evaluates a model for a given parameter configuration.
+
 ```python
 io_data = dataset.load_io_data()
 metric = RegressionMetricRRSE()
@@ -53,6 +62,24 @@ def objective(search_space_element: Dict[str, Any]):
     log.info(f"Loss[{metric.name}]={loss}")
     return {'loss': loss, 'status': hyperopt.STATUS_OK}
 ```
-Following our modular design scheme, we encapsulate the metric computation
-in a high-level object `RegressionMetricRRSE`. This allows us to modify the value to be optimised
-by changing one line of code.
+
+We chose the *root relative squared error* (RRSE) as the metric to be
+minimised and compute its value using the familiar evaluation utility class
+from sensAI.
+We apply a simple evaluation (based on a single split) using a different random
+seed; this helps to avoids bias and will ensure that our later evaluations will accurately reflect model quality (since they will definitely not use the same split).
+
+After having run the search for 60 hours, we obtained the following optimal parameters:
+
+```python
+TODO
+```
+
+We thus add a corresponding model to our factory and shall seek to thoroughly evaluate its quality in the next step.
+
+```python
+    @classmethod
+    def create_xgb_meanpop_opt(cls):
+        params = {}  # TODO
+        return cls.create_xgb("-meanPop-opt", add_features=[FeatureName.MEAN_ARTIST_POPULARITY], **params)
+```
