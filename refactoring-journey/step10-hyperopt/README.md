@@ -1,4 +1,4 @@
-# Step 9: Hyperparameter Optimisation
+# Step 10: Hyperparameter Optimisation
 
 While the model parameters adjust themselves based on the data and the learning algorithm, hyperparameters are set beforehand and remain static throughout the training.
 Hyperparameters such the number of layers/neurons in a neural network or the maximum depth of a tree model can severely affect a model's generalisation performance.
@@ -67,12 +67,18 @@ We chose the *root relative squared error* (RRSE) as the metric to be
 minimised and compute its value using the familiar evaluation utility class
 from sensAI.
 We apply a simple evaluation (based on a single split) using a different random
-seed; this helps to avoids bias and will ensure that our later evaluations will accurately reflect model quality (since they will definitely not use the same split).
+seed; this helps to avoid bias and will ensure that our later evaluations will accurately reflect model quality (since they will definitely not use the same split).
 
 After having run the search for 60 hours, we obtained the following optimal parameters:
 
 ```python
-TODO
+{
+ 'colsample_bytree': 0.9139066597052102,
+ 'gamma': 5.667764911228863,
+ 'max_depth': 10,
+ 'min_child_weight': 38.0,
+ 'reg_lambda': 0.22115937349846312
+}
 ```
 
 We thus add a corresponding model to our factory and shall seek to thoroughly evaluate its quality in the next step.
@@ -80,6 +86,10 @@ We thus add a corresponding model to our factory and shall seek to thoroughly ev
 ```python
     @classmethod
     def create_xgb_meanpop_opt(cls):
-        params = {}  # TODO
+        params = {'colsample_bytree': 0.9139066597052102,
+                  'gamma': 5.667764911228863,
+                  'max_depth': 10,
+                  'min_child_weight': 38.0,
+                  'reg_lambda': 0.22115937349846312} 
         return cls.create_xgb("-meanPop-opt", add_features=[FeatureName.MEAN_ARTIST_POPULARITY], **params)
 ```
