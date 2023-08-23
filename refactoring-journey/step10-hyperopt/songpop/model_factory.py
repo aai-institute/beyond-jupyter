@@ -150,3 +150,8 @@ class RegressionModelFactory:
             .with_feature_collector(fc) \
             .with_feature_transformers(fc.create_feature_transformer_one_hot_encoder()) \
             .with_name(f"XGBoost{name_suffix}")
+
+    @classmethod
+    def create_xgb_meanpop_opt(cls):
+        params = {} # TODO
+        return cls.create_xgb("-meanPop-opt", add_features=[FeatureName.MEAN_ARTIST_POPULARITY], **params)
