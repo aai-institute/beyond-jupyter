@@ -58,7 +58,7 @@ we achieved in the past.
 **We are now free to experiment** with different parametrisations of our existing
 models (as well as entirely new models) - simply by changing the list of models
 we consider in the main script.
-At all times, we can conveniently inspect the results and sorted them by performance. 
+At all times, we can conveniently inspect the results and sort them by performance. 
 If need be, we can easily inspect all the hyperparameters and look at the detailed
 logs of the individual runs.
 
