@@ -16,6 +16,8 @@ effort. For the build of a docker image for inference, we have added a now folde
 * [environment-prod.yml](app/environment-prod.yml): conda environment file, which includes dependencies to run the fastAPI application
 * [Dockerfile](app/Dockerfile): a minimal Dockerfile for running the model inference
 
+The docker image will make use of the best regression model which was saved by `run_regressor_evaluation.py` from the previous step, so in order for the image to work, make sure that you ran the script in the previous step's directory at least once.
+
 To build the image, execute this from the top-level of the repository
 ```
 docker build -t spotify-popularity-estimator -f refactoring-journey/step10-deployment/app/Dockerfile .

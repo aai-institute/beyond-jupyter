@@ -21,7 +21,7 @@ experiment name accordingly.
 experiment_name = TagBuilder("popularity-classification", dataset.tag()) \
     .with_conditional(use_cross_validation, "CV").build()
 ```
-In particular, we are interested in the performance of the xgboost model retrieved from
+In particular, we are interested in the performance of the XGBoost model retrieved from
 the previous hyperparameter optimisation step, which is named `XGBoost-meanPop-opt`. Running the 3-fold cross-validation results in the
 following metrics:
 ```
@@ -33,5 +33,4 @@ XGBoost-meanPop       5.833350  0.013290   66.385235  0.335167  0.736933  0.0016
 XGBoost-meanPop-opt   5.728754  0.009030   64.556853  0.244784  0.744179  0.001259    8.034714   0.015225    0.505786   0.001244        5.633648       0.012552
 
 ```
-We observe a small improvement of the tuned xgboost model in comparison to the default hyperparameter
-model `XGBoost-meanPop`.
+We observe a small improvement of the tuned XGBoost model in comparison to the default parameters as used by model `XGBoost-meanPop`.
