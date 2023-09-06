@@ -124,7 +124,7 @@ Notice that
   * we can easily support the old models and the new ones alongside each other (the `_orig` factory methods remain unchanged),
     because we have moved the pipeline components that differ between them into the actual model specifications.
 
-    This critically enables us re-evaluate old models, e.g. on a different data set.
+    This critically enables us to re-evaluate old models, e.g. on a different data set.
 
   * our model specifications are largely declarative in nature.
     
