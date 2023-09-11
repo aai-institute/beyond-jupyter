@@ -15,7 +15,7 @@ and download the Spotify song data.
 
 ### Python Environment
 
-Use conda to create an environment based on [environment.yml](../environment.yml) in the root folder of this repository:
+Use conda to create an environment based on [environment.yml](environment.yml) in the root folder of this repository:
 
     conda env create -f ../environment.yml
 
@@ -29,7 +29,7 @@ mark the folder as a sources root).
 
 ### Downloading the Data
 
-You can use the script [load_data.py](../scripts/load_data.py) to automatically download the raw data CSV file to the subfolder
+You can use the script [load_data.py](scripts/load_data.py) to automatically download the raw data CSV file to the subfolder
 `data` on the top level of the repository.
 Note that a Kaggle API key is required for this (see [instructions](https://www.kaggle.com/docs/api)).
 
@@ -62,45 +62,45 @@ the state of each step in a separate tag, i.e. in said folder, you could run, fo
 
 These are the steps of the journey:
 
- 0. [Monolithic Notebook](step00-monolithic-notebook/README.md)
+ 0. [Monolithic Notebook](refactoring-journey/step00-monolithic-notebook/README.md)
    
     This is the starting point, a Jupyter notebook which is largely unstructured.  
    
- 1. [Python Script](step01-python-script/README.md)
+ 1. [Python Script](refactoring-journey/step01-python-script/README.md)
 
     This step extracts the code that is strictly concerned with the training and evaluation of models.
 
- 2. [Dataset Representation](step02-dataset-representation/README.md)
+ 2. [Dataset Representation](refactoring-journey/step02-dataset-representation/README.md)
 
     This step introduces an explicit representation for the dataset, making transformations explicit as well as optional.
 
- 3. [Model-Specific Pipelines](step03-model-specific-pipelines/README.md)
+ 3. [Model-Specific Pipelines](refactoring-journey/step03-model-specific-pipelines/README.md)
 
     This step refactors the pipeline to move all transforming operations into the models, enabling different models to use entirely different pipelines.
 
- 4. [Refactoring](step04-refactoring/README.md)
+ 4. [Refactoring](refactoring-journey/step04-refactoring/README.md)
 
     This step improves the code structure by adding function-specific Python modules.
 
- 5. [sensAI](step05-sensai/README.md)
+ 5. [sensAI](refactoring-journey/step05-sensai/README.md)
 
     This step introduces the high-level library sensAI, which will enable more flexible, declarative model specifications down the line.
     It furthermore facilitates logging, model evaluation and helps with other minor details.
 
- 6. [Feature Representation](step06-feature-representation/README.md)
+ 6. [Feature Representation](refactoring-journey/step06-feature-representation/README.md)
 
     This step separates representations of features and their properties from the models that use them, allowing
     model input pipelines to be flexibly composed.
 
- 7. [Feature Engineering](step07-feature-engineering/README.md)
+ 7. [Feature Engineering](refactoring-journey/step07-feature-engineering/README.md)
 
     This step adds an engineered feature to the mix.
 
- 8. [Tracking Experiments](step08-tracking-experiments/README.md)
+ 8. [Tracking Experiments](refactoring-journey/step08-tracking-experiments/README.md)
 
     This step adds tracking functionality via sensAI's mlflow integration and by logging directly to the file system.
 
- 9. [Regression](step09-regression/README.md)
+ 9. [Regression](refactoring-journey/step09-regression/README.md)
 
     This step considers the perhaps more natural formulation of the prediction problem as a regression problem.
 
@@ -108,11 +108,11 @@ These are the steps of the journey:
 
     This step adds hyperparameter optimisation for the XGBoost regression model.
 
-11. [Cross-Validation](step11-cross-validation/README.md)
+11. [Cross-Validation](refactoring-journey/step11-cross-validation/README.md)
 
     This step adds the option to use cross-validation.
 
-12. [Deployment](step12-deployment/README.md)
+12. [Deployment](refactoring-journey/step12-deployment/README.md)
 
     This step adds a web service for inference, which is packaged in a docker container.
 
