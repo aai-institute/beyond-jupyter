@@ -36,7 +36,7 @@ Note that a Kaggle API key is required for this (see [instructions](https://www.
 Alternatively, you can [download the dataset manually from the Kaggle website](https://www.kaggle.com/datasets/amitanshjoshi/spotify-1million-tracks).
 Place the CSV file `spotify_data.csv` in the `data` folder (in the root of this repository).
 
-![data_folder](res/data_folder.png)
+![data_folder](resources/data_folder.png)
 
 ## How to use this package?
 
