@@ -5,7 +5,7 @@ from typing import Literal, Dict, Any
 import hyperopt
 from hyperopt import hp
 
-from sensai.evaluation import VectorRegressionModelEvaluatorParams, RegressionEvaluationUtil
+from sensai.evaluation import RegressionEvaluatorParams, RegressionModelEvaluation
 from songpop.data import Dataset
 from songpop.features import FeatureName
 from songpop.model_factory import RegressionModelFactory
@@ -58,8 +58,8 @@ def run_hyperopt(dataset: Dataset, model: Literal["xgb"] = "xgb"):
 
     io_data = dataset.load_io_data()
     metric = RegressionMetricRRSE()
-    evaluator_params = VectorRegressionModelEvaluatorParams(fractional_split_test_fraction=0.3, fractional_split_random_seed=21)
-    ev = RegressionEvaluationUtil(io_data, evaluator_params=evaluator_params)
+    evaluator_params = RegressionEvaluatorParams(fractional_split_test_fraction=0.3, fractional_split_random_seed=21)
+    ev = RegressionModelEvaluation(io_data, evaluator_params=evaluator_params)
 
     def objective(search_space_element: Dict[str, Any]):
         log.info(f"Evaluating {search_space_element}")

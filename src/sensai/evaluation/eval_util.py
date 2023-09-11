@@ -29,7 +29,7 @@ from .eval_stats.eval_stats_classification import ClassificationEvalStats
 from .eval_stats.eval_stats_regression import RegressionEvalStats
 from .evaluator import VectorModelEvaluator, VectorModelEvaluationData, VectorRegressionModelEvaluator, \
     VectorRegressionModelEvaluationData, VectorClassificationModelEvaluator, VectorClassificationModelEvaluationData, \
-    VectorRegressionModelEvaluatorParams, VectorClassificationModelEvaluatorParams
+    RegressionEvaluatorParams, ClassificationEvaluatorParams
 from ..data import InputOutputData
 from ..feature_importance import AggregatedFeatureImportance, FeatureImportanceProvider, plot_feature_importance, FeatureImportance
 from ..tracking import TrackedExperiment
@@ -62,14 +62,14 @@ def _is_regression(model: Optional[VectorModel], is_regression: Optional[bool]) 
 
 
 def create_vector_model_evaluator(data: InputOutputData, model: VectorModel = None,
-        is_regression: bool = None, params: Union[VectorRegressionModelEvaluatorParams, VectorClassificationModelEvaluatorParams] = None) \
+        is_regression: bool = None, params: Union[RegressionEvaluatorParams, ClassificationEvaluatorParams] = None) \
             -> Union[VectorRegressionModelEvaluator, VectorClassificationModelEvaluator]:
     is_regression = _is_regression(model, is_regression)
     if params is None:
         if is_regression:
-            params = VectorRegressionModelEvaluatorParams(fractional_split_test_fraction=0.2)
+            params = RegressionEvaluatorParams(fractional_split_test_fraction=0.2)
         else:
-            params = VectorClassificationModelEvaluatorParams(fractional_split_test_fraction=0.2)
+            params = ClassificationEvaluatorParams(fractional_split_test_fraction=0.2)
         log.debug(f"No evaluator parameters specified, using default: {params}")
     if is_regression:
         return VectorRegressionModelEvaluator(data, params=params)
@@ -89,13 +89,13 @@ def create_vector_model_cross_validator(data: InputOutputData,
 
 
 def create_evaluation_util(data: InputOutputData, model: VectorModel = None, is_regression: bool = None,
-        evaluator_params: Optional[Union[VectorRegressionModelEvaluatorParams, VectorClassificationModelEvaluatorParams]] = None,
+        evaluator_params: Optional[Union[RegressionEvaluatorParams, ClassificationEvaluatorParams]] = None,
         cross_validator_params: Optional[Dict[str, Any]] = None) \
-            -> Union["ClassificationEvaluationUtil", "RegressionEvaluationUtil"]:
+            -> Union["ClassificationModelEvaluation", "RegressionModelEvaluation"]:
     if _is_regression(model, is_regression):
-        return RegressionEvaluationUtil(data, evaluator_params=evaluator_params, cross_validator_params=cross_validator_params)
+        return RegressionModelEvaluation(data, evaluator_params=evaluator_params, cross_validator_params=cross_validator_params)
     else:
-        return ClassificationEvaluationUtil(data, evaluator_params=evaluator_params, cross_validator_params=cross_validator_params)
+        return ClassificationModelEvaluation(data, evaluator_params=evaluator_params, cross_validator_params=cross_validator_params)
 
 
 def eval_model_via_evaluator(model: TModel, io_data: InputOutputData, test_fraction=0.2,
@@ -131,10 +131,10 @@ def eval_model_via_evaluator(model: TModel, io_data: InputOutputData, test_fract
         fig.show()
 
     if model.is_regression_model():
-        evaluator_params = VectorRegressionModelEvaluatorParams(fractional_split_test_fraction=test_fraction,
+        evaluator_params = RegressionEvaluatorParams(fractional_split_test_fraction=test_fraction,
             fractional_split_random_seed=random_seed)
     else:
-        evaluator_params = VectorClassificationModelEvaluatorParams(fractional_split_test_fraction=test_fraction,
+        evaluator_params = ClassificationEvaluatorParams(fractional_split_test_fraction=test_fraction,
             compute_probabilities=compute_probabilities, fractional_split_random_seed=random_seed)
     ev = create_evaluation_util(io_data, model=model, evaluator_params=evaluator_params)
     return ev.perform_simple_evaluation(model, show_plots=True, log_results=True)
@@ -209,14 +209,13 @@ class ClassificationEvalStatsPlotCollector(EvalStatsPlotCollector[RegressionEval
         self.add_plot("threshold-counts", ClassificationEvalStatsPlotProbabilityThresholdCounts())
 
 
-# TODO conceive of better class name
-class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator, TCrossValData, TEvalStats]):
+class ModelEvaluation(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator, TCrossValData, TEvalStats]):
     """
     Utility class for the evaluation of models based on a dataset
     """
     def __init__(self, io_data: InputOutputData,
             eval_stats_plot_collector: Union[RegressionEvalStatsPlotCollector, ClassificationEvalStatsPlotCollector],
-            evaluator_params: Optional[Union[VectorRegressionModelEvaluatorParams, VectorClassificationModelEvaluatorParams,
+            evaluator_params: Optional[Union[RegressionEvaluatorParams, ClassificationEvaluatorParams,
                 Dict[str, Any]]] = None,
             cross_validator_params: Optional[Union[VectorModelCrossValidatorParams, Dict[str, Any]]] = None):
         """
@@ -291,7 +290,7 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
                     self.create_plots(result_data, show_plots=show_plots, result_writer=res_writer,
                         subtitle_prefix=subtitle_prefix, tracking_context=trackingContext)
 
-        eval_result_data = evaluator.eval_model(model, fit=True)
+        eval_result_data = evaluator.eval_model(model, fit=fit_model)
         gather_results(eval_result_data, result_writer)
         if additional_evaluation_on_training_data:
             eval_result_data_train = evaluator.eval_model(model, on_training_data=True, track=False)
@@ -526,10 +525,10 @@ class EvaluationUtil(ABC, Generic[TModel, TEvaluator, TEvalData, TCrossValidator
         self.eval_stats_plot_collector.create_plots(eval_stats, subtitle, result_collector)
 
 
-class RegressionEvaluationUtil(EvaluationUtil[VectorRegressionModel, VectorRegressionModelEvaluator, VectorRegressionModelEvaluationData,
+class RegressionModelEvaluation(ModelEvaluation[VectorRegressionModel, VectorRegressionModelEvaluator, VectorRegressionModelEvaluationData,
         VectorRegressionModelCrossValidator, VectorRegressionModelCrossValidationData, RegressionEvalStats]):
     def __init__(self, io_data: InputOutputData,
-            evaluator_params: Optional[Union[VectorRegressionModelEvaluatorParams, Dict[str, Any]]] = None,
+            evaluator_params: Optional[Union[RegressionEvaluatorParams, Dict[str, Any]]] = None,
             cross_validator_params: Optional[Union[VectorModelCrossValidatorParams, Dict[str, Any]]] = None):
         """
         :param io_data: the data set to use for evaluation
@@ -540,11 +539,11 @@ class RegressionEvaluationUtil(EvaluationUtil[VectorRegressionModel, VectorRegre
             cross_validator_params=cross_validator_params)
 
 
-class ClassificationEvaluationUtil(EvaluationUtil[VectorClassificationModel, VectorClassificationModelEvaluator,
+class ClassificationModelEvaluation(ModelEvaluation[VectorClassificationModel, VectorClassificationModelEvaluator,
         VectorClassificationModelEvaluationData, VectorClassificationModelCrossValidator, VectorClassificationModelCrossValidationData,
         ClassificationEvalStats]):
     def __init__(self, io_data: InputOutputData,
-            evaluator_params: Optional[Union[VectorClassificationModelEvaluatorParams, Dict[str, Any]]] = None,
+            evaluator_params: Optional[Union[ClassificationEvaluatorParams, Dict[str, Any]]] = None,
             cross_validator_params: Optional[Union[VectorModelCrossValidatorParams, Dict[str, Any]]] = None):
         """
         :param io_data: the data set to use for evaluation
@@ -555,10 +554,10 @@ class ClassificationEvaluationUtil(EvaluationUtil[VectorClassificationModel, Vec
             cross_validator_params=cross_validator_params)
 
 
-class MultiDataEvaluationUtil:
+class MultiDataModelEvaluation:
     def __init__(self, io_data_dict: Dict[str, InputOutputData], key_name: str = "dataset",
             meta_data_dict: Optional[Dict[str, Dict[str, Any]]] = None,
-            evaluator_params: Optional[Union[VectorRegressionModelEvaluatorParams, VectorClassificationModelEvaluatorParams, Dict[str, Any]]] = None,
+            evaluator_params: Optional[Union[RegressionEvaluatorParams, ClassificationEvaluatorParams, Dict[str, Any]]] = None,
             cross_validator_params: Optional[Union[VectorModelCrossValidatorParams, Dict[str, Any]]] = None):
         """
         :param io_data_dict: a dictionary mapping from names to the data sets with which to evaluate models

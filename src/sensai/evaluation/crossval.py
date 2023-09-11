@@ -11,8 +11,8 @@ from .eval_stats.eval_stats_classification import ClassificationEvalStats, Class
 from .eval_stats.eval_stats_regression import RegressionEvalStats, RegressionEvalStatsCollection
 from .evaluator import VectorRegressionModelEvaluationData, VectorClassificationModelEvaluationData, \
     VectorModelEvaluationData, VectorClassificationModelEvaluator, VectorRegressionModelEvaluator, \
-    MetricsDictProvider, VectorModelEvaluator, VectorClassificationModelEvaluatorParams, \
-    VectorRegressionModelEvaluatorParams, MetricsDictProviderFromFunction
+    MetricsDictProvider, VectorModelEvaluator, ClassificationEvaluatorParams, \
+    RegressionEvaluatorParams, MetricsDictProviderFromFunction
 from ..data import InputOutputData, DataSplitterFractional
 from ..tracking.tracking_base import TrackingContext
 from ..util.typing import PandasNamedTuple
@@ -128,7 +128,7 @@ class VectorModelCrossValidatorParams:
             folds: int = 5,
             splitter: CrossValidationSplitter = None,
             return_trained_models=False,
-            evaluator_params: Union[VectorRegressionModelEvaluatorParams, VectorClassificationModelEvaluatorParams] = None,
+            evaluator_params: Union[RegressionEvaluatorParams, ClassificationEvaluatorParams] = None,
             default_splitter_random_seed=42,
             default_splitter_shuffle=True):
         """
@@ -233,7 +233,7 @@ class VectorRegressionModelCrossValidationData(VectorModelCrossValidationData[Ve
 
 class VectorRegressionModelCrossValidator(VectorModelCrossValidator[VectorRegressionModelCrossValidationData]):
     def _create_model_evaluator(self, training_data: InputOutputData, test_data: InputOutputData) -> VectorRegressionModelEvaluator:
-        evaluator_params = VectorRegressionModelEvaluatorParams.from_dict_or_instance(self.params.evaluatorParams)
+        evaluator_params = RegressionEvaluatorParams.from_dict_or_instance(self.params.evaluatorParams)
         return VectorRegressionModelEvaluator(training_data, test_data=test_data, params=evaluator_params)
 
     def _create_result_data(self, trained_models, eval_data_list, test_indices_list, predicted_var_names) \
@@ -249,7 +249,7 @@ class VectorClassificationModelCrossValidationData(VectorModelCrossValidationDat
 
 class VectorClassificationModelCrossValidator(VectorModelCrossValidator[VectorClassificationModelCrossValidationData]):
     def _create_model_evaluator(self, training_data: InputOutputData, test_data: InputOutputData):
-        evaluator_params = VectorClassificationModelEvaluatorParams.from_dict_or_instance(self.params.evaluatorParams)
+        evaluator_params = ClassificationEvaluatorParams.from_dict_or_instance(self.params.evaluatorParams)
         return VectorClassificationModelEvaluator(training_data, test_data=test_data, params=evaluator_params)
 
     def _create_result_data(self, trained_models, eval_data_list, test_indices_list, predicted_var_names) \

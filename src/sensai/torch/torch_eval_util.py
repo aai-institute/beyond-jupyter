@@ -1,13 +1,13 @@
 from typing import Union
 
 from . import TorchVectorRegressionModel
-from ..evaluation import RegressionEvaluationUtil
+from ..evaluation import RegressionModelEvaluation
 from ..evaluation.crossval import VectorModelCrossValidationData, VectorRegressionModelCrossValidationData
 from ..evaluation.eval_util import EvaluationResultCollector
 from ..evaluation.evaluator import VectorModelEvaluationData, VectorRegressionModelEvaluationData
 
 
-class TorchVectorRegressionModelEvaluationUtil(RegressionEvaluationUtil):
+class TorchVectorRegressionModelEvaluationUtil(RegressionModelEvaluation):
 
     def _create_plots(self,
             data: Union[VectorRegressionModelEvaluationData, VectorRegressionModelCrossValidationData],

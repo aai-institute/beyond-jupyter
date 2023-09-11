@@ -12,7 +12,7 @@ from .eval_stats.eval_stats_regression import RegressionEvalStats, RegressionEva
 from ..data import DataSplitter, DataSplitterFractional, InputOutputData
 from ..data_transformation import DataFrameTransformer
 from ..tracking import TrackingMixin, TrackedExperiment
-from ..tracking.tracking_base import TrackingContext
+from ..util.deprecation import deprecated
 from ..util.string import ToStringMixin
 from ..util.typing import PandasNamedTuple
 from ..vector_model import VectorClassificationModel, VectorModel, VectorModelBase, VectorModelFittableBase, VectorRegressionModel
@@ -122,7 +122,7 @@ class VectorRegressionModelEvaluationData(VectorModelEvaluationData[RegressionEv
 TEvalData = TypeVar("TEvalData", bound=VectorModelEvaluationData)
 
 
-class VectorModelEvaluatorParams(ToStringMixin, ABC):
+class EvaluatorParams(ToStringMixin, ABC):
     def __init__(self, data_splitter: DataSplitter = None, fractional_split_test_fraction: float = None, fractional_split_random_seed=42,
             fractional_split_shuffle=True):
         """
@@ -166,7 +166,7 @@ class VectorModelEvaluatorParams(ToStringMixin, ABC):
 
 
 class VectorModelEvaluator(MetricsDictProvider, Generic[TEvalData], ABC):
-    def __init__(self, data: Optional[InputOutputData], test_data: InputOutputData = None, params: VectorModelEvaluatorParams = None):
+    def __init__(self, data: Optional[InputOutputData], test_data: InputOutputData = None, params: EvaluatorParams = None):
         """
         Constructs an evaluator with test and training data.
 
@@ -248,7 +248,7 @@ class VectorModelEvaluator(MetricsDictProvider, Generic[TEvalData], ABC):
         model.fit(self.training_data.inputs, self.training_data.outputs)
 
 
-class VectorRegressionModelEvaluatorParams(VectorModelEvaluatorParams):
+class RegressionEvaluatorParams(EvaluatorParams):
     def __init__(self,
             data_splitter: DataSplitter = None,
             fractional_split_test_fraction: float = None,
@@ -281,9 +281,9 @@ class VectorRegressionModelEvaluatorParams(VectorModelEvaluatorParams):
 
     @classmethod
     def from_dict_or_instance(cls,
-            params: Optional[Union[Dict[str, Any], "VectorRegressionModelEvaluatorParams"]]) -> "VectorRegressionModelEvaluatorParams":
+            params: Optional[Union[Dict[str, Any], "RegressionEvaluatorParams"]]) -> "RegressionEvaluatorParams":
         if params is None:
-            return VectorRegressionModelEvaluatorParams()
+            return RegressionEvaluatorParams()
         elif type(params) == dict:
             raise Exception("Old-style dictionary parametrisation is no longer supported")
         elif isinstance(params, cls):
@@ -292,9 +292,15 @@ class VectorRegressionModelEvaluatorParams(VectorModelEvaluatorParams):
             raise ValueError(f"Must provide dictionary or {cls} instance, got {params}, type {type(params)}")
 
 
+class VectorRegressionModelEvaluatorParams(RegressionEvaluatorParams):
+    @deprecated("Use RegressionEvaluatorParams instead")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
 class VectorRegressionModelEvaluator(VectorModelEvaluator[VectorRegressionModelEvaluationData]):
     def __init__(self, data: Optional[InputOutputData], test_data: InputOutputData = None,
-            params: VectorRegressionModelEvaluatorParams = None):
+            params: RegressionEvaluatorParams = None):
         """
         Constructs an evaluator with test and training data.
 
@@ -358,7 +364,7 @@ class VectorClassificationModelEvaluationData(VectorModelEvaluationData[Classifi
         return [(eval_stats.y_predicted[i], eval_stats.y_true[i], self.input_data.iloc[i]) for i in indices]
 
 
-class VectorClassificationModelEvaluatorParams(VectorModelEvaluatorParams):
+class ClassificationEvaluatorParams(EvaluatorParams):
     def __init__(self, data_splitter: DataSplitter = None, fractional_split_test_fraction: float = None, fractional_split_random_seed=42,
             fractional_split_shuffle=True, additional_metrics: Sequence[ClassificationMetric] = None,
             compute_probabilities: bool = False, binary_positive_label=GUESS):
@@ -387,16 +393,22 @@ class VectorClassificationModelEvaluatorParams(VectorModelEvaluatorParams):
 
     @classmethod
     def from_dict_or_instance(cls,
-            params: Optional[Union[Dict[str, Any], "VectorClassificationModelEvaluatorParams"]]) \
-            -> "VectorClassificationModelEvaluatorParams":
+            params: Optional[Union[Dict[str, Any], "ClassificationEvaluatorParams"]]) \
+            -> "ClassificationEvaluatorParams":
         if params is None:
-            return VectorClassificationModelEvaluatorParams()
+            return ClassificationEvaluatorParams()
         elif type(params) == dict:
             raise ValueError("Old-style dictionary parametrisation is no longer supported")
-        elif isinstance(params, VectorClassificationModelEvaluatorParams):
+        elif isinstance(params, ClassificationEvaluatorParams):
             return params
         else:
             raise ValueError(f"Must provide dictionary or instance, got {params}")
+
+
+class VectorClassificationModelEvaluatorParams(ClassificationEvaluatorParams):
+    @deprecated("Use ClassificationEvaluatorParams instead")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 class VectorClassificationModelEvaluator(VectorModelEvaluator[VectorClassificationModelEvaluationData]):

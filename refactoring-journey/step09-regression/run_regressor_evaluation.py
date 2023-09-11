@@ -1,7 +1,7 @@
 import os
 
-from sensai.evaluation import VectorRegressionModelEvaluatorParams, \
-    RegressionEvaluationUtil
+from sensai.evaluation import RegressionEvaluatorParams, \
+    RegressionModelEvaluation
 from sensai.evaluation.eval_stats import RegressionMetricR2
 from sensai.tracking.mlflow_tracking import MLFlowExperiment
 from sensai.util import logging
@@ -39,11 +39,11 @@ def main():
     ]
 
     # declare parameters to be used for evaluation, i.e. how to split the data (fraction and random seed)
-    evaluator_params = VectorRegressionModelEvaluatorParams(fractional_split_test_fraction=0.3)
+    evaluator_params = RegressionEvaluatorParams(fractional_split_test_fraction=0.3)
 
     # use a high-level utility class for evaluating the models based on these parameters, injecting the
     # objects defined above for the tracking of results
-    ev = RegressionEvaluationUtil(io_data, evaluator_params=evaluator_params)
+    ev = RegressionModelEvaluation(io_data, evaluator_params=evaluator_params)
     result = ev.compare_models(models, tracked_experiment=tracked_experiment, result_writer=result_writer)
 
     # save best model

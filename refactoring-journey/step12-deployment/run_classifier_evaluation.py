@@ -5,7 +5,7 @@ from sensai.util.io import ResultWriter
 from sensai.util.logging import datetime_tag
 from sensai.util.string import TagBuilder
 from songpop.features import FeatureName
-from sensai.evaluation import ClassificationEvaluationUtil, VectorClassificationModelEvaluatorParams, VectorModelCrossValidatorParams
+from sensai.evaluation import ClassificationModelEvaluation, ClassificationEvaluatorParams, VectorModelCrossValidatorParams
 from sensai.util import logging
 from songpop.data import Dataset
 from songpop.model_factory import ClassificationModelFactory
@@ -48,10 +48,10 @@ def main():
     models = [m for m in models if m is not None]
 
     # evaluate models
-    evaluator_params = VectorClassificationModelEvaluatorParams(fractional_split_test_fraction=0.3,
+    evaluator_params = ClassificationEvaluatorParams(fractional_split_test_fraction=0.3,
         binary_positive_label=dataset.class_positive)
     cross_validator_params = VectorModelCrossValidatorParams(folds=3)
-    ev = ClassificationEvaluationUtil(io_data, evaluator_params=evaluator_params, cross_validator_params=cross_validator_params)
+    ev = ClassificationModelEvaluation(io_data, evaluator_params=evaluator_params, cross_validator_params=cross_validator_params)
     ev.compare_models(models, tracked_experiment=tracked_experiment, result_writer=result_writer, use_cross_validation=use_cross_validation)
 
 

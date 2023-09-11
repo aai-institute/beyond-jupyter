@@ -6,7 +6,7 @@ import pandas as pd
 from pop.features import COL_POPULARITY, FeatureName, registry
 from sensai import InputOutputData
 from sensai.data_transformation import DFTOneHotEncoder, DFTNormalisation, DFTKeepColumns
-from sensai.evaluation import VectorRegressionModelEvaluatorParams, RegressionEvaluationUtil, \
+from sensai.evaluation import RegressionEvaluatorParams, RegressionModelEvaluation, \
     VectorModelCrossValidatorParams
 from sensai.featuregen import FeatureCollector
 from sensai.sklearn.sklearn_regression import SkLearnRandomForestVectorRegressionModel, \
@@ -94,10 +94,10 @@ class ModelEvaluation:
     def __init__(self, dataset: DataSet):
         self.dataset = dataset
         self.iodata = dataset.load_iodata()
-        self.evaluator_params = VectorRegressionModelEvaluatorParams(fractional_split_test_fraction=0.2,
+        self.evaluator_params = RegressionEvaluatorParams(fractional_split_test_fraction=0.2,
             fractional_split_shuffle=True)
         self.crossval_params = VectorModelCrossValidatorParams(folds=5, evaluator_params=self.evaluator_params)
 
     def create_evaluator(self):
-        return RegressionEvaluationUtil(self.iodata, evaluator_params=self.evaluator_params,
+        return RegressionModelEvaluation(self.iodata, evaluator_params=self.evaluator_params,
             cross_validator_params=self.crossval_params)

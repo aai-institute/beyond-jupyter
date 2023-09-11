@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Union, List, Callable
 
 from sensai import VectorRegressionModel, VectorClassificationModel, VectorModelBase
-from sensai.evaluation import MultiDataEvaluationUtil
+from sensai.evaluation import MultiDataModelEvaluation
 from sensai.evaluation.eval_stats import RegressionMetric, ClassificationMetric
 
 TMetric = Union[RegressionMetric, ClassificationMetric]
@@ -26,7 +26,7 @@ class MetricComputation(ABC):
 
 
 class MetricComputationMultiData(MetricComputation):
-    def __init__(self, ev_util: MultiDataEvaluationUtil, use_cross_validation: bool, metric: TMetric,
+    def __init__(self, ev_util: MultiDataModelEvaluation, use_cross_validation: bool, metric: TMetric,
             use_combined_eval_stats: bool):
         super().__init__(metric)
         self.use_combined_eval_stats = use_combined_eval_stats

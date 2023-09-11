@@ -1,10 +1,10 @@
 from .crossval import VectorClassificationModelCrossValidator, VectorRegressionModelCrossValidator, \
     VectorClassificationModelCrossValidationData, VectorRegressionModelCrossValidationData, \
     VectorModelCrossValidatorParams
-from .eval_util import RegressionEvaluationUtil, ClassificationEvaluationUtil, MultiDataEvaluationUtil, \
+from .eval_util import RegressionModelEvaluation, ClassificationModelEvaluation, MultiDataModelEvaluation, \
     eval_model_via_evaluator, create_evaluation_util, create_vector_model_evaluator, create_vector_model_cross_validator
 from .evaluator import VectorClassificationModelEvaluator, VectorRegressionModelEvaluator, \
-    VectorRegressionModelEvaluatorParams, VectorClassificationModelEvaluatorParams, \
+    RegressionEvaluatorParams, ClassificationEvaluatorParams, \
     VectorRegressionModelEvaluationData, VectorClassificationModelEvaluationData, \
     RuleBasedVectorClassificationModelEvaluator, RuleBasedVectorRegressionModelEvaluator
 

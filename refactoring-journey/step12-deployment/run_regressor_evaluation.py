@@ -1,7 +1,7 @@
 import os
 
-from sensai.evaluation import VectorRegressionModelEvaluatorParams, \
-    RegressionEvaluationUtil, VectorModelCrossValidatorParams
+from sensai.evaluation import RegressionEvaluatorParams, \
+    RegressionModelEvaluation, VectorModelCrossValidatorParams
 from sensai.evaluation.eval_stats import RegressionMetricR2
 from sensai.tracking.mlflow_tracking import MLFlowExperiment
 from sensai.util import logging
@@ -43,9 +43,9 @@ def main():
     ]
 
     # evaluate models
-    evaluator_params = VectorRegressionModelEvaluatorParams(fractional_split_test_fraction=0.3)
+    evaluator_params = RegressionEvaluatorParams(fractional_split_test_fraction=0.3)
     cross_validator_params = VectorModelCrossValidatorParams(folds=3)
-    ev = RegressionEvaluationUtil(io_data, evaluator_params=evaluator_params, cross_validator_params=cross_validator_params)
+    ev = RegressionModelEvaluation(io_data, evaluator_params=evaluator_params, cross_validator_params=cross_validator_params)
     result = ev.compare_models(models, tracked_experiment=tracked_experiment, result_writer=result_writer,
         use_cross_validation=use_cross_validation)
 
