@@ -29,7 +29,7 @@ mark the folder as a sources root).
 
 ### Downloading the Data
 
-You can use the script [load_data.py](scripts/load_data.py) to automatically download the raw data CSV file to the subfolder
+You can use the script [load_data.py](load_data.py) to automatically download the raw data CSV file to the subfolder
 `data` on the top level of the repository.
 Note that a Kaggle API key is required for this (see [instructions](https://www.kaggle.com/docs/api)).
 

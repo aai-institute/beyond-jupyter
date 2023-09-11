@@ -23,7 +23,7 @@ import os
 from kaggle import KaggleApi
 
 script_folder = os.path.dirname(os.path.abspath(__file__))
-destination_path = os.path.join(script_folder, "..", "data")
+destination_path = os.path.join(script_folder, "data")
 dataset_name = 'amitanshjoshi/spotify-1million-tracks'
 
 
@@ -34,6 +34,7 @@ def load_via_kaggle():
 
     # Downloading the dataset
     api.dataset_download_files(dataset_name, path=destination_path, unzip=True)
+
 
 if __name__ == "__main__":
     load_via_kaggle()
