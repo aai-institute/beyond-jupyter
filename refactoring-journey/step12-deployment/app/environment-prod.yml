@@ -68,3 +68,5 @@ dependencies:
       - pyparsing==3.0.9
       - seaborn==0.12.2
       - xgboost==1.7.6
+      - sensai==1.0.0b1
+
