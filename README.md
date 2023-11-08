@@ -34,14 +34,17 @@ Configure your IDE to use the `pop` environment created in the previous step.
 
 ### Downloading the Data
 
-You can use the script [load_data.py](load_data.py) to automatically download the raw data CSV file to the subfolder
-`data` on the top level of the repository.
-Note that a Kaggle API key is required for this (see [instructions](https://www.kaggle.com/docs/api)).
+You can download the data in two ways:
 
-Alternatively, you can [download the dataset manually from the Kaggle website](https://www.kaggle.com/datasets/amitanshjoshi/spotify-1million-tracks).
-Place the CSV file `spotify_data.csv` in the `data` folder (in the root of this repository).
+ * Manually [download it from the Kaggle website](https://www.kaggle.com/datasets/amitanshjoshi/spotify-1million-tracks).
+   Place the CSV file `spotify_data.csv` in the `data` folder (in the root of this repository).
 
-![data_folder](resources/data_folder.png)
+   ![data_folder](resources/data_folder.png)
+
+ * Alternatively, use the script [load_data.py](load_data.py) to automatically download the raw data CSV file to the subfolder
+   `data` on the top level of the repository.
+   Note that a Kaggle API key is required for this (see [instructions](https://www.kaggle.com/docs/api)).
+
 
 ## How to use this package?
 
