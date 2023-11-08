@@ -12,8 +12,11 @@ order to
  * appropriately track results
  * develop a solution that can straightforwardly be deployed for production.
 
-The use case considers a dataset from kaggle containing meta-data on approximately one million songs (see download instructions below).
-The goal is to use the data in order to learn a model for the prediction of popularity given other attributes such as the tempo, the release year, the key, the musical mode, etc.
+The use case considers a dataset from kaggle containing meta-data on 
+approximately one million songs (see download instructions below).
+The goal is to use the data in order to learn a model for the prediction of song 
+popularity given other song attributes such as the tempo, the release year, 
+the key, the musical mode, etc.
 
 ## Preliminaries
 
