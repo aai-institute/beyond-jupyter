@@ -1,9 +1,16 @@
 # Predicting Spotify Song Popularity: A Refactoring Journey
 
-In this case study, we will show how a machine learning use case that is implemented
-as a Jupyter notebook (which was [taken from Kaggle]()) can be successively refactored to gain flexibility and
-adopt software design principles as well as workflow improvements in order
-to facilitate experimentation.
+This lesson is part of the _Beyond Jupyter_ series, in which we address 
+the problem of designing maintainable software for machine learning use cases.
+We have put forth a corresponding set of [guiding principles](https://www.notion.so/appliedaiinitiative/Guiding-Principles-3031741733244aaab20b24cfdf0b15ee). 
+
+In the case study at hand, we will show how a machine learning use case that is implemented
+as a Jupyter notebook (which was [taken from Kaggle](https://www.kaggle.com/code/sauravpalekar/spotify-song-popularity-prediction)) can be successively refactored in 
+order to 
+ * improve the software design in general
+ * gain flexibility for experimentation
+ * appropriately track results
+ * develop a solution that can straightforwardly be deployed for production.
 
 The use case considers a dataset from kaggle containing meta-data on approximately one million songs (see download instructions below).
 The goal is to use the data in order to learn a model for the prediction of popularity given other attributes such as the tempo, the release year, the key, the musical mode, etc.
@@ -17,15 +24,13 @@ and download the Spotify song data.
 
 Use conda to create an environment based on [environment.yml](environment.yml) in the root folder of this repository:
 
-    conda env create -f ../environment.yml
+    conda env create -f environment.yml
 
 This will create a conda environment named `pop`.
 
 ### Configure Your IDE's Runtime Environment
 
 Configure your IDE to use the `pop` environment created in the previous step.
-Furthermore, make sure to add the folder `../src` to your PYTHONPATH (in PyCharm, simply
-mark the folder as a sources root).
 
 ### Downloading the Data
 
