@@ -1,4 +1,4 @@
-# Step 10: Cross-Validation.
+# Step 11: Cross-Validation.
 
 In this step, we extend the runnable scripts to optionally apply cross-validation
 and thus evaluate our models on multiple splits rather than a single split.
