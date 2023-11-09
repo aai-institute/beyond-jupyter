@@ -116,7 +116,7 @@ These are the steps of the journey:
 
     This step considers the perhaps more natural formulation of the prediction problem as a regression problem.
 
-10. [Hyperparameter Optimisation](step10-hyperparameter-optimisation/README.md)
+10. [Hyperparameter Optimisation](refactoring-journey/step10-hyperopt/README.md)
 
     This step adds hyperparameter optimisation for the XGBoost regression model.
 
