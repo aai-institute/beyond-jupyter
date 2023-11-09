@@ -1,7 +1,7 @@
 # Step 5: Introducing sensAI
 
 In this step, we will switch from using scikit-learn as our main framework to 
-[sensAI](https://github.com/jambit/sensAI), the Python library for sensible AI.
+[sensAI](https://github.com/aai-institute/sensAI), the Python library for sensible AI.
 sensAI is a high-level framework which provides convenient abstractions that
 support a variety of machine learning libraries (scikit-learn and PyTorch being
 perhaps the most relevant ones).
