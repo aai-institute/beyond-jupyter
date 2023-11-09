@@ -1,16 +1,16 @@
 # Predicting Spotify Song Popularity: A Refactoring Journey
 
 This lesson is part of the _Beyond Jupyter_ series, in which we address 
-the problem of designing maintainable software for machine learning use cases.
-We have put forth a corresponding set of [guiding principles](https://www.notion.so/appliedaiinitiative/Guiding-Principles-3031741733244aaab20b24cfdf0b15ee). 
+the specifics of software design in machine learning contexts.
+We have put forth a set of [guiding principles](Guiding-Principles.md)
+that can critically inform the decision-making process during development.
 
 In the case study at hand, we will show how a machine learning use case that is implemented
-as a Jupyter notebook (which was [taken from Kaggle](https://www.kaggle.com/code/sauravpalekar/spotify-song-popularity-prediction)) can be successively refactored in 
-order to 
- * improve the software design in general
- * gain flexibility for experimentation
- * appropriately track results
- * develop a solution that can straightforwardly be deployed for production.
+as a Jupyter notebook (which was [taken from Kaggle](https://www.kaggle.com/code/sauravpalekar/spotify-song-popularity-prediction)) can be successively refactored in order to 
+ * improve the software design in general, achieving a high degree clarity and maintainability,
+ * gain flexibility for experimentation,
+ * appropriately track results,
+ * arrive at a solution that can straightforwardly be deployed for production.
 
 The use case considers a dataset from kaggle containing meta-data on 
 approximately one million songs (see download instructions below).
@@ -46,7 +46,8 @@ You can download the data in two ways:
 
  * Alternatively, use the script [load_data.py](load_data.py) to automatically download the raw data CSV file to the subfolder
    `data` on the top level of the repository.
-   Note that a Kaggle API key is required for this (see [instructions](https://www.kaggle.com/docs/api)).
+   Note that a Kaggle API key, which must be configured in `kaggle.json`, is required for this 
+   (see [instructions](https://www.kaggle.com/docs/api)).
 
 
 ## How to use this package?
@@ -62,8 +63,8 @@ such that you can browse it with familiar tools and navigate the code efficientl
 
 To more clearly see the concrete changes from one step to another, you can make use 
 of a diff tool. 
-To support this, you may run the Python script 
-`generate_repository.py` in order to create a git repository in `./refactoring-repo` that references 
+To support this, in folder `refactoring-journey/`, you may run the Python script 
+`generate_repository.py` in order to create a git repository in folder `refactoring-repo` that references 
 the state of each step in a separate tag, i.e. in said folder, you could run, for example,
    
         git difftool step04-refactoring step05-sensai
