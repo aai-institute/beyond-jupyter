@@ -1,3 +1,5 @@
+[![CC BY-SA 4.0][cc-by-sa-shield]][cc-by-sa]
+
 # Predicting Spotify Song Popularity: A Refactoring Journey
 
 This lesson is part of the _Beyond Jupyter_ series, in which we address 
