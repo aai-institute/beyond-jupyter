@@ -1,4 +1,5 @@
-[![CC BY-SA 4.0][cc-by-sa-shield]][cc-by-sa]
+
+[![CC BY-SA 4.0](https://img.shields.io/badge/License-CC_BY--SA_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 
 # Predicting Spotify Song Popularity: A Refactoring Journey
 
