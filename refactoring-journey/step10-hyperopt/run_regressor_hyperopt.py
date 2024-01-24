@@ -18,7 +18,7 @@ from sensai.util.pickle import load_pickle
 log = logging.getLogger(__name__)
 
 
-def run_hyperopt(dataset: Dataset, model: Literal["xgb"] = "xgb"):
+def run_hyperopt(dataset: Dataset, model: Literal["xgb"] = "xgb", hours=2):
     experiment_name = f"{datetime_tag()}-{model}-{dataset.tag()}"
     result_writer = ResultWriter(os.path.join("results", "hyperopt", experiment_name))
     logging.add_file_logger(result_writer.path("log.txt"))
@@ -50,7 +50,6 @@ def run_hyperopt(dataset: Dataset, model: Literal["xgb"] = "xgb"):
                 min_child_weight=search_space_element['min_child_weight'],
                 colsample_bytree=search_space_element['colsample_bytree'])
 
-        hours = 2
         warnings.filterwarnings("ignore")
     else:
         # Handle different models here

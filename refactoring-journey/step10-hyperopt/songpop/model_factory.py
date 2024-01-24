@@ -153,5 +153,9 @@ class RegressionModelFactory:
 
     @classmethod
     def create_xgb_meanpop_opt(cls):
-        params = {} # TODO
+        params = {'colsample_bytree': 0.9139066597052102,
+                  'gamma': 5.667764911228863,
+                  'max_depth': 10,
+                  'min_child_weight': 38.0,
+                  'reg_lambda': 0.22115937349846312}
         return cls.create_xgb("-meanPop-opt", add_features=[FeatureName.MEAN_ARTIST_POPULARITY], **params)
