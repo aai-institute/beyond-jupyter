@@ -93,37 +93,35 @@ As outlined above, we then include the following XGBoost models in the list of e
 
 ```python
         ModelFactory.create_xgb(),
-        ModelFactory.create_xgb("-minChildWeight10", min_child_weight=10),
         ModelFactory.create_xgb("-meanArtistFreqPopular", add_features=[FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
         ModelFactory.create_xgb("-meanArtistFreqPopularOnly", features=[FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
 ```
 
 In addition to the base model "XGBoost", which uses the previously defined default features and parameters,
 we now additionally define three variants thereof:
- * `XGBoost-minChildWeight10` modifies the regularisation parameter min_child_weight
  * `XGBoost-meanArtistFreqPopular` adds the mean artist popularity on top of the default features
  * `XGBoost-meanArtistFreqPopularOnly` reduces the feature set to the single defined feature.
 
 Notice that we were able to very concisely define the model variants, without any code duplication.
 The models adapt dynamically to the properties we specify!
 
-These are the evaluation results we obtained:
+We now want to compute meaningful results, and therefore we switch to the full dataset.
+The random forest models are prohibitively slow to train, and we thus disabled them.
+For the variations of the XGBoost model, we obtain: 
 ```
-INFO  2023-08-17 12:08:36,171 sensai.evaluation.eval_util:compare_models - Model comparison results:
+INFO  2024-01-24 14:32:08,271 sensai.evaluation.eval_util:compare_models - Model comparison results:
                                    accuracy  balancedAccuracy  precision[popular]  recall[popular]  F1[popular]
-model_name                                                                                                     
-XGBoost                            0.970000          0.572664            0.433333         0.151163     0.224138
-XGBoost-minChildWeight10           0.974000          0.574723            0.722222         0.151163     0.250000
-XGBoost-meanArtistFreqPopular      0.974000          0.642432            0.595238         0.290698     0.390625
-XGBoost-meanArtistFreqPopularOnly  0.970667          0.618147            0.477273         0.244186     0.323077
+model_name
+XGBoost                            0.962409          0.645840            0.710075         0.297486     0.419305
+XGBoost-meanArtistFreqPopular      0.964426          0.689429            0.698998         0.386820     0.498033
+XGBoost-meanArtistFreqPopularOnly  0.957034          0.637985            0.556452         0.286902     0.378601
 ```
 
 Therefore, we can conclude that 
-  * controlling overfitting is helpful. Setting `min_child_weight` to 10 has greatly increased the precision.
-    We might want to investigate this further and conduct a hyper-parameter optimisation in order to determine
-    the best way to control overfitting.
-  * the mean artist popularity feature is hugely important. Removing all other features did not affect the 
-    quality of the results substantially.
+  * the mean artist popularity feature is hugely important; adding it to the model increases the F1 score 
+    significantly.
+  * removing all other features deteriorated the results, but the F1 score of the model that uses only the 
+    popularity feature is still remarkably high.
     
 
 ## Principles Addressed in this Step
