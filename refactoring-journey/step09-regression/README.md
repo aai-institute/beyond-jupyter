@@ -13,4 +13,4 @@ The following changes are made:
 
 A new [runnable script for regression](run_regressor_evaluation.py) handles the new experiments.
 
-As this is the last step along our journey in which we will change the set of models, we now switch to using the full data set and run the scripts for both regression and classification in order to obtain some preliminary results.
+We can now run the scripts for both regression and classification in order to obtain some preliminary results.
