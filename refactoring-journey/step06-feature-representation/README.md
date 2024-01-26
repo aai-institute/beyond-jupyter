@@ -100,7 +100,7 @@ during feature registration via a second factory method of our `FeatureCollector
 For the KNN model, we require the vector space in which our features reside
 to produce meaningful distance metrics. 
 Since we have now introduced Boolean features that are represented numerically
-as elements of {0, 1}, we add, after normalisation (which partly uses standarisation), 
+as elements of {0, 1}, we add, after normalisation (which partly uses standardisation), 
 an additional `MaxAbsScaler` transformer to not give undue weight to the features 
 that use larger scales.
 The resulting transformation should be an improvement; but ultimately, a thoroughly
