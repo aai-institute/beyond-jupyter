@@ -69,15 +69,15 @@ from sensAI.
 We apply a simple evaluation (based on a single split) using a different random
 seed; this helps to avoid bias and will ensure that our later evaluations will accurately reflect model quality (since they will definitely not use the same split).
 
-After having run the search for 60 hours, we obtained the following optimal parameters:
+After having run the search for 10 hours, we obtained the following optimal parameters:
 
 ```python
 {
- 'colsample_bytree': 0.9139066597052102,
- 'gamma': 5.667764911228863,
+ 'colsample_bytree': 0.9869550725977663,
+ 'gamma': 8.022497033174522,
  'max_depth': 10,
- 'min_child_weight': 38.0,
- 'reg_lambda': 0.22115937349846312
+ 'min_child_weight': 48.0,
+ 'reg_lambda': 0.3984639652186364
 }
 ```
 
@@ -86,10 +86,10 @@ We thus add a corresponding model to our factory and shall seek to thoroughly ev
 ```python
     @classmethod
     def create_xgb_meanpop_opt(cls):
-        params = {'colsample_bytree': 0.9139066597052102,
-                  'gamma': 5.667764911228863,
+        params = {'colsample_bytree': 0.9869550725977663,
+                  'gamma': 8.022497033174522,
                   'max_depth': 10,
-                  'min_child_weight': 38.0,
-                  'reg_lambda': 0.22115937349846312} 
+                  'min_child_weight': 48.0,
+                  'reg_lambda': 0.3984639652186364} 
         return cls.create_xgb("-meanPop-opt", add_features=[FeatureName.MEAN_ARTIST_POPULARITY], **params)
 ```

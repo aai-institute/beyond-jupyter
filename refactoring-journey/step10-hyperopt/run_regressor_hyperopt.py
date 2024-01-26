@@ -78,4 +78,4 @@ def run_hyperopt(dataset: Dataset, model: Literal["xgb"] = "xgb", hours=2):
 
 
 if __name__ == '__main__':
-    logging.run_main(lambda: run_hyperopt(Dataset(is_classification=False)))
+    logging.run_main(lambda: run_hyperopt(Dataset(is_classification=False), hours=10))

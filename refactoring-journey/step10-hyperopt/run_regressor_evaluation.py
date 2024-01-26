@@ -35,7 +35,8 @@ def main():
         #RegressionModelFactory.create_linear(),
         #RegressionModelFactory.create_rf(),
         #RegressionModelFactory.create_xgb(),
-        RegressionModelFactory.create_xgb("-meanPop", add_features=[FeatureName.MEAN_ARTIST_POPULARITY]),
+        #RegressionModelFactory.create_xgb("-meanPop", add_features=[FeatureName.MEAN_ARTIST_POPULARITY]),
+        RegressionModelFactory.create_xgb_meanpop_opt()
     ]
 
     # declare parameters to be used for evaluation, i.e. how to split the data (fraction and random seed)
