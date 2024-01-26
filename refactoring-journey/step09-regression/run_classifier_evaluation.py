@@ -49,7 +49,7 @@ def main():
     # use a high-level utility class for evaluating the models based on these parameters, injecting the
     # objects defined above for the tracking of results
     ev = ClassificationModelEvaluation(io_data, evaluator_params=evaluator_params)
-    ev.compare_models(models, fit_models=True)
+    ev.compare_models(models, fit_models=True, tracked_experiment=tracked_experiment, result_writer=result_writer)
 
 
 if __name__ == '__main__':
