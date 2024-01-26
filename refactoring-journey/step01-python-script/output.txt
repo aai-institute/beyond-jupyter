@@ -1,4 +1,8 @@
 C:\Users\DominikJain\miniconda3\envs\pop\python.exe C:\Users\DominikJain\Dev\spotify-popularity-sensai\refactoring-journey\step01-python-script\run_model_evaluation.py
+Index(['year', 'danceability', 'energy', 'key', 'loudness', 'mode',
+       'speechiness', 'acousticness', 'instrumentalness', 'liveness',
+       'valence', 'tempo', 'time_signature', 'duration_mins'],
+      dtype='object')
 Logistic Regression Model Accuracy (in %): 94.7082673128903
 [[284506      6]
  [ 15891      9]]

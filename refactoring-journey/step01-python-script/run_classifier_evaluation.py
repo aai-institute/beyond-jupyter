@@ -11,7 +11,10 @@ from sklearn.tree import DecisionTreeClassifier
 if __name__ == '__main__':
     spotify_tracks = pd.read_csv(config.csv_data_path())
 
+    # adding a new column in data set duration_mins by diving duration_ms (duration milliseconds) by 60000
     spotify_tracks['duration_mins'] = spotify_tracks['duration_ms'] / 60000
+
+    # dropping the columns we don't need
     spotify_tracks = spotify_tracks.drop(['track_id', 'duration_ms'], axis=1)
 
     popularity_verdict = spotify_tracks.copy()
@@ -20,6 +23,7 @@ if __name__ == '__main__':
     # model in predicting better. 0 value records will not have significance in our analysis.
     popularity_verdict = popularity_verdict[popularity_verdict.popularity > 0]
 
+    # setting ratings based on popularity score - popularity score 0 - 50 = Low, score = 51 - 100 = Popular
     popularity_verdict['verdict'] = ''
     for i, row in popularity_verdict.iterrows():
         score = 'low'
@@ -29,6 +33,7 @@ if __name__ == '__main__':
 
     pop_ver_att = popularity_verdict[['year', 'danceability', 'energy', 'key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo', 'time_signature', 'duration_mins']]
 
+    # defining x and y df for our analysis
     X = pop_ver_att.select_dtypes(include='number')
     print(X.columns)
     y = popularity_verdict['verdict']
