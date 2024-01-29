@@ -63,7 +63,7 @@ class Dataset(ToStringMixin):
             self.class_negative = CLASS_UNPOPULAR
             self.col_target = COL_GEN_POPULARITY_CLASS
         else:
-            self.class_positive = self.class_positive = None
+            self.class_positive = self.class_negative = None
             self.col_target = COL_POPULARITY
 
     def tag(self):
