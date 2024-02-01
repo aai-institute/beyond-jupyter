@@ -64,6 +64,24 @@ class MetricR2(Metric):
         return True
 
 
+class MetricRelFreqErrorWithin(Metric):
+    def __init__(self, max_error: float):
+        self.max_error = max_error
+
+    def compute_value(self, y_ground_truth: np.ndarray, y_predicted: np.ndarray) -> float:
+        cnt = 0
+        for y1, y2 in zip(y_ground_truth, y_predicted):
+            if abs(y1 - y2) <= self.max_error:
+                cnt += 1
+        return cnt / len(y_ground_truth)
+
+    def get_name(self) -> str:
+        return f"RelFreqErrWithin[{self.max_error}]"
+
+    def is_larger_better(self) -> bool:
+        return True
+
+
 class ModelEvaluation:
     """
     Supports the evaluation of regression models, collecting the results.
@@ -136,7 +154,7 @@ def main():
     X_scaled = scaler.transform(X)
 
     # evaluate models
-    ev = ModelEvaluation(X_scaled, y, [MetricR2(), MetricMeanAbsError()])
+    ev = ModelEvaluation(X_scaled, y, [MetricR2(), MetricMeanAbsError(), MetricRelFreqErrorWithin(10)])
     ev.evaluate_model(LogisticRegression(solver='lbfgs', max_iter=1000))
     ev.evaluate_model(KNeighborsRegressor(n_neighbors=1))
     ev.evaluate_model(RandomForestRegressor(n_estimators=100))
