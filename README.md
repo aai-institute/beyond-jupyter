@@ -17,9 +17,9 @@ and we thus deem it necessary to abandon the respective software development pat
 
 The goal of the course material is for practictioners to 
 
-<p style="text-align: center; font-weight:bold">
+<p align="center" style="text-align:center"><b>
 understand how a principled software design approach supports every aspect of a machine learning project, accelerating both development & experimentation.
-</p>
+</b></p>
 
 It is a common misconception that good design slows down development, while, in fact, the opposite is true.
 We showcase the limitations of (unstructured) procedural code and explain how principled design approaches can drastically increase development speed while simultaneously improving the quality of the code along multiple dimensions.
