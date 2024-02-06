@@ -1,10 +1,10 @@
 
 
-<p align="center" style="text-align:center">
+<p align="left" style="text-align:left">
   <img src="resources/beyond-jupyter-logo.png#gh-light-mode-only" style="width:600px">
   <img src="resources/beyond-jupyter-logo-dark-mode.png#gh-dark-mode-only" style="width:600px">
-  <br>
-  <div align="center" style="text-align:center">
+  <br><br>
+  <div align="left" style="text-align:left">
   <a href="https://creativecommons.org/licenses/by-sa/4.0/" style="text-decoration:none"><img src="https://img.shields.io/badge/License-CC_BY--SA_4.0-lightgrey.svg" alt="License"></a>
   </div>
 </p>
@@ -69,7 +69,7 @@ You can download the data in two ways:
  1. [A Primer on Object-Oriented Programming](oop-essentials/README.md)
 
     This module explains the core principles of object-oriented programming (OOP), which lay the foundation for subsequent modules.
-    If your familiarity with OOP concepts and design principles is low, or if its benefits or not yet clear to you,
+    If your familiarity with OOP concepts and design principles is low, or if its benefits are not yet clear to you,
     we highly recommend starting with this module.
     
     At a structural level, OOP adds complexity, yet this complexity can be mitigated by using advanced development tools.
