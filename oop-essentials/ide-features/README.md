@@ -105,7 +105,7 @@ The structure/outline view can provide a quick overview of a module's content, a
 | IDE       | Shortcut      |
 | --------- |---------------|
 | JetBrains | Alt+7 (Cmd+7) |
-| VSCode    | Can be set in Settings |
+| VSCode    | In Sidebar. Shortcut can be set in Settings |
 
 In JetBrains IDEs, the view can 
   * optionally be sorted lexicographically,
@@ -205,7 +205,7 @@ automatically, adapting all references to this component.
 | IDE       | Shortcut |
 | --------- |-----|
 | JetBrains | F6  |
-| VSCode    | ND |
+| VSCode    | Ctrl+Shifr+R and select "Move Symbol to" |
 
 #### Extracting a Method/Local Variable
 
