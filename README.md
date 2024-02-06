@@ -1,7 +1,13 @@
 
-[![CC BY-SA 4.0](https://img.shields.io/badge/License-CC_BY--SA_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 
-# Beyond Jupyter: Software Design Principles for Machine Learning Applications
+<p align="center" style="text-align:center">
+  <img src="resources/beyond-jupyter-logo.png#gh-light-mode-only" style="width:600px">
+  <img src="resources/beyond-jupyter-logo-dark-mode.png#gh-dark-mode-only" style="width:600px">
+  <br>
+  <div align="center" style="text-align:center">
+  <a href="https://creativecommons.org/licenses/by-sa/4.0/" style="text-decoration:none"><img src="https://img.shields.io/badge/License-CC_BY--SA_4.0-lightgrey.svg" alt="License"></a>
+  </div>
+</p>
 
 The *Beyond Jupyter* project is a collection of resources for software design,
 with a specific focus on machine learning applications.
