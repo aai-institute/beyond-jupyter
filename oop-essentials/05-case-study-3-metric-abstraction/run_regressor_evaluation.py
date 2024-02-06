@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 from typing import List, Dict
 
 import numpy as np
-import pandas as pd
-import sklearn.metrics
 from sklearn import metrics
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LogisticRegression
