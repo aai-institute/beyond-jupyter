@@ -19,7 +19,7 @@ Especially in larger software projects, it is imperative that all interfaces be 
 
   * **static type analysis**
 
-    With known types, the IDE (and other static analysis tools) can determine whether the types you are passing to or returning from functions match the expected types and can display errors as you type.
+    With known types, the IDE (and other static analysis tools) can determine whether the types you are passing to or returning from functions match the expected types; errors can be displayed as you type.
 
   * **interface documentation**
     
@@ -74,13 +74,15 @@ Directly searching for filenames can be much faster than looking for a file's lo
 
 #### Substring Search
 
-Sometimes we want to search for the occurrences of string literals or code snippets.
+Sometimes we want to search for the occurrences of string literals/code snippets.
 
 | IDE       | Shortcut     |
 | --------- |--------------|
 | JetBrains | Ctrl+Shift+F |
 | VSCode    | TODO         |
 
+Note, however, that, in most cases, this type of feature should not be used to search and replace code occurrences.
+Whenever possible, a dedicated [refactoring function](#refactoring) should be used instead, as it is both quicker and significantly more failsafe, provided that type annotations are applied rigorously.
 
 ### Class Hierarchy Display
 
@@ -101,6 +103,8 @@ This is the hierarchy of the `Metric` class from the earlier example:
 The structure/outline view can provide a quick overview of a module's content, and it can also be used to navigate within the file by clicking on its elements.
 
 ![Structure View](res/structure_view_navigation_intellij.gif)
+
+Opening the structure view can be especially helpful for larger modules that contain a multitude of (top-level) definitions.
 
 | IDE       | Shortcut      |
 | --------- |---------------|

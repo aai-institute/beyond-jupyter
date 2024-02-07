@@ -104,6 +104,8 @@ class ModelEvaluation:
 
     def evaluate_model(self, model) -> Dict[str, float]:
         """
+        Fits and evaluates the given model, collecting the evaluation results.
+
         :param model: the model to evaluate
         :return: a dictionary containing all metric values
         """

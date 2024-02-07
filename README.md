@@ -66,7 +66,7 @@ You can download the data in two ways:
 
 ## Course Modules
 
- 1. [A Primer on Object-Oriented Programming](oop-essentials/README.md)
+ 1. [Object-Oriented Programming: Essentials](oop-essentials/README.md)
 
     This module explains the core principles of object-oriented programming (OOP), which lay the foundation for subsequent modules.
     If your familiarity with OOP concepts and design principles is low, or if its benefits are not yet clear to you,
@@ -83,5 +83,5 @@ You can download the data in two ways:
 
  2. [Spotify Song Popularity Prediction: A Refactoring Journey](refactoring-journey/README.md) 
  
-    This module addresses the full journey from a notebook implemented in Jupyter to a highly structured solution that is vastly more flexible, easy to maintain and that strongly facilitates experimentation and even deployment for production use.
+    This module addresses the full journey from a notebook implemented in Jupyter to a highly structured solution that is vastly more flexible, easy to maintain and that strongly facilitates experimentation as well as deployment for production use.
     We transform the implementation step by step, clearly explaining the benefits achieved and naming the relevant principles being implemented along the way.
