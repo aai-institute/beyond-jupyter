@@ -7,4 +7,5 @@
    3. [Step 2: Evaluation Abstraction](02c-case-study-2-evaluation-abstraction/README.md)
    4. [Step 3: Metric Abstraction](02d-case-study-3-metric-abstraction/README.md)
    5. [Step 4: Results Abstraction](02e-case-study-4-results-abstraction/README.md)
-3. [Making Use of IDE Features](ide-features/README.md)
+3. [General Design & Development Principles](03-general-principles/README.md)
+4. [Making Use of IDE Features](ide-features/README.md)
