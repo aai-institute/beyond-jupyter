@@ -12,7 +12,8 @@ from songpop.data import *
 log = logging.getLogger(__name__)
 
 
-def compute_metric_rel_freq_with(y_ground_truth: np.ndarray, y_predicted: np.ndarray, max_error: float) -> float:
+def compute_metric_rel_freq_error_within(y_ground_truth: np.ndarray, y_predicted: np.ndarray, 
+        max_error: float) -> float:
     cnt = 0
     for y1, y2 in zip(y_ground_truth, y_predicted):
         if abs(y1 - y2) <= max_error:
@@ -72,7 +73,7 @@ def main():
     # evaluate models
     max_error = 10
     evaluation_result_df = evaluate_models(models, X, y,
-        lambda t, u: compute_metric_rel_freq_with(t, u, max_error),
+        lambda t, u: compute_metric_rel_freq_error_within(t, u, max_error),
         metric_name=f"RelFreqErrWithin[{max_error}]", higher_is_better=True)
     log.info(f"Results:\n{evaluation_result_df}")
 
