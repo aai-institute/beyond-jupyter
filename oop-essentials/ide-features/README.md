@@ -163,14 +163,12 @@ Auto-completion helps save time by not requiring the developer to type out the n
 | JetBrains | just start typing or explicitly request via Ctrl+Space |
 | VSCode    | TODO |
 
-**Auto-completion of identifiers in the entire project**, including external dependencies:
+**Auto-completion (with auto-import) of identifiers in the entire project**, including external dependencies:
 
 | IDE       | Shortcut  |
 | --------- | --------- |
 | JetBrains | Ctrl+Space+Space |
 | VSCode    | TODO |
-
-Auto-completing an identifier automatically adds the respective import to the module's preamble.
 
 
 #### Type-Based Auto-Completion
@@ -183,6 +181,34 @@ With the types of identifiers being known, the IDE can directly auto-complete th
 | --------- | --------- |
 | JetBrains | type `.` after the identifier or explicitly request via Ctrl+Space |
 | VSCode    | TODO |
+
+
+### Getting Help
+
+When writing code, it is essential to know what exactly functions do and how the parameters are interpreted,
+and ideally, the functions you call are well-documented.
+
+#### Display Documentation
+
+Getting an inline display of the documentation of a function/type is the fastest way to obtain the information you need.
+
+![Show Documentation Popup](res/docs-popup-intellij.png)
+
+| IDE       | Shortcut  |
+| --------- |-----------|
+| JetBrains | Ctrl+Q (Cmd+Q)  |
+| VSCode    | Ctrl+K+I (Cmd+K+I)  |
+
+#### Show Parameter Information
+
+When the initial auto-popup, which typically is triggered by typing an opening parenthesis, is no longer present, we can trigger the parameter information display within a parameter list explicitly.
+
+![Parameter Info](res/parameter-info-intellij.png)
+
+| IDE       | Shortcut  |
+| --------- |-----------|
+| JetBrains | Ctrl+P (Cmd+P)  |
+| VSCode    | Ctrl+Shift+Sppace (Cmd+Shift+Space)  |
 
 ### Refactoring
 
