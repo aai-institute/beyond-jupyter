@@ -75,13 +75,16 @@ You can download the data in two ways:
     At a structural level, OOP adds complexity, yet this complexity can be mitigated by using advanced development tools.
     We thus also include a section on the interplay between OOP and integrated development environments (IDEs) in this section.
 
-
  2. [Guiding Principles](Guiding-Principles.md)
 
     This module puts forth our set of guiding principles for software development in machine learning applications.
     These principles can critically inform design decisions during development.
 
- 2. [Spotify Song Popularity Prediction: A Refactoring Journey](refactoring-journey/README.md) 
+3. [Spotify Song Popularity Prediction: A Refactoring Journey](refactoring-journey/README.md) 
  
     This module addresses the full journey from a notebook implemented in Jupyter to a highly structured solution that is vastly more flexible, easy to maintain and that strongly facilitates experimentation as well as deployment for production use.
     We transform the implementation step by step, clearly explaining the benefits achieved and naming the relevant principles being implemented along the way.
+
+4. [Anti-Patterns](anti-patterns/README.md) 
+   
+    While the rest of the course material focusses on demonstrating positive design patterns, this module collects a number of common anti-patterns.
