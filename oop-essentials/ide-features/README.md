@@ -38,7 +38,7 @@ It can be critical in gaining a deep understanding of how the code works.
 | IDE       | Shortcut                                           |
 | --------- |----------------------------------------------------|
 | JetBrains | Ctrl+B (Cmd+B) or Ctrl+Left-Click (Cmd+Left-Click) |
-| VSCode    | TODO                                               |
+| VSCode    | Alt+Shift+F12 (Opt+Shift+F12)                      |
 
 ### Go to Definition
 
@@ -47,7 +47,7 @@ When an identifier is in front of you, navigating to the code that defines it ca
 | IDE       | Shortcut                                           |
 | --------- |----------------------------------------------------|
 | JetBrains | Ctrl+B (Cmd+B) or Ctrl+Left-Click (Cmd+Left-Click) |
-| VSCode    | TODO                                               |
+| VSCode    | F12 or Ctrl+Left-Click (Cmd+Left-Click)            |
 
 ### Search
 
@@ -61,7 +61,7 @@ Sometimes you know the name of the type/class you are looking for but not its pr
 | IDE       | Shortcut       |
 | --------- |----------------|
 | JetBrains | Ctrl+N (Cmd+N) |
-| VSCode    | TODO           |
+| VSCode    | ND           |
 
 #### File Search
 
@@ -70,16 +70,16 @@ Directly searching for filenames can be much faster than looking for a file's lo
 | IDE       | Shortcut                   |
 | --------- |----------------------------|
 | JetBrains | Ctrl+Shift+N (Cmd+Shift+N) |
-| VSCode    | TODO                       |
+| VSCode    | Ctrl+P (Cmd+P)             |
 
 #### Substring Search
 
 Sometimes we want to search for the occurrences of string literals/code snippets.
 
-| IDE       | Shortcut     |
-| --------- |--------------|
-| JetBrains | Ctrl+Shift+F |
-| VSCode    | TODO         |
+| IDE       | Shortcut                           |
+| --------- |------------------------------------|
+| JetBrains | Ctrl+Shift+F                       |
+| VSCode    | Ctrl+Shift+F (Cmd+Shift+F)         |
 
 Note, however, that, in most cases, this type of feature should not be used to search and replace code occurrences.
 Whenever possible, a dedicated [refactoring function](#refactoring) should be used instead, as it is both quicker and significantly more failsafe, provided that type annotations are applied rigorously.
@@ -96,7 +96,7 @@ This is the hierarchy of the `Metric` class from the earlier example:
 | IDE       | Shortcut  |
 | --------- |-----------|
 | JetBrains | Ctrl+H    |
-| VSCode    | TODO      |
+| VSCode    | Alt+Shift+H (Opt+Shift+H) |
 
 ### Structure/Outline View
 
@@ -109,7 +109,7 @@ Opening the structure view can be especially helpful for larger modules that con
 | IDE       | Shortcut      |
 | --------- |---------------|
 | JetBrains | Alt+7 (Cmd+7) |
-| VSCode    | TODO          |
+| VSCode    | In Sidebar. Shortcut can be set in Settings |
 
 In JetBrains IDEs, the view can 
   * optionally be sorted lexicographically,
@@ -126,7 +126,7 @@ Especially in larger files, being able to quickly navigate to elements of the mo
 | IDE       | Shortcut           |
 | --------- |--------------------|
 | JetBrains | Ctrl+F12 (Cmd+F12) |
-| VSCode    | TODO               |
+| VSCode    | ND               |
 
 ### Forward/Backward Navigation
 
@@ -135,7 +135,7 @@ When jumping between positions in the code (e.g. in conjunction with "go to defi
 | IDE       | Shortcut                                 |
 | --------- |------------------------------------------|
 | JetBrains | Ctrl+Alt+Left/Right (Cmd+Opt+Left/Right) |
-| VSCode    | TODO                                     |
+| VSCode    | Backward Ctrl+"-" (Cmd+"-") Forward Ctrl+Shift+"-" (Cmd+Shift+"-") |
 
 ### Recently Used Files
 
@@ -144,7 +144,7 @@ When jumping between files, being able to quickly return to a previous file (wit
 | IDE       | Shortcut       |
 | --------- |----------------|
 | JetBrains | Ctrl+E (Cmd+E) |
-| VSCode    | TODO           |
+| VSCode    | Ctrl+Alt+Left/Right (Cmd+Opt+Left/Right) |
 
 ## Editing
 
@@ -161,14 +161,14 @@ Auto-completion helps save time by not requiring the developer to type out the n
 | IDE       | Shortcut  |
 | --------- | --------- |
 | JetBrains | just start typing or explicitly request via Ctrl+Space |
-| VSCode    | TODO |
+| VSCode    | just start typing |
 
 **Auto-completion (with auto-import) of identifiers in the entire project**, including external dependencies:
 
 | IDE       | Shortcut  |
 | --------- | --------- |
 | JetBrains | Ctrl+Space+Space |
-| VSCode    | TODO |
+| VSCode    | just start typing |
 
 
 #### Type-Based Auto-Completion
@@ -180,7 +180,7 @@ With the types of identifiers being known, the IDE can directly auto-complete th
 | IDE       | Shortcut  |
 | --------- | --------- |
 | JetBrains | type `.` after the identifier or explicitly request via Ctrl+Space |
-| VSCode    | TODO |
+| VSCode    | type `.` after the identifier |
 
 
 ### Getting Help
@@ -225,7 +225,7 @@ adapts usages throughout your codebase.
 | IDE       | Shortcut  |
 | --------- |-----------|
 | JetBrains | Shift+F6  |
-| VSCode    | TODO      |
+| VSCode    | F2      |
 
 #### Moving a Component to Another Module
 
@@ -235,7 +235,7 @@ automatically, adapting all references to this component.
 | IDE       | Shortcut |
 | --------- |-----|
 | JetBrains | F6  |
-| VSCode    | TODO |
+| VSCode    | Ctrl+Shifr+R and select "Move Symbol to" |
 
 #### Extracting a Method/Local Variable
 
@@ -246,7 +246,7 @@ Turning a piece of code into a function/method is a common refactoring task:
 | IDE       | Shortcut               |
 | --------- |------------------------|
 | JetBrains | Ctrl+Alt+M (Cmd+Opt+M) |
-| VSCode    | TODO                   |
+| VSCode    | Ctrl+Shifr+R and select "Extract Method" |
 
 The reverse operation (inlining a function) is also a common refactoring task.
 
@@ -258,35 +258,35 @@ The IDE will typically update all usages of the expression.
 | IDE       | Shortcut               |
 | --------- |------------------------|
 | JetBrains | Ctrl+Alt+V (Cmd+Opt+V) |
-| VSCode    | TODO                   |
+| VSCode    | Ctrl+Shifr+R and select "Extract Variable" |
 
 
 ### Basic Editing
 
 **Delete line**
 
-| IDE       | Shortcut          |
-| --------- |-------------------|
-| JetBrains | Ctrl+Y (Cmd+Y)    |
-| VSCode    | TODO              |
+| IDE       | Shortcut                   |
+| --------- |----------------------------|
+| JetBrains | Ctrl+Y (Cmd+Y)             |
+| VSCode    | Ctrl+Shift+K (Cmd+Shift+K) |
 
 **Move line(s) up/down**
 
 | IDE       | Shortcut                              |
 | --------- |---------------------------------------|
 | JetBrains | Alt+Shift+Up/Down (Opt+Shift+Up/Down) |
-| VSCode    | TODO                                  |
+| VSCode    | Alt+Up/Down (Opt+Up/Down)             |
 
 **Move cursor to next/previous word**
 
 | IDE       | Shortcut                         |
 | --------- |----------------------------------|
 | JetBrains | Ctrl+Left/Right (Opt+Left/Right) |
-| VSCode    | TODO                             |
+| VSCode    | Alt+Left/Right (Opt+Left/Right) |
 
 **Move to start/end of line/statement**
 
-| IDE       | Shortcut                    |
-| --------- |-----------------------------|
-| JetBrains | Home/End or Fn+Left/Right   |
-| VSCode    | TODO                        |
+| IDE       | Shortcut                         |
+| --------- |----------------------------------|
+| JetBrains | Home/End or Fn+Left/Right        |
+| VSCode    | Ctrl+Left/Right (Cmd+Left/Right) |
