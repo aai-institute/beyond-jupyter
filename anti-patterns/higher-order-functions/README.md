@@ -90,7 +90,7 @@ The OOP solution has significant advantages over the functional solution:
   In functional interface specifications, we use `Callable` to declare the type of the function - or a previously defined `Protocol` in the case of a complex function signature involving keyword arguments.
   In either case, the relationship between the declared type and its implementors is, in typical *duck typing* fashion, normally an implicit one.
   By contrast, the object-oriented solution establishes an explicit type relationship.
-  An explicit type relationship has the advantage of being checkable, i.e. a static type checker can test whether an interface is indeed implemented correctly (as far as types are concerned), whereas a divergence in duck-typed implementations will remain unnoticed: If a function signature changes (for whatever reason), static type checking will not reveal that the function no longer aligns with the type annotation of the higher-order function is what intended to be used in conjunction with.
+  An explicit type relationship has the advantage of being checkable, i.e. a static type checker can test whether an interface is indeed implemented correctly (as far as types are concerned), whereas a divergence in duck-typed implementations will remain unnoticed: If a function signature changes (for whatever reason), static type checking will not reveal that the function no longer aligns with the type annotation of the higher-order function it was intended to be used in conjunction with.
 
 ## Doubling Down on Encapsulation
 

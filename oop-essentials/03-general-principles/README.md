@@ -73,7 +73,7 @@ If there is no (good) reason for the design to be complex, prefer simple design,
 
 This is closely tied to the *principle of least surprise*, which calls for design choices that won't elicit surprise on the user's part. 
 Understand people as part of the system, and choose a design that matches people's expectations, experience, and mental models. 
-If possible, the design should prefer idiomatic language constructs over exotic, non-standard ones that aren't easily understood - even if they may solve a problem slightly more elegantly.
+If possible, the design should prefer idiomatic language constructs over exotic, non-standard ones that aren't easily understood - even if the exotic ones may solve a problem slightly more elegantly.
 
 # Extreme Programming (XP)
 
