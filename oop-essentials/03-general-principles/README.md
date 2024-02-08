@@ -66,6 +66,15 @@ The YAGNI principle seeks to find the simplest solution that will work, without 
 Overengineering a solution to prepare for future needs is virtually *always* a bad thing, and unexperienced programmers typically do not realise how rare it is for these needs to actually materialise.
 Instead, keep your design clean, such that it will be easy to refactor it once new requirements arise.
 
+# KISS (Keep It Simple and Stupid) and the Principle of Least Surprise
+
+The KISS principle calls for simple solutions rather than complex ones. 
+If there is no (good) reason for the design to be complex, prefer simple design, as it will facilitate understandability.
+
+This is closely tied to the *principle of least surprise*, which calls for design choices that won't elicit surprise on the user's part. 
+Understand people as part of the system, and choose a design that matches people's expectations, experience, and mental models. 
+If possible, the design should prefer idiomatic language constructs over exotic, non-standard ones that aren't easily understood - even if they may solve a problem slightly more elegantly.
+
 # Extreme Programming (XP)
 
 YAGNI is one of the core principles of extreme programming (aka XP), which addresses not only principles pertaining to code but also collaboration.
