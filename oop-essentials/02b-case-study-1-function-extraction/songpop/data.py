@@ -1,10 +1,12 @@
-import logging
+from sensai.util import logging
 from typing import Optional, Tuple
 
 import pandas as pd
 
 from sensai import InputOutputData
 from sensai.util.string import ToStringMixin, TagBuilder
+from sklearn.preprocessing import StandardScaler
+
 from . import config
 
 
@@ -90,3 +92,12 @@ class Dataset(ToStringMixin):
         """
         df = self.load_data_frame()
         return df.drop(columns=COL_POPULARITY), df[COL_POPULARITY]
+
+    def load_xy_projected_scaled(self) -> Tuple[pd.DataFrame, pd.Series]:
+        X, y = self.load_xy()
+        cols_used_by_models = [COL_YEAR, *COLS_MUSICAL_DEGREES, COL_KEY, COL_MODE, COL_TEMPO, COL_TIME_SIGNATURE, COL_LOUDNESS, COL_DURATION_MS]
+        X_proj = X[cols_used_by_models]
+        scaler = StandardScaler()
+        scaler.fit(X_proj)
+        X_scaled = scaler.transform(X_proj)
+        return X_scaled, y

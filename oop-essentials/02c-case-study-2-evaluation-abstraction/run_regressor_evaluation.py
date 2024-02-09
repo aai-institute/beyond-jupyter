@@ -49,17 +49,10 @@ class ModelEvaluation:
 
 def main():
     dataset = Dataset(10000)
-    X, y = dataset.load_xy()
-
-    # project and scale data
-    cols_used_by_models = [COL_YEAR, *COLS_MUSICAL_DEGREES, COL_KEY, COL_MODE, COL_TEMPO, COL_TIME_SIGNATURE, COL_LOUDNESS, COL_DURATION_MS]
-    X = X[cols_used_by_models]
-    scaler = StandardScaler()
-    scaler.fit(X)
-    X_scaled = scaler.transform(X)
+    X, y = dataset.load_xy_projected_scaled()
 
     # evaluate models
-    ev = ModelEvaluation(X_scaled, y)
+    ev = ModelEvaluation(X, y)
     ev.evaluate_model(LogisticRegression(solver='lbfgs', max_iter=1000))
     ev.evaluate_model(KNeighborsRegressor(n_neighbors=1))
     ev.evaluate_model(RandomForestRegressor(n_estimators=100))

@@ -1,8 +1,7 @@
 from sklearn import linear_model, metrics
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 
 from songpop.data import *
@@ -10,17 +9,9 @@ from songpop.data import *
 
 def main():
     dataset = Dataset(10000)
-    X, y = dataset.load_xy()
+    X, y = dataset.load_xy_projected_scaled()
 
-    # project and scale data
-    cols_used_by_models = [COL_YEAR, *COLS_MUSICAL_DEGREES, COL_KEY, COL_MODE, COL_TEMPO, COL_TIME_SIGNATURE, COL_LOUDNESS, COL_DURATION_MS]
-    X = X[cols_used_by_models]
-    scaler = StandardScaler()
-    scaler.fit(X)
-    X_scaled = scaler.transform(X)
-
-    # split data
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, random_state=42, test_size=0.3, shuffle=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42, test_size=0.3, shuffle=True)
 
     log_reg = linear_model.LogisticRegression(solver='lbfgs', max_iter=1000)
     log_reg.fit(X_train, y_train)
