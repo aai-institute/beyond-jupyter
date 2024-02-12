@@ -10,9 +10,9 @@ In this step, we generalise the evaluation by making the metric user-configurabl
   * The user shall be able to provide one or more metrics for evaluation, based on a well-defined interface given by abstract base class `Metric`. Each metric shall define
       * the metric computation (method `compute_value`)
       * whether larger or smaller is considered as better (method `is_larger_better`)
-      * the name of the metric for reporting its valeu (method `get_name`)
+      * the name of the metric for reporting its value (method `get_name`)
   
-    ```python
+```python
     class Metric(ABC):
         @abstractmethod
         def compute_value(self, y_ground_truth: np.ndarray, y_predicted: np.ndarray) -> float:
@@ -37,7 +37,7 @@ In this step, we generalise the evaluation by making the metric user-configurabl
                 False if it is an error metric where lower is better
             """
             pass
-    ```
+```
   
   * We provide implementations for the mean absolute error (`MetricMeanAbsError`) and the coefficient of determination $R^2$ (`MetricR2`) by drawing upon functions from sklearn. 
   
