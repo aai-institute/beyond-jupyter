@@ -133,6 +133,45 @@ Notice that
     Without the feature representations introduced in this step, this would not be possible in such a concise manner.
 
 
+### Declarative, Fully Composable Feature Pipelines
+
+The last point we made is a highly important one, and we thus illustrate it further using an extended factory definition. 
+Consider the following extended definition of the logistic regression model factory,
+
+```python
+    @classmethod
+    def create_logistic_regression(cls, name_suffix="", features: Optional[List[FeatureName]] = None):
+        if features is None:
+            features = DEFAULT_FEATURES
+        fc = FeatureCollector(features, registry=registry)
+        return SkLearnLogisticRegressionVectorClassificationModel(solver='lbfgs', max_iter=1000) \
+            .with_feature_collector(fc) \
+            .with_feature_transformers(
+                fc.create_feature_transformer_one_hot_encoder(),
+                fc.create_feature_transformer_normalisation()) \
+            .with_name("LogisticRegression" + name_suffix)
+```
+
+where we have added two parameters that allow us to modify the name of the model and to choose the set of features freely.
+This enables us to experiment with variations of the logistic regression model as follows,
+
+```python
+models = [
+    ModelFactory.create_logistic_regression(),
+    ModelFactory.create_logistic_regression("-only-cat", [FeatureName.MUSICAL_CATEGORIES]),
+    ModelFactory.create_logistic_regression("-only-cat-deg", 
+        [FeatureName.MUSICAL_CATEGORIES, FeatureName.MUSICAL_DEGREES]),
+]
+```
+
+i.e. we can specify variations of the model which use entirely different input pipelines simply by declaring the set of features.
+The model simply declared that categorical features are to be one-hot encoded and that numerical features shall be normalised, and no matter which set of features we actually use, the downstream transformations will take place. 
+All we have to do is specify the set of features.
+
+The representation of the feature meta-data was critical in achieving this!
+If we had used a more low-level data processing approach, we would have to specifically adapt the downstream transformation code to handle the change in features.
+
+
 ## Principles Addressed in this Step
 
 * Know your features
