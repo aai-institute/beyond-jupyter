@@ -74,6 +74,9 @@ class RLProcess:
         ...
 ```
 
+Apart from the injection of creation mechanisms, factories can be used as configuration items which can more readily be stored or transferred.
+If, for instance, the actual object would be difficult to persist for technical reasons, has an unstable representation or is excessively large, it can make sense to use a factory instead of the actual object.
+
 We can also make use of **functions as factories**, which, in OOP, are typically implemented as static methods or class methods.
 In particular, such factories are frequently used to provide alternative construction mechanisms for objects and use the naming scheme `Class.from_something`.
 For instance, we may want to be able to load an `RLAgent` from a persisted pickle file and add a class method `from_pickle_file` to obtain an instance of the class:
