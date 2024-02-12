@@ -1,14 +1,14 @@
-from typing import List, Sequence
+from typing import Sequence
 
-from sklearn.preprocessing import StandardScaler, MaxAbsScaler
-
-from sensai.xgboost import XGBGradientBoostedVectorClassificationModel
-from .data import *
-from .features import FeatureName, registry
 from sensai.data_transformation import DFTSkLearnTransformer
 from sensai.featuregen import FeatureGeneratorTakeColumns, FeatureCollector
 from sensai.sklearn.sklearn_classification import SkLearnLogisticRegressionVectorClassificationModel, \
     SkLearnKNeighborsVectorClassificationModel, SkLearnRandomForestVectorClassificationModel, SkLearnDecisionTreeVectorClassificationModel
+from sensai.xgboost import XGBGradientBoostedVectorClassificationModel
+from sklearn.preprocessing import StandardScaler, MaxAbsScaler
+
+from .data import *
+from .features import FeatureName, registry
 
 
 class ModelFactory:

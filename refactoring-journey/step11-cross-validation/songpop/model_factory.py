@@ -1,8 +1,6 @@
 from pathlib import Path
 from typing import Sequence
 
-from sklearn.preprocessing import StandardScaler, MaxAbsScaler
-
 from sensai import VectorRegressionModel
 from sensai.data_transformation import DFTSkLearnTransformer
 from sensai.featuregen import FeatureGeneratorTakeColumns, FeatureCollector
@@ -12,6 +10,8 @@ from sensai.sklearn.sklearn_regression import SkLearnRandomForestVectorRegressio
 from sensai.util.pickle import load_pickle
 from sensai.vector_model import RuleBasedVectorClassificationModel
 from sensai.xgboost import XGBGradientBoostedVectorClassificationModel, XGBGradientBoostedVectorRegressionModel
+from sklearn.preprocessing import StandardScaler, MaxAbsScaler
+
 from .data import *
 from .features import FeatureName, registry
 

@@ -1,11 +1,11 @@
-from sklearn.preprocessing import StandardScaler, MaxAbsScaler
-
-from .data import *
-from .features import FeatureName, registry
 from sensai.data_transformation import DFTSkLearnTransformer
 from sensai.featuregen import FeatureGeneratorTakeColumns, FeatureCollector
 from sensai.sklearn.sklearn_classification import SkLearnLogisticRegressionVectorClassificationModel, \
     SkLearnKNeighborsVectorClassificationModel, SkLearnRandomForestVectorClassificationModel, SkLearnDecisionTreeVectorClassificationModel
+from sklearn.preprocessing import StandardScaler, MaxAbsScaler
+
+from .data import *
+from .features import FeatureName, registry
 
 
 class ModelFactory:

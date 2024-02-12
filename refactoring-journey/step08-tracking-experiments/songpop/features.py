@@ -1,10 +1,10 @@
 from enum import Enum
 
 import numpy as np
-
 from sensai import VectorRegressionModel
 from sensai.data_transformation import DFTNormalisation, SkLearnTransformerFactoryFactory
 from sensai.featuregen import FeatureGeneratorRegistry, FeatureGeneratorTakeColumns, FeatureGenerator
+
 from .data import *
 
 

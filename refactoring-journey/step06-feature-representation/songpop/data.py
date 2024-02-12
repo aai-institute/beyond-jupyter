@@ -2,11 +2,10 @@ import logging
 from typing import Optional
 
 import pandas as pd
-
 from sensai import InputOutputData
 from sensai.util.string import ToStringMixin
-from . import config
 
+from . import config
 
 log = logging.getLogger(__name__)
 

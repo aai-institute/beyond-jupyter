@@ -1,10 +1,10 @@
-from sklearn.preprocessing import StandardScaler
-
-from .data import COL_YEAR, COLS_MUSICAL_DEGREES, COL_KEY, COL_MODE, COL_TEMPO, COL_TIME_SIGNATURE, COL_LOUDNESS, COL_DURATION_MS
 from sensai.data_transformation import DFTSkLearnTransformer
 from sensai.featuregen import FeatureGeneratorTakeColumns
 from sensai.sklearn.sklearn_classification import SkLearnLogisticRegressionVectorClassificationModel, \
     SkLearnKNeighborsVectorClassificationModel, SkLearnRandomForestVectorClassificationModel, SkLearnDecisionTreeVectorClassificationModel
+from sklearn.preprocessing import StandardScaler
+
+from .data import COL_YEAR, COLS_MUSICAL_DEGREES, COL_KEY, COL_MODE, COL_TEMPO, COL_TIME_SIGNATURE, COL_LOUDNESS, COL_DURATION_MS
 
 
 class ModelFactory:
