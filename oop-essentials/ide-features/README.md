@@ -177,7 +177,7 @@ When jumping between files, being able to quickly return to a previous file (wit
 | IDE       | Shortcut                    |
 | --------- |-----------------------------|
 | JetBrains | Ctrl+E (Cmd+E)              |
-| VSCode    | Ctrl+P (Cmd+P)              |
+| VSCode    | Ctrl+Tab (Cmd+Tab)          |
 
 ## Editing
 
