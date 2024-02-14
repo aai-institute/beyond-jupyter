@@ -3,6 +3,39 @@
 Knowing your integrated development environment (IDE) well and using it to its full potential is essential in speeding up the development process and can greatly reduce the potential for errors.
 In the following, we will specifically address Python development using **JetBrains IDEs** (i.e. PyCharm and IntelliJ IDEA) and **Microsoft Visual Studio Code** (aka VSCode).
 
+<!-- generated with `markdown-toc -i README.md` -->
+
+<!-- toc -->
+
+- [Type Annotations](#type-annotations)
+- [Navigating and Understanding the Code](#navigating-and-understanding-the-code)
+  * [Finding Usages](#finding-usages)
+  * [Go to Definition](#go-to-definition)
+  * [Search](#search)
+    + [Type Search](#type-search)
+    + [File Search](#file-search)
+    + [Substring Search](#substring-search)
+  * [Class Hierarchy Display](#class-hierarchy-display)
+  * [Structure/Outline View](#structureoutline-view)
+  * [Structure/Outline-Based Navigation](#structureoutline-based-navigation)
+  * [Forward/Backward Navigation](#forwardbackward-navigation)
+  * [Recently/Previously Used Files/Editors](#recentlypreviously-used-fileseditors)
+- [Editing](#editing)
+  * [Auto-Completions](#auto-completions)
+    + [Identifier Auto-Completion](#identifier-auto-completion)
+    + [Type-Based Auto-Completion](#type-based-auto-completion)
+  * [Getting Help](#getting-help)
+    + [Display Documentation](#display-documentation)
+    + [Show Parameter Information](#show-parameter-information)
+  * [Refactoring](#refactoring)
+    + [Renaming](#renaming)
+    + [Moving a Component to Another Module](#moving-a-component-to-another-module)
+    + [Extracting a Method/Local Variable](#extracting-a-methodlocal-variable)
+    + [Extracting a Local Variable](#extracting-a-local-variable)
+  * [Basic Editing](#basic-editing)
+
+<!-- tocstop -->
+
 ## Type Annotations
 
 Python is a dynamically typed language, but the addition of type hints can greatly enhance the assistance functions that can be provided.
@@ -61,7 +94,7 @@ Sometimes you know the name of the type/class you are looking for but not its pr
 | IDE       | Shortcut       |
 | --------- |----------------|
 | JetBrains | Ctrl+N (Cmd+N) |
-| VSCode    | ND           |
+| VSCode    | n/a            |
 
 #### File Search
 
@@ -93,9 +126,9 @@ This is the hierarchy of the `Metric` class from the earlier example:
 
 ![Type Hierarchy for the Metric Class](res/hierarchy_intellij.png)
 
-| IDE       | Shortcut  |
-| --------- |-----------|
-| JetBrains | Ctrl+H    |
+| IDE       | Shortcut                  |
+| --------- |---------------------------|
+| JetBrains | Ctrl+H                    |
 | VSCode    | Alt+Shift+H (Opt+Shift+H) |
 
 ### Structure/Outline View
@@ -106,9 +139,9 @@ The structure/outline view can provide a quick overview of a module's content, a
 
 Opening the structure view can be especially helpful for larger modules that contain a multitude of (top-level) definitions.
 
-| IDE       | Shortcut      |
-| --------- |---------------|
-| JetBrains | Alt+7 (Cmd+7) |
+| IDE       | Shortcut                                    |
+| --------- |---------------------------------------------|
+| JetBrains | Alt+7 (Cmd+7)                               |
 | VSCode    | In Sidebar. Shortcut can be set in Settings |
 
 In JetBrains IDEs, the view can 
@@ -123,28 +156,28 @@ Especially in larger files, being able to quickly navigate to elements of the mo
 
 ![Structure Search](res/structure_search_navigation_intellij.gif)
 
-| IDE       | Shortcut           |
-| --------- |--------------------|
-| JetBrains | Ctrl+F12 (Cmd+F12) |
-| VSCode    | ND               |
+| IDE       | Shortcut                   |
+| --------- |----------------------------|
+| JetBrains | Ctrl+F12 (Cmd+F12)         |
+| VSCode    | Ctrl+Shift+O (Cmd+Shift+O) |
 
 ### Forward/Backward Navigation
 
-When jumping between positions in the code (e.g. in conjunction with "go to definition"), it is important to be able to quickly jump back and forth recent cursor/editing positions.
+When jumping between positions in the code (e.g. in conjunction with "go to definition"), it is important to be able to quickly jump back and forth between recent cursor/editing positions.
 
 | IDE       | Shortcut                                 |
 | --------- |------------------------------------------|
 | JetBrains | Ctrl+Alt+Left/Right (Cmd+Opt+Left/Right) |
-| VSCode    | Backward Ctrl+"-" (Cmd+"-") Forward Ctrl+Shift+"-" (Cmd+Shift+"-") |
+| VSCode    | Alt+Left/Right (Opt+Left/Right)          |
 
-### Recently Used Files
+### Recently/Previously Used Files/Editors
 
 When jumping between files, being able to quickly return to a previous file (without using the mouse to click on a tab) can be very efficient.
 
-| IDE       | Shortcut       |
-| --------- |----------------|
-| JetBrains | Ctrl+E (Cmd+E) |
-| VSCode    | Ctrl+Alt+Left/Right (Cmd+Opt+Left/Right) |
+| IDE       | Shortcut                    |
+| --------- |-----------------------------|
+| JetBrains | Ctrl+E (Cmd+E)              |
+| VSCode    | Ctrl+P (Cmd+P)              |
 
 ## Editing
 
@@ -165,11 +198,12 @@ Auto-completion helps save time by not requiring the developer to type out the n
 
 **Auto-completion (with auto-import) of identifiers in the entire project**, including external dependencies:
 
-| IDE       | Shortcut  |
-| --------- | --------- |
-| JetBrains | Ctrl+Space+Space |
-| VSCode    | just start typing |
+| IDE       | Shortcut           |
+| --------- |--------------------|
+| JetBrains | Ctrl+Space+Space   |
+| VSCode    | just start typing  |
 
+In VSCode, auto-import will not happen by default; it has to be enabled in settings.
 
 #### Type-Based Auto-Completion
 
@@ -177,10 +211,10 @@ With the types of identifiers being known, the IDE can directly auto-complete th
 
 ![Type-Based Auto-Completion](res/autocompletion_type-based.gif)
 
-| IDE       | Shortcut  |
-| --------- | --------- |
+| IDE       | Shortcut                                                           |
+| --------- |--------------------------------------------------------------------|
 | JetBrains | type `.` after the identifier or explicitly request via Ctrl+Space |
-| VSCode    | type `.` after the identifier |
+| VSCode    | type `.` after the identifier                                      |
 
 
 ### Getting Help
@@ -194,10 +228,10 @@ Getting an inline display of the documentation of a function/type is the fastest
 
 ![Show Documentation Popup](res/docs-popup-intellij.png)
 
-| IDE       | Shortcut  |
-| --------- |-----------|
-| JetBrains | Ctrl+Q (Cmd+Q)  |
-| VSCode    | Ctrl+K+I (Cmd+K+I)  |
+| IDE       | Shortcut           |
+| --------- |--------------------|
+| JetBrains | Ctrl+Q (Cmd+Q)     |
+| VSCode    | Ctrl+K+I (Cmd+K+I) |
 
 #### Show Parameter Information
 
@@ -205,10 +239,10 @@ When the initial auto-popup, which typically is triggered by typing an opening p
 
 ![Parameter Info](res/parameter-info-intellij.png)
 
-| IDE       | Shortcut  |
-| --------- |-----------|
-| JetBrains | Ctrl+P (Cmd+P)  |
-| VSCode    | Ctrl+Shift+Sppace (Cmd+Shift+Space)  |
+| IDE       | Shortcut                           |
+| --------- |------------------------------------|
+| JetBrains | Ctrl+P (Cmd+P)                     |
+| VSCode    | Ctrl+Shift+Space (Cmd+Shift+Space) |
 
 ### Refactoring
 
@@ -225,17 +259,17 @@ adapts usages throughout your codebase.
 | IDE       | Shortcut  |
 | --------- |-----------|
 | JetBrains | Shift+F6  |
-| VSCode    | F2      |
+| VSCode    | F2        |
 
 #### Moving a Component to Another Module
 
 Whenever you would like to extract components and move them to a different module, the IDE can manage this
 automatically, adapting all references to this component.
 
-| IDE       | Shortcut |
-| --------- |-----|
-| JetBrains | F6  |
-| VSCode    | Ctrl+Shifr+R and select "Move Symbol to" |
+| IDE       | Shortcut                                 |
+| --------- |------------------------------------------|
+| JetBrains | F6                                       |
+| VSCode    | Ctrl+Shift+R and select "Move Symbol to" |
 
 #### Extracting a Method/Local Variable
 
@@ -243,10 +277,10 @@ Turning a piece of code into a function/method is a common refactoring task:
 
 ![Extracting a Method](res/refactor_extract_function_intellij.gif)
 
-| IDE       | Shortcut               |
-| --------- |------------------------|
-| JetBrains | Ctrl+Alt+M (Cmd+Opt+M) |
-| VSCode    | Ctrl+Shifr+R and select "Extract Method" |
+| IDE       | Shortcut                                 |
+| --------- |------------------------------------------|
+| JetBrains | Ctrl+Alt+M (Cmd+Opt+M)                   |
+| VSCode    | Ctrl+Shift+R and select "Extract Method" |
 
 The reverse operation (inlining a function) is also a common refactoring task.
 
@@ -255,10 +289,10 @@ The reverse operation (inlining a function) is also a common refactoring task.
 Turning an expression into a local variable is another minor refactoring task that frequently comes in handy.
 The IDE will typically update all usages of the expression.
 
-| IDE       | Shortcut               |
-| --------- |------------------------|
-| JetBrains | Ctrl+Alt+V (Cmd+Opt+V) |
-| VSCode    | Ctrl+Shifr+R and select "Extract Variable" |
+| IDE       | Shortcut                                   |
+| --------- |--------------------------------------------|
+| JetBrains | Ctrl+Alt+V (Cmd+Opt+V)                     |
+| VSCode    | Ctrl+Shift+R and select "Extract Variable" |
 
 
 ### Basic Editing
