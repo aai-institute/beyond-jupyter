@@ -1,9 +1,49 @@
 # Useful Design Patterns for ML Projects
 
-## Strategy Pattern
+## The Strategy Pattern
+
+Algorithms are typically composed of a set of lower-level algorithms (or sub-routines).
+There could be more than one way to perform the tasks these lower-level algorithms attend to.
+The *strategy pattern* allows the respective lower-level behaviour to be modified by having the high-level algorithm accept an object of a class representing an abstraction of the lower-level task.
+
+Recall the example from the case study: The `ModelEvaluation` could be parametrised with one or more `Metric` instances,
+which perform the actual task of computing an evaluation metric:
+
+```python
+class ModelEvaluation:
+    def __init__(self, X: pd.DataFrame, y: pd.Series,
+            metrics: List[Metric],
+            test_size: float = 0.3, shuffle: bool = True, random_state: int = 42):
+        ...
+```
+
+In accordance with the dependency inversion principle, `ModelEvaluation` depends on the abstraction `Metric`,
+which encapsulates the logic to compute a specific metric value.
+
+```python
+class Metric(ABC):
+    @abstractmethod
+    def compute_value(self, y_ground_truth: np.ndarray, y_predicted: np.ndarray) -> float:
+        pass
+```
+
+It can then be specialised in many ways and subsequently injected into the evaluation object in order to modify its behaviour accordingly.
+
+```python
+class MetricMeanAbsError(Metric):
+    def compute_value(self, y_ground_truth: np.ndarray, y_predicted: np.ndarray) -> float:
+        return metrics.mean_absolute_error(y_ground_truth, y_predicted)
 
 
-## Factory
+class MetricR2(Metric):
+    def compute_value(self, y_ground_truth: np.ndarray, y_predicted: np.ndarray) -> float:
+        return metrics.r2_score(y_ground_truth, y_predicted)
+```
+
+A new metric can be supported by implementing a new implementation of the `Metric` abstraction and without requiring
+modifications to the main algorithm implemented in `ModelEvaluation` (open-closed principle).
+
+## The Factory Pattern
 
 Algorithms frequently need to dynamically create objects, and we often want the way in which the objects are created to be user-definable.
 The *factory pattern* addresses this need.
@@ -88,4 +128,10 @@ class RLAgent(ABC):
         pass
 ```
 
-## Registry
+## The Registry Pattern
+
+A *registry* is a container of objects that allows us to conveniently retrieve the respective objects, e.g. by name.
+We can combine this with the factory pattern and register a collection of factories.
+If the set of objects is fixed, we can use an enumeration as the registry.
+
+
