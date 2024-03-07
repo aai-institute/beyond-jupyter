@@ -1,4 +1,4 @@
-# Step 3: Model-Specific Pipelines
+# Step 4: Model-Specific Pipelines
 
 In this step, we make another critical step towards more flexibility.
 We shall **strongly associate the data processing pipeline with the models** in order
@@ -44,7 +44,7 @@ sufficiently representative for the learning result to be virtually identical,
 but it is advisable to completely exclude the training set from any training
 processes in order for results to be meaningful in general.
 
-Technically, we introduce a model factory that is able to create instances of the four different models
+Technically, we introduce a [model factory](songpop/model_factory.py) that is able to create instances of the four different models
 we currently consider. 
 We have named the factory functions in a way that indicates that they pertain to the original
 models (with suffix `_orig`), preparing for the future case where we will have
