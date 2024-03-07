@@ -1,17 +1,8 @@
 from typing import Tuple, Optional
 
 import pandas as pd
-from sklearn import linear_model
-from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix
-from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.tree import DecisionTreeClassifier
 
-import config
+from . import config
 
 
 COL_POPULARITY = "popularity"
@@ -76,57 +67,3 @@ class Dataset:
         """
         df = self.load_data_frame()
         return df.drop(columns=COL_GEN_POPULARITY_CLASS), df[COL_GEN_POPULARITY_CLASS]
-
-
-class ModelFactory:
-    COLS_USED_BY_ORIGINAL_MODELS = [COL_YEAR, *COLS_MUSICAL_DEGREES, COL_KEY, COL_MODE, COL_TEMPO, COL_TIME_SIGNATURE, COL_LOUDNESS,
-        COL_DURATION_MS]
-
-    @classmethod
-    def create_logistic_regression_orig(cls):
-        return Pipeline([
-            ("project_scale", ColumnTransformer([("scaler", StandardScaler(), cls.COLS_USED_BY_ORIGINAL_MODELS)])),
-            ("model", linear_model.LogisticRegression(solver='lbfgs', max_iter=1000))])
-
-    @classmethod
-    def create_knn_orig(cls):
-        return Pipeline([
-            ("project_scale", ColumnTransformer([("scaler", StandardScaler(), cls.COLS_USED_BY_ORIGINAL_MODELS)])),
-            ("model", KNeighborsClassifier(n_neighbors=1))])
-
-    @classmethod
-    def create_random_forest_orig(cls):
-        return Pipeline([
-            ("project_scale", ColumnTransformer([("scaler", StandardScaler(), cls.COLS_USED_BY_ORIGINAL_MODELS)])),
-            ("model", RandomForestClassifier(n_estimators=100))])
-
-    @classmethod
-    def create_decision_tree_orig(cls):
-        return Pipeline([
-            ("project_scale", ColumnTransformer([("scaler", StandardScaler(), cls.COLS_USED_BY_ORIGINAL_MODELS)])),
-            ("model", DecisionTreeClassifier(random_state=42, max_depth=2))])
-
-
-if __name__ == '__main__':
-    # define & load dataset
-    dataset = Dataset(10000)
-    X, y = dataset.load_xy()
-
-    # split the data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42, test_size=0.3, shuffle=True)
-
-    # define models to be evaluated
-    models = [
-        ModelFactory.create_logistic_regression_orig(),
-        ModelFactory.create_knn_orig(),
-        ModelFactory.create_random_forest_orig(),
-        ModelFactory.create_decision_tree_orig(),
-    ]
-
-    # evaluate models
-    for model in models:
-        print(f"Evaluating model:\n{model}")
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        print(confusion_matrix(y_test, y_pred))
-        print(classification_report(y_test, y_pred))

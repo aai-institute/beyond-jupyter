@@ -5,7 +5,7 @@ from songpop.data import Dataset
 from songpop.model_factory import ModelFactory
 
 
-def main():
+if __name__ == '__main__':
     # define & load dataset
     dataset = Dataset(10000)
     X, y = dataset.load_xy()
@@ -28,7 +28,3 @@ def main():
         y_pred = model.predict(X_test)
         print(confusion_matrix(y_test, y_pred))
         print(classification_report(y_test, y_pred))
-
-
-if __name__ == '__main__':
-    main()

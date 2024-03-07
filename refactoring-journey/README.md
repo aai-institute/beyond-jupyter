@@ -57,13 +57,13 @@ These are the steps of the journey:
 
     This step introduces an explicit representation for the dataset, making transformations explicit as well as optional.
 
- 3. [Model-Specific Pipelines](step03-model-specific-pipelines/README.md)
-
-    This step refactors the pipeline to move all transforming operations into the models, enabling different models to use entirely different pipelines.
-
- 4. [Refactoring](step04-refactoring/README.md)
+ 3. [Refactoring](step03-refactoring/README.md)
 
     This step improves the code structure by adding function-specific Python modules.
+
+ 4. [Model-Specific Pipelines](step04-model-specific-pipelines/README.md)
+
+    This step refactors the pipeline to move all transforming operations into the models, enabling different models to use entirely different pipelines.
 
  5. [sensAI](step05-sensai/README.md)
 
