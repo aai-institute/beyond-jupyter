@@ -50,6 +50,17 @@ We have named the factory functions in a way that indicates that they pertain to
 models (with suffix `_orig`), preparing for the future case where we will have
 several additional models.
 
+## Are Sklearn Pipelines the Final Answer?
+
+While using sklearn pipeline objects allow for the definition of model-specific
+data processing, this concept only appears as an interim solution here.
+
+The reader might ask the simple question `Why?`, so we would like to elaborate on this.
+
+Although the sklearn pipeline concept introduces a new abstraction, namely the 
+sklearn `fit/transform` protocol, the resulting code still has more or less
+a procedural character. We are chaining operations encapsulated in objects,
+which implement the bespoken protocol.
 
 ## Principles Addressed in this Step
 
