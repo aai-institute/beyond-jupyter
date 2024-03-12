@@ -73,17 +73,8 @@ if __name__ == '__main__':
 Take a look at the [log output](output.txt) that is produced and compare it to
 the [output we had initially](../step02-dataset-representation/output.txt).
 
-## Randomness
-
-sensAI's wrappers around scikit-learn classes will use a fixed random seed by default
-to ensure reproducible results.
-(Notice that in the original notebook implementation, the random forest model did not
-use a fixed random seed.)
-
-
 
 ## Principles Addressed in this Step
 
 * Log extensively
 * Prefer declarative semantics
-* Avoid uncontrolled randomness

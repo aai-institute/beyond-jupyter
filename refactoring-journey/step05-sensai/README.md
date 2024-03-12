@@ -72,7 +72,16 @@ us closer to declarative semantics in our code.
 Furthermore, we have now named all models to support the reporting of model-specific results.
 
 
+## Randomness
+
+sensAI's wrappers around scikit-learn classes will use a fixed random seed by default
+to ensure reproducible results.
+(Notice that in the original notebook implementation, the random forest model did not
+use a fixed random seed.)
+
+
 ## Principles Addressed in this Step
 
 * Prefer declarative semantics
 * Find the right abstractions
+* Avoid uncontrolled randomness

@@ -1,6 +1,9 @@
 # Step 9: Tracking Experiments
 
-In this step, we introduce tracking mechanisms for our experiments.
+The high-level evaluation class we introduced in the previous step, with its extensive logs, 
+has already made our experiments more transparent. 
+In this step, we shall go one step further and introduce explicit tracking mechanisms in order to archive the results of our experiments for future reference.
+
 sensAI has integrated support for mlflow via the `MLFlowTrackedExperiment`
 implementation.
 It furthermore supports direct logging to the file system via its `ResultWriter` 

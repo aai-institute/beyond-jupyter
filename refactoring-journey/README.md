@@ -78,13 +78,13 @@ These are the steps of the journey:
 
     This step adds an engineered feature to the mix.
 
- 8. [Evaluation](step08-high-level-evaluation/README.md)
+ 8. [High-Level Evaluation](step08-high-level-evaluation/README.md)
 
-    This step applies sensAI's high-level abstraction for model evaluation and enables logging.
+    This step applies sensAI's high-level abstraction for model evaluation, enabling logging.
 
  9. [Tracking Experiments](step09-tracking-experiments/README.md)
 
-    This step adds tracking functionality via sensAI's mlflow integration and by logging directly to the file system.
+    This step adds tracking functionality via sensAI's mlflow integration (and additionally by saving results directly to the file system).
 
 10. [Regression](step10-regression/README.md)
 
