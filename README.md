@@ -15,7 +15,7 @@ The software being developed in machine learning contexts often remains at fairl
 One could argue that development environments such as Jupyter even actively encourage unstructured design; 
 and we thus deem it necessary to abandon the respective software development patterns and to metaphorically go "beyond Jupyter".
 
-The goal of the course material is for practictioners to 
+The goal of the course material is for practitioners to 
 
 <p align="center" style="text-align:center"><b>
 understand how a principled software design approach supports every aspect of a machine learning project, accelerating both development & experimentation.
