@@ -60,7 +60,20 @@ The reader might ask the simple question `Why?`, so we would like to elaborate o
 Although the sklearn pipeline concept introduces a new abstraction, namely the 
 sklearn `fit/transform` protocol, the resulting code still has more or less
 a procedural character. We are chaining operations encapsulated in objects,
-which implement the bespoken protocol.
+which implement the bespoken protocol. Every modification, such as adding a new
+column transformation or changing the normalisation requires the definition of a new
+pipeline. The combinatorial complexity of the manual definition of
+a pipeline per feature/pre-processing combination explodes very quickly.
+
+In other words, only using pipeline objects is to "low-level". We want a higher level
+of abstraction, which enables us to only provide a **declaration** of what we would like
+to do and the corresponding pipeline to achieve this is composed automatically.
+
+The aim of the next two steps is to introduce the framework 
+[sensAI](https://github.com/aai-institute/sensAI), which already provides this 
+functionality, i.e. allow to automatically build data processing pipelines, based
+on a user defined parametrisation.
+
 
 ## Principles Addressed in this Step
 

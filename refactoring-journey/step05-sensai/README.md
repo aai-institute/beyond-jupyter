@@ -1,12 +1,24 @@
 # Step 5: Introducing sensAI
 
-In this step, we will switch from using scikit-learn as our main framework to 
+In the previous step, we observed that relying solely on scikit-learn pipeline objects 
+for creating model-specific data pipelines is inadequate in terms of composability.
+
+We will switch from using scikit-learn as our main framework to 
 [sensAI](https://github.com/aai-institute/sensAI), the Python library for sensible AI.
 sensAI is a high-level framework which provides convenient abstractions that
 support a variety of machine learning libraries (scikit-learn and PyTorch being
 perhaps the most relevant ones).
 Through its extensive array of high-level functions, it helps to keep boilerplate
 code to a minimum without relinquishing control over the things that matter.
+
+This step is meant to introduce the key abstractions of sensAI, which revolve around
+feature generation and representation. In comparison to the scikit-learn pipeline
+objects from the [previous step](../step04-model-specific-pipelines/README.md), these
+abstractions add more semantic/meta-information than chaining ``fit/transform`` objects.
+
+In the [next step](../step06-feature-representation/README.md), this added 
+semantic is used to obtain a fully declarative code style.
+
 
 ## Model-Specific Pipelines with sensAI
 
