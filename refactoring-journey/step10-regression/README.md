@@ -1,4 +1,4 @@
-# Step 9: Regression
+# Step 10: Regression
 
 The popularity prediction problem is perhaps more naturally phrased as a 
 regression problem where we directly predict the numeric popularity value.

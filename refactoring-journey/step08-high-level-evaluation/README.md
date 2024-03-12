@@ -1,4 +1,4 @@
-# Step 7: Evaluation and Logging
+# Step 8: High-Level Evaluation
 
 As the result of the previous two steps, we achieved a fully declarative semantic
 for the definition of the model pipelines. In comparison to this, the model
@@ -53,8 +53,8 @@ By contrast, when using a logging framework, we have full control over the degre
 can define which packages/modules are allowed to log at which levels) and we can flexibly
 define where the logs end up (even in multiple places).
 
-sensAI will log every important step by default, so we won't actually have to write
-many log statements ourselves.
+sensAI's high-level evaluation class will log every important step by default, 
+so we won't actually have to write many log statements ourselves.
 We opted to add but a single log statement to the `Dataset` class:
 We want to log all the relevant parameters that determine the data, and we have
 used sensAI's `ToStringMixin` to facilitate this.

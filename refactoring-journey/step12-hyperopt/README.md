@@ -1,4 +1,4 @@
-# Step 10: Hyperparameter Optimisation
+# Step 12: Hyperparameter Optimisation
 
 While the model parameters adjust themselves based on the data and the learning algorithm, hyperparameters are set beforehand and remain static throughout the training.
 Hyperparameters such the number of layers/neurons in a neural network or the maximum depth of a tree model can severely affect a model's generalisation performance.

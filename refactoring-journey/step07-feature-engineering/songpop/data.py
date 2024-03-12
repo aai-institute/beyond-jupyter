@@ -42,7 +42,7 @@ CLASS_POPULAR = "popular"
 CLASS_UNPOPULAR = "unpopular"
 
 
-class Dataset(ToStringMixin):
+class Dataset:
     def __init__(self, num_samples: Optional[int] = None, drop_zero_popularity: bool = False, threshold_popular: int = 50,
             random_seed: int = 42):
         """
@@ -63,7 +63,6 @@ class Dataset(ToStringMixin):
         :return: the full data frame for this dataset (including the class column)
         """
         csv_path = config.csv_data_path()
-        log.info(f"Loading {self} from {csv_path}")
         df = pd.read_csv(csv_path).dropna()
         if self.num_samples is not None:
             df = df.sample(self.num_samples, random_state=self.random_seed)

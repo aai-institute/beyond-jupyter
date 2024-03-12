@@ -1,4 +1,4 @@
-# Step 12: Deployment via Docker
+# Step 13: Deployment via Docker
 
 The result of our journey is a model artifact, which is serializable and deployable with minimal
 effort. For the build of a docker image for inference, we have added a now folder `app` with the following:

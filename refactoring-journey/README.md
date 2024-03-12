@@ -68,7 +68,6 @@ These are the steps of the journey:
  5. [sensAI](step05-sensai/README.md)
 
     This step introduces the high-level library sensAI, which will enable more flexible, declarative model specifications down the line.
-    It furthermore facilitates logging, model evaluation and helps with other minor details.
 
  6. [Feature Representation](step06-feature-representation/README.md)
 
@@ -79,23 +78,27 @@ These are the steps of the journey:
 
     This step adds an engineered feature to the mix.
 
- 8. [Tracking Experiments](step09-tracking-experiments/README.md)
+ 8. [Evaluation](step08-high-level-evaluation/README.md)
+
+    This step applies sensAI's high-level abstraction for model evaluation and enables logging.
+
+ 9. [Tracking Experiments](step09-tracking-experiments/README.md)
 
     This step adds tracking functionality via sensAI's mlflow integration and by logging directly to the file system.
 
- 9. [Regression](step10-regression/README.md)
+10. [Regression](step10-regression/README.md)
 
     This step considers the perhaps more natural formulation of the prediction problem as a regression problem.
 
-10. [Hyperparameter Optimisation](step12-hyperopt/README.md)
+11. [Hyperparameter Optimisation](step12-hyperopt/README.md)
 
     This step adds hyperparameter optimisation for the XGBoost regression model.
 
-11. [Cross-Validation](step11-cross-validation/README.md)
+12. [Cross-Validation](step11-cross-validation/README.md)
 
     This step adds the option to use cross-validation.
 
-12. [Deployment](step13-deployment/README.md)
+13. [Deployment](step13-deployment/README.md)
 
     This step adds a web service for inference, which is packaged in a docker container.
 
