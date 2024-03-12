@@ -79,15 +79,15 @@ These are the steps of the journey:
 
     This step adds an engineered feature to the mix.
 
- 8. [Tracking Experiments](step08-tracking-experiments/README.md)
+ 8. [Tracking Experiments](step09-tracking-experiments/README.md)
 
     This step adds tracking functionality via sensAI's mlflow integration and by logging directly to the file system.
 
- 9. [Regression](step09-regression/README.md)
+ 9. [Regression](step10-regression/README.md)
 
     This step considers the perhaps more natural formulation of the prediction problem as a regression problem.
 
-10. [Hyperparameter Optimisation](step10-hyperopt/README.md)
+10. [Hyperparameter Optimisation](step12-hyperopt/README.md)
 
     This step adds hyperparameter optimisation for the XGBoost regression model.
 
@@ -95,7 +95,7 @@ These are the steps of the journey:
 
     This step adds the option to use cross-validation.
 
-12. [Deployment](step12-deployment/README.md)
+12. [Deployment](step13-deployment/README.md)
 
     This step adds a web service for inference, which is packaged in a docker container.
 
