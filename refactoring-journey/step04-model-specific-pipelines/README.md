@@ -50,29 +50,34 @@ We have named the factory functions in a way that indicates that they pertain to
 models (with suffix `_orig`), preparing for the future case where we will have
 several additional models.
 
-## Are Sklearn Pipelines the Final Answer?
+## Are Scikit-learn Pipelines the Final Answer?
 
-While using sklearn pipeline objects allow for the definition of model-specific
-data processing, this concept only appears as an interim solution here.
+While using Scikit-learn pipeline objects allow for the definition of model-specific
+data processing, this concept only appears as an interim solution in our journey.
+The reader might ask the simple question "Why?", so we would like to elaborate on this.
 
-The reader might ask the simple question `Why?`, so we would like to elaborate on this.
-
-Although the sklearn pipeline concept introduces a new abstraction, namely the 
-sklearn `fit/transform` protocol, the resulting code still has more or less
-a procedural character. We are chaining operations encapsulated in objects,
-which implement the bespoken protocol. Every modification, such as adding a new
-column transformation or changing the normalisation requires the definition of a new
-pipeline. The combinatorial complexity of the manual definition of
+Although the Scikit-learn pipeline concept introduces a new abstraction, namely the 
+Scikit-learn `fit/transform` protocol, the resulting code can still be regarded as, more or less,
+procedural. We are chaining operations encapsulated in objects,
+which implement the aforementioned protocol. Every modification, such as 
+    * changing the set of features,
+    * adding a new model-specific feature value transformation, or 
+    * changing the normalisation 
+requires the definition of a new pipeline; achieving modularity is not trivial. 
+The combinatorial complexity of the manual definition of
 a pipeline per feature/pre-processing combination explodes very quickly.
 
-In other words, only using pipeline objects is to "low-level". We want a higher level
-of abstraction, which enables us to only provide a **declaration** of what we would like
-to do and the corresponding pipeline to achieve this is composed automatically.
+In other words, only using pipeline objects is too "low-level". 
+We want a higher level of abstraction, which enables us to only provide a **declaration** of what we would like
+to do and the corresponding pipeline to achieve this shall be composed automatically, i.e. we would like to declare,
+for each model,
+  * which features we would like to use,
+  * which transformations it requires (and which shall then be applied to all relevant features appropriately).
 
 The aim of the next two steps is to introduce the framework 
 [sensAI](https://github.com/aai-institute/sensAI), which already provides this 
-functionality, i.e. allow to automatically build data processing pipelines, based
-on a user defined parametrisation.
+functionality, i.e. allow to automatically build data processing pipelines based
+on a user-defined parametrisation.
 
 
 ## Principles Addressed in this Step

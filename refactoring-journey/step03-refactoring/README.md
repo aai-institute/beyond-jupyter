@@ -4,6 +4,7 @@ Now is a good time to improve the structure of the code.
 
 We create a package `songpop` containing the module [`data`](songpop/data.py), 
 which contains all logic directly related to the dataset.
+In subsequent steps, we shall create further modules with dedicated purposes.
 In a more realistic setting, we would likely have adopted such a structure 
 from the very beginning.
 

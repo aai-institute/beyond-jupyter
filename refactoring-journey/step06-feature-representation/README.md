@@ -174,7 +174,7 @@ The model simply declared that categorical features are to be one-hot encoded an
 All we have to do is specify the set of features.
 
 The representation of the feature meta-data was critical in achieving this!
-If we had used a more low-level data processing approach, we would have to specifically adapt the downstream transformation code to handle the change in features.
+If we had used a more low-level data processing approach, we would have had to specifically adapt the downstream transformation code to handle the change in features.
 
 
 ## Principles Addressed in this Step
