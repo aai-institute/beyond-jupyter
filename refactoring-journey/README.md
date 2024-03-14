@@ -90,11 +90,11 @@ These are the steps of the journey:
 
     This step considers the perhaps more natural formulation of the prediction problem as a regression problem.
 
-11. [Hyperparameter Optimisation](step12-hyperopt/README.md)
+11. [Hyperparameter Optimisation](step11-hyperopt/README.md)
 
     This step adds hyperparameter optimisation for the XGBoost regression model.
 
-12. [Cross-Validation](step11-cross-validation/README.md)
+12. [Cross-Validation](step12-cross-validation/README.md)
 
     This step adds the option to use cross-validation.
 
