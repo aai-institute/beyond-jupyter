@@ -1,5 +1,6 @@
 # Anti-Patterns
-
+ 
+ * [Needlessly Externalising Configuration](external-config/README.md)
  * [Using Higher-Order Functions Instead of the Strategy Pattern](higher-order-functions/README.md)
 
 More to come.
