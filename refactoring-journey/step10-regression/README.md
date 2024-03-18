@@ -14,3 +14,8 @@ The following changes are made:
 A new [runnable script for regression](run_regressor_evaluation.py) handles the new experiments.
 
 We can now run the scripts for both regression and classification in order to obtain some preliminary results.
+
+
+<hr>
+
+[Next Step](../step11-hyperopt/README.md)

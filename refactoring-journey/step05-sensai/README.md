@@ -85,3 +85,8 @@ use a fixed random seed.)
 * Prefer declarative semantics
 * Find the right abstractions
 * Avoid uncontrolled randomness
+
+
+<hr>
+
+[Next Step](../step06-feature-representation/README.md)

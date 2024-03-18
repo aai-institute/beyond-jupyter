@@ -30,6 +30,10 @@ docker run -p 80:80 spotify-popularity-estimator
 You can use the script [run_fastapi_test.py](run_fastapi_test.py) to build the image, start a container
 and send a GET and a POST request with sample data.
 
+
+This concludes our refactoring journey.
+
+
 ## Principles Addressed in this Step
 
 * Develop reusable components

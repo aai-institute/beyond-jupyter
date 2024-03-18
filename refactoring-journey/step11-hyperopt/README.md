@@ -93,3 +93,7 @@ We thus add a corresponding model to our factory and shall seek to thoroughly ev
                   'reg_lambda': 0.3984639652186364} 
         return cls.create_xgb("-meanPop-opt", add_features=[FeatureName.MEAN_ARTIST_POPULARITY], **params)
 ```
+
+<hr>
+
+[Next Step](../step12-cross-validation/README.md)

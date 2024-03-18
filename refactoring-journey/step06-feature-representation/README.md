@@ -182,3 +182,8 @@ If we had used a more low-level data processing approach, we would have had to s
 * Know your features
 * Find the right abstractions
 * Prefer declarative semantics
+
+
+<hr>
+
+[Next Step](../step07-feature-engineering/README.md)

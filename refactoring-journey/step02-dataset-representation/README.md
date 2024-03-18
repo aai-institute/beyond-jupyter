@@ -105,8 +105,15 @@ In this step, we introduce a representation for the data set:
      cols_used_by_models = [COL_YEAR, *COLS_MUSICAL_DEGREES, COL_KEY, COL_MODE, COL_TEMPO, COL_TIME_SIGNATURE, COL_LOUDNESS, COL_DURATION_MS]
      X = X[cols_used_by_models]
      ```
+     
+
 # Principles Addressed in this Step
 
 * Find the right abstractions
 * Expose parametrisation
 * (Version data)
+
+
+<hr>
+
+[Next Step](../step03-refactoring/README.md)
