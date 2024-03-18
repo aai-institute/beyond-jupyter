@@ -8,4 +8,6 @@
    4. [Step 3: Metric Abstraction](02d-case-study-3-metric-abstraction/README.md)
    5. [Step 4: Results Abstraction](02e-case-study-4-results-abstraction/README.md)
 3. [General Design & Development Principles](03-general-principles/README.md)
-4. [Making Use of IDE Features](ide-features/README.md)
+4. [Selected Design Patterns](04-selected-design-patterns/README.md)
+5. [Making Use of IDE Features](05-ide-features/README.md)
+

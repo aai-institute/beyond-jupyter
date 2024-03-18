@@ -2,7 +2,8 @@
 
 ## SOLID Design
 
-SOLID is a collection of five principles introduced by Robert C. Martin:
+SOLID is a collection of five principles introduced by Robert C. Martin.
+We shall first describe the principles and then relate them to the preceding case study. 
 
  1. **Single Responsibility Principle**
 
@@ -44,7 +45,7 @@ SOLID is a collection of five principles introduced by Robert C. Martin:
     * Interfaces are clear and reduced to the necessary minimum.
    
 
-*Examples.* Even though our case study was a very simple example, it essentially exhibits all of the above principles:
+*Examples.* Even though our case study was a very simple example, the final solution essentially exhibits all of the above principles:
 
  * Single Responsibility Principle: All of the classes `Metric`, `ModelEvaluation` and `Results` serve well-defined purposes and do not mix different levels of abstraction.
  * Open-Closed Principle: `ModelEvaluation` provides some extensibility by depending on one or more `Metric` instances, which the user can specify. Users are free to implement their own metrics and do not need to modify the implementation of the evaluation at all in order to get them applied.
@@ -59,6 +60,7 @@ If a piece of code repeats, factor it out into a reusable function/class which i
 
 Note, however, that factorisation can be overdone. While two pieces of code may use the same sub-routine at present, it may be the case that the implementations have different needs in the future, requiring different extensions. 
 Instead of applying factorisation and extracting a function that can be parametrised in a myriad of ways only to support both cases, it can, therefore,  sometimes be better - for the sake of clarity - to have two copies of the code, which are then free to develop independently.
+A high degree of factorisation and clarity can be conflicting goals. 
 
 # YAGNI: You Aren't Gonna Need It
 
@@ -95,3 +97,8 @@ XP furthermore defines a set of practices, including
   * **Collective Code Ownership**: Every piece of code can be immediately maintained by at least two developers. All code gets the benefit of many people’s attention, which increases code quality and reduces defects.
 
 For the full set of principles and ideas, please refer to ["What is Extreme Programming?" by Ron Jeffries](https://ronjeffries.com/xprog/what-is-extreme-programming/).
+
+
+<hr>
+
+[Next: Selected Design Patterns](../04-selected-design-patterns/README.md)

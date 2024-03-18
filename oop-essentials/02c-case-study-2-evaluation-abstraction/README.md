@@ -1,6 +1,6 @@
 # Case Study - Step 2: An Abstraction for Evaluation
 
-Consider the script [run_regressor_evaluation.py](run_regressor_evaluation.py).
+Consider the updated script [run_regressor_evaluation.py](run_regressor_evaluation.py).
 
 In this step, we create an abstraction `ModelEvaluation` which represents our split-based evaluation task, with the following interface:
 
@@ -35,7 +35,7 @@ class ModelEvaluation:
 
  * The abstraction handles not only the evaluation as such but also the data split.
  * The split can be *parametrised*, allowing the caller to change the relative size of the test set, the random seed, as well as the shuffling.
- * Since the data is now stored in within the evaluation object's attributes, the actual evaluation method now requires fewer parameters; only the model must be passed.
+ * Since the data is now stored within the evaluation object's attributes, the actual evaluation method now requires fewer parameters; only the model must be passed.
  * It can collect the results of potentially multiple evaluations (via method `evaluate_model`), storing them in its internal state,
 and allowing the collected results to be retrieved upon request (via method `get_results`).
 

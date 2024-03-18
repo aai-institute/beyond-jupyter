@@ -59,7 +59,7 @@ The OOP solution has significant advantages over the functional solution:
 - **Discoverability: The abstract base class provides a (searchable) type bound**, which straightforwardly enables discovery of potential implementations.
   We need only to use our IDE's hierarchy view in order to discover all existing implementations of `Metric` that fit the class-based interface:
 
-  ![Hierarchy View](../../oop-essentials/ide-features/res/hierarchy_intellij.png)
+  ![Hierarchy View](../../oop-essentials/05-ide-features/res/hierarchy_intellij.png)
  
   By contrast, the functional interface, which specifies `Callable[[np.ndarray, np.ndarray], float]`, supports no such search.
   This can be a significant problem in cases where the functions to apply are not co-located with the function applying them; they could be anywhere within a very large codebase encompassing dozens of modules and thousands of lines of code. Only extensive documentation could avoid severe usability limitations. 

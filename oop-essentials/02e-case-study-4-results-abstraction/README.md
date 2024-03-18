@@ -1,6 +1,6 @@
 # Case Study - Step 4: An Abstraction for Evaluation Results
 
-Consider the script [run_regressor_evaluation.py](run_regressor_evaluation.py).
+Consider the updated script [run_regressor_evaluation.py](run_regressor_evaluation.py).
 
 The result type we used in the previous step is a low-level data structure (a pandas DataFrame),
 from which important information is inconvenient to retrieve. In particular, retrieving the name
@@ -23,3 +23,8 @@ Notice that
   * The evaluation abstraction is a reusable component, and so are the metrics. We could use them in completely different contexts going forward (e.g. a hyperparameter optimisation).
   * The classes we introduced represent meaningful concepts in our domain.
     Each class has a well-defined purpose and is reasonably concise, making it easy to maintain.
+
+
+<hr>
+
+[Next: General Design and Development Principles](../03-general-principles/README.md)

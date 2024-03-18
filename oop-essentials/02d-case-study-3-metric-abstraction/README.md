@@ -1,9 +1,9 @@
 # Case Study - Step 3: An Abstraction for Metric Computation
 
-Consider the script [run_regressor_evaluation.py](run_regressor_evaluation.py).
+Consider the updated script [run_regressor_evaluation.py](run_regressor_evaluation.py).
 
-So far, the (single) metric that was used for evaluation (MAE) was hard-coded. 
-Computing a different metric is only possible by modifying the evaluation class directly; there is no way to change the metric type dynamically.
+So far, the (single) metric that was used for evaluation was hard-coded (MAE). 
+Computing a different metric is only possible by modifying the evaluation class directly; there is no way to change the metric dynamically.
 
 In this step, we generalise the evaluation by making the metric user-configurable.
 

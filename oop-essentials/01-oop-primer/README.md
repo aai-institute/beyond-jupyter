@@ -4,8 +4,8 @@
 
 **Classes** act as blueprints that define the data **attributes** and behaviors (**methods**) of objects; 
 **objects** are instances of these classes created at runtime with their own state and identity. 
-Multiple objects can be instantiated from the same class and contain their own copies of the data attributes defined by that class. 
-The object's methods operate on the its internal data.
+Multiple objects can be instantiated from the same class and contain their own instances of the data attributes defined by that class. 
+The object's methods can operate on its internal data.
 
 *Encapsulation* binds the data and methods of a class together into a single unit and prevents external code from 
 directly accessing the internal representation. Instead, interaction with the object is managed through a well-defined public interface. 
@@ -17,11 +17,11 @@ A key design aspect is the determination of the right set of classes and abstrac
 
 ## Inheritance
 
-Inheritance allows new classes to be defined that reuse, extend, and modify the behavior of existing classes. 
+Inheritance allows new classes to be defined that reuse, extend, and modify the behaviour of existing classes. 
 The new class is called the *subclass* or child class, and the one it inherits from is the *superclass* or parent class. 
 The subclass inherits the attributes and methods of the parent, so code does not need to be rewritten. 
 The child class can optionally add new attributes and behaviours, extending the functionality of the parent.  
-Inheritance establishes hierarchical relationships between classes and promotes code reuse. 
+Inheritance thus establishes hierarchical relationships between classes and promotes code reuse. 
 
 Parent classes which do not implement all the methods they declare are called *abstract* and cannot be instantiated at runtime. 
 Such classes thus define abstractions which serve as interfaces in object-oriented programming.
@@ -40,7 +40,7 @@ Abstract classes are particularly convenient interface specifications, which are
  - The base class provides a type bound which straightforwardly enables discovery of potential implementations: The type's class hierarchy immediately provides us with possible options.
  - Objects have representations which can more readily be logged and stored.
  - Objects can straightforwardly parametrise their behaviour through attributes,   
-   which alleviates the need for cumbersome currying (e.g. through `lambda` functions or `functools.partial`).
+   which is more user-friendly than requiring function currying (e.g. through `lambda` functions or `functools.partial`).
  - Type relationships are explicit (in contrast to duck typing concepts such as `Protocol`).
 
  Many of the above points will become clear if we look at concrete examples,
