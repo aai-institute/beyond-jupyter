@@ -38,7 +38,7 @@ To support this, you may run the Python script
 `generate_repository.py` in order to create a git repository in folder `refactoring-repo` that references 
 the state of each step in a separate tag, i.e. in said folder, you could run, for example,
    
-        git difftool step04-refactoring step05-sensai
+        git difftool step04-model-specific-pipelines step05-sensai
 
 
 ## Steps in the Journey
