@@ -4,7 +4,7 @@
 # Predicting Spotify Song Popularity: A Refactoring Journey
 
 In this case study, we will show how a machine learning use case that is implemented
-as a Jupyter notebook (which was [taken from Kaggle](https://www.kaggle.com/code/sauravpalekar/spotify-song-popularity-prediction)) can be successively refactored in order to 
+as a Jupyter notebook (which was [taken from Kaggle](https://www.kaggle.com/code/sauravpalekar/spotify-song-popularity-prediction), was originally implemented by Saurav Palekar and is licensed under the [Apache 2 license](Apache2-License.txt)) can be successively refactored in order to 
  * improve the software design in general, achieving a high degree clarity and maintainability,
  * gain flexibility for experimentation,
  * appropriately track results,
