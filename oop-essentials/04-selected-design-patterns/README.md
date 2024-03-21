@@ -1,5 +1,10 @@
 # Useful Design Patterns for ML Projects
 
+An object-oriented *design pattern* is a reusable solution to a commonly occurring problem in software design. 
+Design patterns capture proven practices and successful approaches to solving recurring design issues, making the design more flexible, elegant, and maintainable. 
+Interestingly, most programmers naturally arrive at and use these patterns without necessarily knowing their formal names or descriptions, as they represent intuitive ways of structuring code to address common challenges.
+Naming these patterns establishes a common language (jargon) for software design. 
+
 ## The Strategy Pattern
 
 Algorithms are typically composed of a set of lower-level algorithms (or sub-routines).
@@ -134,6 +139,29 @@ class RLAgent(ABC):
 A *registry* is a container of objects that allows us to conveniently retrieve the respective objects, e.g. by name.
 We can combine this with the factory pattern and register a collection of factories.
 If the set of objects is fixed, we can use an enumeration as the registry.
+
+For example, we might want to register features that we want to use in models, such that the models can then use a subset of the registered features by referring to them by name.
+
+```python
+feature_registry = FeatureRegistry()
+feature_registry.register_feature("age", AgeFeature(categorical=False))
+feature_registry.register_feature("age_category", AgeFeature(categorical=True))
+feature_registry.register_feature("height", HeightFeature(unit="inch"))
+```
+
+Models can then draw upon the registered features by using only the names,
+
+```python
+
+model = MyModelFactory(features=["age", "height"], feature_registry=feature_registry) \
+    .create_model() 
+```
+
+and the model factory internally resolves the feature objects using the registry.
+This simplifies the process of specifying the set of features of a model for experimentation, as a user no longer needs to know how to instantiate the feature objects and can simply specify strings.
+It thus facilitates *configuration* of the model.
+Furthermore, it helps to keep feature definitions consistent across different models.
+If the set of registered keys is fixed, it can make sense to use an `Enum` instead of strings in order to have the added benefit of auto-completion within your IDE and avoid mis-specification.
 
 
 <hr>
