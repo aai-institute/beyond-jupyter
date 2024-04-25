@@ -203,7 +203,13 @@ Auto-completion helps save time by not requiring the developer to type out the n
 | JetBrains | Ctrl+Space+Space   |
 | VSCode    | just start typing  |
 
-In VSCode, auto-import will not happen by default; it has to be enabled in settings.
+In VSCode, auto-import will not happen by default; it has to be enabled in settings:
+Open your settings.json (Ctrl+Shift+P and search for "User Settings") and add these lines:
+```
+    "python.analysis.indexing": true,
+    "python.analysis.autoImportCompletions": true,
+```
+Then, whenever you use an auto-completion in VSCode, it will also add the import.
 
 #### Type-Based Auto-Completion
 
