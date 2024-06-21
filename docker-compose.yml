@@ -1,0 +1,19 @@
+version: '3.9'
+services:
+  app:
+    build: .
+    # dockerfile: Dockerfile
+    container_name: 'beyond-jupyter'
+    working_dir: '/workspace'
+    volumes:
+      - ./:/workspace/
+    ports:
+      - 8888:8888
+
+    tty: true
+    networks:
+      - db_network
+
+networks:
+  db_network:
+    external: true
