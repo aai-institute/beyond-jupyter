@@ -62,6 +62,8 @@ class Dataset:
         :return: the full data frame for this dataset (including the class column)
         """
         df = pd.read_csv(config.csv_data_path()).dropna()
+        if self.drop_zero_popularity:
+            df = df[df[COL_POPULARITY] > 0]
         if self.num_samples is not None:
             df = df.sample(self.num_samples, random_state=self.random_seed)
         df[COL_GEN_POPULARITY_CLASS] = df[COL_POPULARITY].apply(lambda x: CLASS_POPULAR if x >= self.threshold_popular else CLASS_UNPOPULAR)

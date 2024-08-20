@@ -66,8 +66,9 @@ which implement the aforementioned protocol. Every modification, such as
 requires the definition of a new pipeline; achieving modularity is not trivial. 
 The combinatorial complexity of the manual definition of
 a pipeline per feature/pre-processing combination explodes very quickly.
+For ways of extending the pipeline-based approach, see [additional material](sklearn_pipelines_extended.ipynb).
 
-In other words, only using pipeline objects is too "low-level". 
+Essentially, only using pipeline objects is too "low-level". 
 We want a higher level of abstraction, which enables us to only provide a **declaration** of what we would like
 to do and the corresponding pipeline to achieve this shall be composed automatically, i.e. we would like to declare,
 for each model,

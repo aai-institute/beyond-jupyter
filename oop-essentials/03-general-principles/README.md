@@ -85,14 +85,14 @@ The core values of XP are:
   * **Communication**: XP stresses the need for communication between developers, for knowledge transfer and alignment.
   * **Simplicity** (= YAGNI)
   * **Feedback**: Periodically reflecting on past performance can help to identify areas for improvement, both in terms of code and the development process being applied.
-  * **Courage**: Courage is required in order to raise issues that impede the development process, e.g organisational issues or even issues pertaining to the general direction the product is headed in.
+  * **Courage**: Courage is required in order to raise issues that impede the development process, e.g. organisational issues or even issues pertaining to the general direction the product is headed in.
   * **Respect**: Mutual respect is required in order to foster communication and to provide and accept feedback.
 
 XP furthermore defines a set of practices, including
   * **Simple Design**: Build software to a simple but always adequate design.
   * **Pair Programming**: Two developers directly collaborate to produce a single piece of code. This immediately creates knowledge transfer (as more than one person is familiar with every piece of code) and eliminates the need for additional reviews.
   * **Refactoring**: Constantly refactoring the code to retain the quality of simple, adequate code that has no technical debt.
-  * **Test-Driven Development**: Thinking about how to functionality can be tested from the very beginng.
+  * **Test-Driven Development**: Thinking about how functionality can be tested from the very beginning can improve design and avoid errors.
   * **Continuous Integration**: Constantly integrating changes that improve the software product and applying automated tests helps to keep quality standards high.
   * **Collective Code Ownership**: Every piece of code can be immediately maintained by at least two developers. All code gets the benefit of many people’s attention, which increases code quality and reduces defects.
 

@@ -15,7 +15,7 @@ This is particularly important if code is executed in different environments and
 In such cases, it wouldn't be practical to have to create differently parametrised versions of the software; 
 it makes much more sense to make the software access exchangeable configuration instead.
 
-The valid use case for external configuration is thus a case where the configuration changes dynamically, i.e. different configurations are applied in order to adapt, in particular, to external conditions.
+Valid use cases for external configuration are thus cases where the configuration changes dynamically, i.e. different configurations are applied in order to adapt, in particular, to external conditions.
 
 ## Static External Configuration Is Questionable
 
@@ -111,14 +111,13 @@ Under the conditions described above, high-level code has the following advantag
 Configuration has none of these advantages, so the key question to ask is: Is the use of configuration necessary to achieve an elegant solution? In other words: Would not using configuration result in suboptimal design?
 Because of the downsides of configuration when compared to specifications in the programming language, we should only ever use configuration if the answer to these questions is a very clear "yes".
 
-### Examples
+### Example: Tianshou High-Level Experiment
 
-#### Example 1: Tianshou High-Level Experiment
-
-Consider this example from the Tianshou reinforcement learning library, which heavily makes use of the flexibility of the Python interpreter:
+Consider this example from the Tianshou reinforcement learning library, which heavily makes use of the flexibility of the Python language:
 It uses the builder pattern to flexibly configure an experiment; individual arguments can use subtype polymorphism to achieve vastly different behaviour.
-The *entire* code snippet is high-level code which defines the configuration of an experiment; extracting the constants from it would *not* suffice to define it; we need the entire definition to maintain the full level of flexibility.
-(Note, however, that even if it was the case that the constant literals sufficed and we could move them to an external configuration, we still would not gain anything by doing so.) 
+The *entire* code snippet is high-level code which defines the configuration of an experiment.
+Extracting the constants from it would *not* suffice as configuration, as this would fail to maintain the same level of flexibility.
+(Note, however, that even if it was the case that the constant literals sufficed and we could move them to external configuration, we still would not gain anything by doing so!) 
 
 ```python
     
@@ -162,7 +161,7 @@ experiment = (
 As a simple example, consider how we could, using external configuration, handle variations of this experiment where  
 
  * `with_model_factory_default` shall not be called at all (because we don't want to specify non-default hidden sizes)
- * call `with_model_factory(MyModelFactory())` instead of `with_model_factory_default`.
+ * `with_model_factory(MyModelFactory())` shall be called instead of `with_model_factory_default`.
 
 The solutions to both problems would not be entirely trivial to handle with configuration and would necessitate a differentiation of the various cases in the code that interprets the configuration. 
 When using a Python script, however, the changes would be completely straightforward and clean. 

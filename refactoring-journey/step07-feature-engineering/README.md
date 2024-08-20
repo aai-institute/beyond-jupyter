@@ -29,28 +29,30 @@ supports incomplete data.
 
 ```python
     @classmethod
-    def create_xgb(cls, name_suffix="", add_features: Sequence[FeatureName] = (), **kwargs):
-        fc = FeatureCollector(*cls.DEFAULT_FEATURES, *add_features, registry=registry)
-        return XGBGradientBoostedVectorClassificationModel(**kwargs) \
-            .with_feature_collector(fc) \
-            .with_feature_transformers(fc.create_feature_transformer_one_hot_encoder()) \
+    def create_xgb(cls, name_suffix="", features: Sequence[FeatureName] = DEFAULT_FEATURES, add_features: Sequence[FeatureName] = (),
+            min_child_weight: Optional[float] = None, **kwargs):
+        fc = FeatureCollector(*features, *add_features, registry=registry)
+        return XGBGradientBoostedVectorClassificationModel(min_child_weight=min_child_weight, **kwargs)
+            .with_feature_collector(fc)
+            .with_feature_transformers(fc.create_feature_transformer_one_hot_encoder())
             .with_name(f"XGBoost{name_suffix}")
 ```
 
 We can add our newly introduced feature via the parameter `add_features` and 
-consider two concrete models - one which includes the feature and
-one which does not.
+consider three concrete models: one which uses the old set of features, one which adds the new feature and
+one which uses only the new feature.
 
 ```python
     models = [
         ...
         ModelFactory.create_xgb(),
-        ModelFactory.create_xgb("-meanArtistFreqPopular", [FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+        ModelFactory.create_xgb("-meanArtistFreqPopular", add_features=[FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+        ModelFactory.create_xgb("-meanArtistFreqPopularOnly", features=[FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
     ]
 ```
 
 As far as the other models are concerned, we could apply a feature transformation involving
-imputation if we  wanted to support the new feature.
+imputation if we wanted to support the new feature.
 
 
 ## Principles Addressed in this Step

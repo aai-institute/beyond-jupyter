@@ -1,6 +1,7 @@
 from sensai.evaluation import ClassificationModelEvaluation, ClassificationEvaluatorParams
 from sensai.util import logging
 from songpop.data import Dataset
+from songpop.features import FeatureName
 from songpop.model_factory import ModelFactory
 
 
@@ -18,6 +19,9 @@ def main():
         ModelFactory.create_random_forest_orig(),
         ModelFactory.create_random_forest(),
         ModelFactory.create_decision_tree_orig(),
+        ModelFactory.create_xgb(),
+        ModelFactory.create_xgb("-meanArtistFreqPopular", add_features=[FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+        ModelFactory.create_xgb("-meanArtistFreqPopularOnly", features=[FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
     ]
 
     # declare parameters to be used for evaluation, i.e. how to split the data (fraction and random seed)

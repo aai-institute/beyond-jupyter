@@ -8,8 +8,7 @@ from songpop.features import FeatureName
 if __name__ == '__main__':
     # define & load dataset
     dataset = Dataset(10000)
-    io_data = dataset.load_io_data()
-    X, y = io_data.inputs, io_data.outputs
+    X, y = dataset.load_xy()
 
     # split the data
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42, test_size=0.3, shuffle=True)
@@ -24,7 +23,8 @@ if __name__ == '__main__':
         ModelFactory.create_random_forest(),
         ModelFactory.create_decision_tree_orig(),
         ModelFactory.create_xgb(),
-        ModelFactory.create_xgb("-meanArtistFreqPopular", [FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+        ModelFactory.create_xgb("-meanArtistFreqPopular", add_features=[FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
+        ModelFactory.create_xgb("-meanArtistFreqPopularOnly", features=[FeatureName.MEAN_ARTIST_FREQ_POPULAR]),
     ]
 
     # evaluate models

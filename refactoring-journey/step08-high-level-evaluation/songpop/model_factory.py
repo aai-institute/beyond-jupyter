@@ -1,7 +1,10 @@
+from typing import Sequence
+
 from sensai.data_transformation import DFTSkLearnTransformer
 from sensai.featuregen import FeatureGeneratorTakeColumns, FeatureCollector
 from sensai.sklearn.sklearn_classification import SkLearnLogisticRegressionVectorClassificationModel, \
     SkLearnKNeighborsVectorClassificationModel, SkLearnRandomForestVectorClassificationModel, SkLearnDecisionTreeVectorClassificationModel
+from sensai.xgboost import XGBGradientBoostedVectorClassificationModel
 from sklearn.preprocessing import StandardScaler, MaxAbsScaler
 
 from .data import *
@@ -49,7 +52,7 @@ class ModelFactory:
             .with_feature_collector(fc) \
             .with_feature_transformers(fc.create_feature_transformer_one_hot_encoder(),
                 fc.create_feature_transformer_normalisation()) \
-            .with_name("LogisticRegression")
+            .with_name(f"LogisticRegression")
 
     @classmethod
     def create_random_forest(cls):
@@ -57,7 +60,7 @@ class ModelFactory:
         return SkLearnRandomForestVectorClassificationModel(n_estimators=100) \
             .with_feature_collector(fc) \
             .with_feature_transformers(fc.create_feature_transformer_one_hot_encoder()) \
-            .with_name("RandomForest")
+            .with_name(f"RandomForest")
 
     @classmethod
     def create_knn(cls):
@@ -68,3 +71,12 @@ class ModelFactory:
                 fc.create_feature_transformer_normalisation(),
                 DFTSkLearnTransformer(MaxAbsScaler())) \
             .with_name("KNeighbors")
+
+    @classmethod
+    def create_xgb(cls, name_suffix="", features: Sequence[FeatureName] = DEFAULT_FEATURES, add_features: Sequence[FeatureName] = (),
+            min_child_weight: Optional[float] = None, **kwargs):
+        fc = FeatureCollector(*features, *add_features, registry=registry)
+        return XGBGradientBoostedVectorClassificationModel(min_child_weight=min_child_weight, **kwargs) \
+            .with_feature_collector(fc) \
+            .with_feature_transformers(fc.create_feature_transformer_one_hot_encoder()) \
+            .with_name(f"XGBoost{name_suffix}")

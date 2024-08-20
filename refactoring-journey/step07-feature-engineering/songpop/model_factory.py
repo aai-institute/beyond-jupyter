@@ -73,9 +73,10 @@ class ModelFactory:
             .with_name("KNeighbors")
 
     @classmethod
-    def create_xgb(cls, name_suffix="", add_features: Sequence[FeatureName] = (), **kwargs):
-        fc = FeatureCollector(*cls.DEFAULT_FEATURES, *add_features, registry=registry)
-        return XGBGradientBoostedVectorClassificationModel(**kwargs) \
+    def create_xgb(cls, name_suffix="", features: Sequence[FeatureName] = DEFAULT_FEATURES, add_features: Sequence[FeatureName] = (),
+            min_child_weight: Optional[float] = None, **kwargs):
+        fc = FeatureCollector(*features, *add_features, registry=registry)
+        return XGBGradientBoostedVectorClassificationModel(min_child_weight=min_child_weight, **kwargs) \
             .with_feature_collector(fc) \
             .with_feature_transformers(fc.create_feature_transformer_one_hot_encoder()) \
             .with_name(f"XGBoost{name_suffix}")

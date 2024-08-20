@@ -1,13 +1,8 @@
-import logging
-from typing import Optional
+from typing import Tuple, Optional
 
 import pandas as pd
-from sensai import InputOutputData
-from sensai.util.string import ToStringMixin
 
 from . import config
-
-log = logging.getLogger(__name__)
 
 
 COL_POPULARITY = "popularity"
@@ -55,23 +50,22 @@ class Dataset:
         self.threshold_popular = threshold_popular
         self.drop_zero_popularity = drop_zero_popularity
         self.random_seed = random_seed
-        self.class_positive = CLASS_POPULAR
-        self.class_negative = CLASS_UNPOPULAR
 
     def load_data_frame(self) -> pd.DataFrame:
         """
         :return: the full data frame for this dataset (including the class column)
         """
-        csv_path = config.csv_data_path()
-        df = pd.read_csv(csv_path).dropna()
+        df = pd.read_csv(config.csv_data_path()).dropna()
+        if self.drop_zero_popularity:
+            df = df[df[COL_POPULARITY] > 0]
         if self.num_samples is not None:
             df = df.sample(self.num_samples, random_state=self.random_seed)
-        determine_class = lambda x: self.class_positive if x >= self.threshold_popular else self.class_negative
-        df[COL_GEN_POPULARITY_CLASS] = df[COL_POPULARITY].apply(determine_class)
+        df[COL_GEN_POPULARITY_CLASS] = df[COL_POPULARITY].apply(lambda x: CLASS_POPULAR if x >= self.threshold_popular else CLASS_UNPOPULAR)
         return df
 
-    def load_io_data(self) -> InputOutputData:
+    def load_xy(self) -> Tuple[pd.DataFrame, pd.Series]:
         """
-        :return: the I/O data
+        :return: a pair (X, y) where X is the data frame containing all attributes and y is the corresping series of class values
         """
-        return InputOutputData.from_data_frame(self.load_data_frame(), COL_GEN_POPULARITY_CLASS)
+        df = self.load_data_frame()
+        return df.drop(columns=COL_GEN_POPULARITY_CLASS), df[COL_GEN_POPULARITY_CLASS]

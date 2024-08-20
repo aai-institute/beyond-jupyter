@@ -8,8 +8,7 @@ from songpop.model_factory import ModelFactory
 if __name__ == '__main__':
     # define & load dataset
     dataset = Dataset(10000)
-    io_data = dataset.load_io_data()
-    X, y = io_data.inputs, io_data.outputs
+    X, y = dataset.load_xy()
 
     # split the data
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42, test_size=0.3, shuffle=True)
