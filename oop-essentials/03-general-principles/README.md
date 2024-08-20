@@ -13,6 +13,13 @@ We shall first describe the principles and then relate them to the preceding cas
     * The components are relatively small pieces of code that are easy to scan and understand.
     * The component where a change/fix would need to be implemented is easy to identify and modifications can be made more quickly.
 
+    While the Single Responsibility Principle (SRP) traditionally applies to classes, it should also be extended to other components like functions or modules. Each function should do one thing and do it well, and each module should encapsulate a single aspect of the system's functionality. This broad application of SRP ensures that systems remain modular, easier to understand, and simpler to maintain.
+
+    In this sense, SRP can be understood as a specific facette of the broader **Separation of Concerns Principle** and an alternative description
+    of SRP would be:
+
+    “Gather together the things that change for the same reasons. Separate those things that change for different reasons.”
+   
  2. **Open-Closed Principle**
 
     “Software entities (classes, modules, functions, etc.) should be open for extension, but closed for modification,” i.e. entities should allow their behaviour to be extended without modifying the source code.
@@ -76,6 +83,10 @@ If there is no (good) reason for the design to be complex, prefer simple design,
 This is closely tied to the *principle of least surprise*, which calls for design choices that won't elicit surprise on the user's part. 
 Understand people as part of the system, and choose a design that matches people's expectations, experience, and mental models. 
 If possible, the design should prefer idiomatic language constructs over exotic, non-standard ones that aren't easily understood - even if the exotic ones may solve a problem slightly more elegantly.
+
+# SLAP (Single Level of Abstraction Principle)
+
+The **Single Level of Abstraction Principle** states, that a function should either be low-level function itself (think of a pure procedural code snippet like a for loop) or should only call other (possible low-level) functions. One should avoid a mixture of these different levels. 
 
 # Extreme Programming (XP)
 
