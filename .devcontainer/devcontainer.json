@@ -1,0 +1,17 @@
+{
+  "name": "beyond-jupyter",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."  // Set context to project root
+  },
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash",
+    "python.pythonPath": "/opt/conda/envs/pop/bin/python"
+  },
+  "extensions": [
+    "ms-python.python"
+  ],
+  "forwardPorts": [],
+  "postCreateCommand": "echo 'Container ready!'",
+  "remoteUser": "root"
+}
