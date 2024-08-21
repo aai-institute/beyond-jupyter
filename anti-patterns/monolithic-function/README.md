@@ -85,6 +85,18 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 
+
+def main(path: str) -> float:
+    data = load_data(path)
+    data = fill_missing_values(data)
+    data = normalize_features(data)
+    data = engineer_features(data)
+    X_train, X_test, y_train, y_test = split_data(data)
+    model = train_model(X_train, y_train)
+    accuracy = evaluate_model(model, X_test, y_test)
+    return accuracy
+
+
 def load_data(file_path: str) -> pd.DataFrame:
     if file_path.endswith('.csv'):
         data = pd.read_csv(file_path)
@@ -121,8 +133,8 @@ def engineer_features(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def split_data(data: pd.DataFrame) -> tuple[pd.DataFrame, ...]:
-    X = data.drop('target', axis=1)
     y = data['target']
+    X = data.drop('target', axis=1)
     return train_test_split(X, y, test_size=0.2, random_state=42)
 
 
@@ -138,16 +150,6 @@ def evaluate_model(model: DecisionTreeClassifier, X_test: pd.DataFrame, y_test: 
     print(f"Model Accuracy: {accuracy:.2f}")
     return accuracy
 
-
-def main(path: str) -> float:
-    data = load_data(path)
-    data = fill_missing_values(data)
-    data = normalize_features(data)
-    data = engineer_features(data)
-    X_train, X_test, y_train, y_test = split_data(data)
-    model = train_model(X_train, y_train)
-    accuracy = evaluate_model(model, X_test, y_test)
-    return accuracy
 ```
 By simply extracting low-level functions in a way that the low-level functions have an isolated task and calling
 them in the high-level function *main*, we already gained:
