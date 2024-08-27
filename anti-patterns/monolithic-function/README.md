@@ -57,7 +57,6 @@ def main(file_path: str) -> float:
     y_pred = model.predict(X_test)
     
     accuracy = accuracy_score(y_test, y_pred)
-    print(f"Model Accuracy: {accuracy:.2f}")
     return accuracy
 ```
 Sure, if you painstakingly read it line by line, you’ll eventually arrive at this thrilling revelation about what the function does:
@@ -147,7 +146,6 @@ def train_model(X_train: pd.DataFrame, y_train: pd.DataFrame) -> DecisionTreeCla
 def evaluate_model(model: DecisionTreeClassifier, X_test: pd.DataFrame, y_test: pd.DataFrame) -> float:
     y_pred = model.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
-    print(f"Model Accuracy: {accuracy:.2f}")
     return accuracy
 
 ```
