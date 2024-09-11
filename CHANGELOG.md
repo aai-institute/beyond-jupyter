@@ -1,4 +1,4 @@
-# Unreleased
+# v0.2.0
 
 * add devcontainer setup
 * add section *Single Level of Abstraction principle* to principles guide
