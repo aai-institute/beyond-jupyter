@@ -86,9 +86,13 @@ If possible, the design should prefer idiomatic language constructs over exotic,
 
 # SLAP (Single Level of Abstraction Principle)
 
-The **Single Level of Abstraction Principle** (SLAP) states that a function should operate at a single level of abstraction. Specifically, a function should either perform a high-level operation by calling other functions or handle low-level operations directly (e.g., loops, conditionals, or simple calculations), but not mix these levels within the same function.
+The **Single Level of Abstraction Principle** (SLAP) states that a function should operate at a single level of abstraction. Specifically, a function should either perform a high-level operation by orchestrating and calling other functions, or handle low-level operations directly, but not mix these levels within the same function. Low-level functions should have a single, clear purpose, such as performing a specific calculation, iterating over a collection, or executing a conditional check.
 
 Adhering to SLAP ensures that functions are cohesive and focused, making them easier to understand and maintain. When a function strictly adheres to SLAP, it either orchestrates higher-level processes by delegating tasks to other functions or directly handles low-level details. This separation allows developers to comprehend the function's purpose quickly, without being distracted by unrelated details, which can increase the readability a lot.
+
+Applying SLAP can often be the first step
+in refactoring a [complicated code snippet](../../anti-patterns/monolithic-function/README.md). 
+
 
 # Extreme Programming (XP)
 
