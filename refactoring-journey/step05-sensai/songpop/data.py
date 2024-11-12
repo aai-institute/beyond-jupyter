@@ -63,9 +63,9 @@ class Dataset:
         df[COL_GEN_POPULARITY_CLASS] = df[COL_POPULARITY].apply(lambda x: CLASS_POPULAR if x >= self.threshold_popular else CLASS_UNPOPULAR)
         return df
 
-    def load_xy(self) -> Tuple[pd.DataFrame, pd.Series]:
+    def load_xy(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         :return: a pair (X, y) where X is the data frame containing all attributes and y is the corresping series of class values
         """
         df = self.load_data_frame()
-        return df.drop(columns=COL_GEN_POPULARITY_CLASS), df[COL_GEN_POPULARITY_CLASS]
+        return df.drop(columns=COL_GEN_POPULARITY_CLASS), df[[COL_GEN_POPULARITY_CLASS]]
