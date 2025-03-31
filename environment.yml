@@ -14,7 +14,6 @@ dependencies:
   - jupyter=1.0.0
   - xgboost=1.7.6
   - hyperopt=0.2.7
-  - databricks-cli=
   - GitPython=3.1.32
   - requests=2.31.0
   - docker-py=6.1.3
