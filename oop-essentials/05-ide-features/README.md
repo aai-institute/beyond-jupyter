@@ -168,7 +168,7 @@ When jumping between positions in the code (e.g. in conjunction with "go to defi
 | IDE       | Shortcut                                 |
 | --------- |------------------------------------------|
 | JetBrains | Ctrl+Alt+Left/Right (Cmd+Opt+Left/Right) |
-| VSCode    | Alt+Left/Right (Opt+Left/Right)          |
+| VSCode    | Alt+Left/Right (Ctrl+-/Ctrl+Shift+-)     |
 
 ### Recently/Previously Used Files/Editors
 
@@ -177,7 +177,7 @@ When jumping between files, being able to quickly return to a previous file (wit
 | IDE       | Shortcut                    |
 | --------- |-----------------------------|
 | JetBrains | Ctrl+E (Cmd+E)              |
-| VSCode    | Ctrl+Tab (Cmd+Tab)          |
+| VSCode    | Ctrl+Tab (Ctrl+Tab)         |
 
 ## Editing
 
